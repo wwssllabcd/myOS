@@ -1,0 +1,75 @@
+define local_connect
+	set architecture i8086
+	target remote localhost:1234
+	b *0x7C00
+	b *0x90200
+end
+
+define sii
+	si
+	printf "---------------------------[ REG ]----\n"
+	compute_regs
+	pr
+	printf "---------------------------[ CODE ]----\n"
+	cur_intstruction
+end
+
+define eric_stepo_2
+	set $brPtr = (((unsigned long)$cs)<<4 ) + ((unsigned long)$eip) +2
+	b *$brPtr
+	p/x $brPtr
+	c
+	delete
+	cur_intstruction
+end
+
+
+define cur_intstruction
+	x/8i $cs*16 + $eip
+end
+
+
+# By default A20 is present
+set $ADDRESS_MASK = 0x1FFFFF
+
+define enable-a20
+  set $ADDRESS_MASK = 0x1FFFFF
+end
+define disable-a20
+  set $ADDRESS_MASK = 0x0FFFFF
+end
+
+define compute_regs
+  set $rax = ((unsigned long)$eax & 0xFFFF)
+  set $rbx = ((unsigned long)$ebx & 0xFFFF)
+  set $rcx = ((unsigned long)$ecx & 0xFFFF)
+  set $rdx = ((unsigned long)$edx & 0xFFFF)
+  set $rsi = ((unsigned long)$esi & 0xFFFF)
+  set $rdi = ((unsigned long)$edi & 0xFFFF)
+  set $rbp = ((unsigned long)$ebp & 0xFFFF)
+  set $rsp = ((unsigned long)$esp & 0xFFFF)
+  set $rcs = ((unsigned long)$cs & 0xFFFF)
+  set $rds = ((unsigned long)$ds & 0xFFFF)
+  set $res = ((unsigned long)$es & 0xFFFF)
+  set $rss = ((unsigned long)$ss & 0xFFFF)
+  set $rip = ((((unsigned long)$cs & 0xFFFF) << 4) + ((unsigned long)$eip & 0xFFFF)) & $ADDRESS_MASK
+  set $r_ss_sp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$esp & 0xFFFF)) & $ADDRESS_MASK
+  set $r_ss_bp = ((((unsigned long)$ss & 0xFFFF) << 4) + ((unsigned long)$ebp & 0xFFFF)) & $ADDRESS_MASK
+
+end
+
+define pr
+  printf "AX: %04X BX: %04X ", $rax, $rbx
+  printf "CX: %04X DX: %04X\n", $rcx, $rdx
+  printf "SI: %04X DI: %04X ", $rsi, $rdi
+  printf "SP: %04X BP: %04X\n", $rsp, $rbp
+  printf "CS: %04X DS: %04X ", $rcs, $rds
+  printf "ES: %04X SS: %04X\n", $res, $rss
+  printf "\n"
+  printf "IP: %04X EIP:%08X\n", ((unsigned short)$eip & 0xFFFF), $eip
+  printf "CS:IP: %04X:%04X (0x%05X)\n", $rcs, ((unsigned short)$eip & 0xFFFF), $rip
+  printf "SS:SP: %04X:%04X (0x%05X)\n", $rss, $rsp, $r_ss_sp
+  printf "SS:BP: %04X:%04X (0x%05X)\n", $rss, $rbp, $r_ss_bp
+
+end
+

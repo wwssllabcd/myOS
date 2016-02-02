@@ -1,0 +1,294 @@
+.code16       //使用16位模式彙編
+
+.equ SETUPLEN, 4		# nr of setup-sectors
+.equ BOOTSEG, 0x07c0		# original address of boot-sector
+.equ INITSEG, 0x9000		# we move boot here - out of the way
+.equ DX_SAVE, 0x07C0
+.equ SETUPSEG, 0x9020
+
+.equ SYSSIZE, 0x3000
+
+
+
+.equ SYSSEG, 0x1000		# system loaded at 0x10000 (65536).
+.equ ENDSEG, SYSSEG + SYSSIZE	# where to stop loading
+
+.equ ROOT_DEV, 0x301       # 這邊代表要讀取那個裝置，0x301是讀取/dev/hda1，也可以替換其他裝置
+
+
+//保留給 DX 使用
+DX_SAVE: .word 0x0000
+sectors: .word 0
+root_dev: .word ROOT_DEV
+
+	ljmp $BOOTSEG, $_start
+_start:
+	mov	%cs,%ax
+	mov	%ax,%ds
+	mov	%ax,%es
+	mov	$0xFF00, %sp
+
+MovDataTo9k:
+	call LoadCursor
+	mov	$25,%cx
+	mov	$MsgMove, %ax
+	call DispStr
+
+	mov	$BOOTSEG, %ax  
+	mov	%ax, %ds
+	mov	$INITSEG, %ax
+	mov	%ax, %es
+	mov	$0x100, %cx      # cx = counter
+	sub	%si, %si         # sub 是暫存器相減，這裡的意思同 xor %si, %si, 也就是si相減，清成0
+	sub	%di, %di
+	rep	                 
+	movsw                    # 從 [ds:si]->[es:si]
+
+	call OpFinMSg
+
+jumpTo9000:
+	ljmp	$INITSEG, $go_9000
+
+go_9000:
+	mov	%cs, %ax
+	mov	%ax, %ds
+	mov	%ax, %es
+	mov	%ax, %ss
+	mov	$0xFF00, %sp   // 9FF00
+
+ec_load_setup:
+	//reset DX
+    mov $0x0100, %dx
+    mov $0x15, %cx
+	mov $MsgLoadSetup, %ax
+	call DispStr
+
+    //不能直接指定數值給es, 否則編譯器會報錯
+    mov	$INITSEG, %ax 
+    mov %ax, %es
+
+	mov	$0x0000, %dx        // drive 0, head 0
+	mov	$0x0002, %cx        // sector 2, track 0, 把 sec 2 讀出來(chs mode 是以sec 1 作為開始)
+	mov	$0x0200, %bx        // addr=512, ES:BX=target, 由此可知這邊是要把data讀出來放到0x90200的位置
+	.equ    AX, 0x0200+SETUPLEN 
+	mov     $AX, %ax	    // 這邊的值為0x0204, AH是0x02號 service (把data放到ram), AL 為讀幾個 sector
+	int	$0x13		        // read it, INT 13H/AH=02H：讀取磁區
+
+	jnc	ec_ok_load_setup  	    // ok - continue
+
+	// if result = bad, 下reset disk cmd 之後，在跳到最前面，看起來沒有退路，讀到成功為止，否則就是死循環
+	mov	$0x0000, %dx
+	mov	$0x0000, %ax		// reset the diskette
+	int	$0x13
+	jmp	ec_load_setup
+
+ec_ok_load_setup:
+	call OpFinMSg
+
+ec_load_cy_sec:
+# Get disk drive parameters, specifically nr of sectors/track
+# 把CX的內容(也就是cy與 sec per track)存在cs:sectors+0 中，sector 為一位置，在最下面有定義
+# 要知道目前硬碟的 sector 位在哪，才知道還剩多少沒有讀取
+	mov	$0x00, %dl          # DL= drive No, int 13, AH=8 = get param
+	mov	$0x0800, %ax		# AH=8 is get drive parameters
+	int	$0x13
+	mov	$0x00, %ch
+	#seg cs
+	mov	%cx, %cs:sectors+0  # %cs means sectors is in %cs , 其值為12
+	mov	$INITSEG, %ax       # INITSEG的值為0x9000，因為讀取磁盤的參數會改掉ES，所以重設
+	mov	%ax, %es
+
+# ok, we've written the message, now
+# we want to load the system (at 0x10000)
+
+	mov	$SYSSEG, %ax    # SYSSEG=0x1000,  system loaded at 0x10000 (65536)64k.
+	mov	%ax, %es		# segment of 0x010000
+	call	read_it     # read_it 在下面
+	call	kill_motor
+
+# After that we check which root-device to use. If the device is
+# defined (#= 0), nothing is done and the given device is used.
+# Otherwise, either /dev/PS0 (2,28) or /dev/at0 (2,8), depending
+# on the number of sectors that the BIOS reports currently.
+
+	#seg cs
+	mov	%cs:root_dev+0, %ax  # root_dev 使用code 的方式 hard code, 預設值為 0x301
+	cmp	$0, %ax              # 檢查該直是否為 0   
+	jne	root_defined         # jne (jump not equal) 	不等於則轉移 	檢查 zf=0
+	#seg cs
+	mov	%cs:sectors+0, %bx
+	mov	$0x0208, %ax		# /dev/ps0 - 1.2Mb
+	cmp	$15, %bx
+	je	root_defined
+	mov	$0x021c, %ax		# /dev/PS0 - 1.44Mb
+	cmp	$18, %bx
+	je	root_defined
+undef_root:
+	jmp undef_root
+root_defined:
+	#seg cs
+	mov	%ax, %cs:root_dev+0
+
+# after that (everyting loaded), we jump to
+# the setup-routine loaded directly after
+# the bootblock:
+
+jump_2_90200:
+	ljmp	$SETUPSEG, $0  # 跳到0x90200，執行setup.S
+
+# This routine loads the system at address 0x10000, making sure
+# no 64kB boundaries are crossed. We try to load it as fast as
+# possible, loading whole tracks whenever we can.
+#
+# in:	es - starting address segment (normally 0x1000)
+#
+sread:	.word 1+ SETUPLEN	# sectors read of current track
+head:	.word 0			# current head
+track:	.word 0			# current track
+
+#要把 system從磁碟讀到0x10000的位置
+read_it:
+	mov		%es, %ax        # es已經被設定為 0x1000
+	test	$0x0fff, %ax    # 測試 es 是否為 0x1000
+die:	
+	jne 	die				# es must be at 64kB boundary(也就是es = 0x1000)
+	xor 	%bx, %bx		# bx is starting address within segment
+rp_read:
+	mov 	%es, %ax
+ 	cmp 	$ENDSEG, %ax	# have we loaded all yet? # sys_start = 0x1000, sts_end = 0x3000 ，所以大小為100個sector?
+	jb		ok1_read        #
+	ret
+ok1_read:
+	mov		%cs:sectors+0, %ax   # 讀取之前的 secPerTrack
+	sub		%cs:sread, %ax       # ax = ax - sread, 此時ax保存的是還剩多少 sector可以read
+	mov		%ax, %cx
+	shl		$9, %cx
+	add		%bx, %cx
+	jnc 	ok2_read
+	je 		ok2_read
+	xor 	%ax, %ax
+	sub 	%bx, %ax
+	shr 	$9, %ax
+ok2_read:
+	call 	read_track
+	mov 	%ax, %cx             // 本次讀多少sector 備份到 cx中
+	add 	%cs:sread, %ax
+	cmp 	%cs:sectors+0, %ax
+
+	jne 	ok3_read
+	mov 	$1, %ax
+	sub 	%cs:head, %ax
+	jne 	ok4_read
+	incw    %cs:track 
+ok4_read:
+	mov	%ax, %cs:head
+	xor	%ax, %ax
+ok3_read:
+	mov	%ax, %cs:sread
+	shl	$9, %cx
+	add	%cx, %bx              // 重新設定 bx( 因為es:bx)為0x0d*0x200
+	jnc	rp_read
+	mov	%es, %ax
+	add	$0x1000, %ax
+	mov	%ax, %es
+	xor	%bx, %bx
+	jmp	rp_read
+
+read_track:
+	push	%ax
+	push	%bx
+	push	%cx
+	push	%dx
+	mov	%cs:track, %dx
+	mov	%cs:sread, %cx
+	inc	%cx
+	mov	%dl, %ch         // dl 此時是 track, 設給ch是
+	mov	%cs:head, %dx    // head 設 0
+	mov	%dl, %dh		 // head 設到 %dh, DH = head number
+	mov	$0, %dl          // DL = drive number (bit 7 set for hard disk)
+	and	$0x0100, %dx     // dx=0, 跟0x1000作 "&"動作, 還是0, 所以 head最高為1 ?
+	mov	$2, %ah	         // int 13 (AH=2) , es:bx , AL = number of sectors to read (must be nonzero)
+	int	$0x13
+
+	jc	bad_rt
+
+	pop	%dx
+	pop	%cx              // cx 還原為 "本次到底前進多少 byte"也就是 讀取sec數*512
+	pop	%bx
+	pop	%ax
+	ret
+bad_rt:	mov	$0, %ax
+	mov	$0, %dx
+	int	$0x13
+	pop	%dx
+	pop	%cx
+	pop	%bx
+	pop	%ax
+	jmp	read_track
+
+#/*
+# * This procedure turns off the floppy drive motor, so
+# * that we enter the kernel in a known state, and
+# * don't have to worry about it later.
+# */
+kill_motor:
+	push	%dx
+	mov		$0x3f2, %dx
+	mov		$0, %al
+	outsb
+	pop		%dx
+	ret
+
+
+
+jmp_setup:
+	ljmp	$SETUPSEG, $0  # 跳到0x90200，執行setup.S
+
+    
+fin:
+	hlt
+	jmp fin         //無限循環
+
+DispStr:
+	mov %ax, %bp          //ES:BP = 串地址
+	mov $0x1301,%ax       //AH = 13, AL = 01h
+	mov $0x00c,%bx        //頁號為0(BH = 0) 黑底紅字(BL = 0Ch,高亮)
+	int $0x10             //10h 號中斷
+	
+	// calc cx
+	mov %dx, %ax
+	add %cx, %ax
+	mov %ax, %dx
+	// restore DX value to 0x9000:DxValue
+
+	mov	$DX_SAVE, %ax	
+	mov	%ax, %ds
+	mov	%dx, %ds:0
+	ret
+
+LoadCursor:
+	// load dx
+	mov	$DX_SAVE, %ax	
+	mov	%ax, %ds
+	mov %ds:0, %dx
+	ret
+
+OpFinMSg:
+	call LoadCursor
+
+    //要把ES重設, 否則string 會出不來
+    mov %cs, %ax
+    mov %ax, %es
+
+	mov $0x07,%cx
+	mov $MsgOpFin, %ax
+	call DispStr
+	ret
+
+MsgMove:.ascii "Starting mov 7C00 to 9000"
+MsgOpFin:.ascii "...down"
+MsgLoadSetup:.ascii "Starting load setup.s"
+
+.org 510       //填充到~510~字節處
+.word 0xaa55   //結束標誌
+

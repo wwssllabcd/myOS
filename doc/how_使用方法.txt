@@ -1,0 +1,20 @@
+﻿
+輸入(需要KVM)
+qemu-system-i386 -fda boot.img -s -S
+
+
+開另一個terminal 輸入gdb
+
+source eric_GdbScript.txt
+local_connect
+
+此時會停在 0x7c00:0000
+可以下sii顯示code
+
+但是一旦執行到int的時候, 就要用小技巧來避過
+
+
+使用 eric_stepo_2
+會先在int 下面設一個中斷點, 然後執行 continue 
+再把中斷點刪除, 這是重點, 因為不刪除中斷點的話, 會讓gdb執行不下去
+
