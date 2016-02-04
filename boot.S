@@ -31,7 +31,7 @@ MovDataTo9k:
 	#call LoadCursor
 	# %ax為string位置, %cx為長度
 	mov	$MsgMove, %ax
-	mov	$25,%cx
+	mov	$0x1C,%cx
 	call DispStr
 
 	mov	$BOOTSEG, %ax
@@ -45,11 +45,8 @@ MovDataTo9k:
 	movsw                    # 從 [ds:si]->[es:di]
 
 	# show msg
-	mov $0x00, %dh
-	mov $25, %dl
-	mov	$MsgOpFin, %ax
-	mov	$7,%cx
-	call DispStr
+	mov $0x001C, %dx
+	call ShowDownMSg
 
 jumpTo9000:
 	ljmp	$INITSEG, $go_9000
@@ -64,11 +61,9 @@ go_9000:
 ec_load_setup:
 	# show msg
     mov $0x0100, %dx
-    mov $0x15, %cx
+    mov $0x18, %cx
 	mov $MsgLoadSetup, %ax
 	call DispStr
-
-	jmp .
 
     //不能直接指定數值給es, 否則編譯器會報錯
     mov	$INITSEG, %ax 
@@ -81,6 +76,7 @@ ec_load_setup:
 	mov     $AX, %ax	    // 這邊的值為0x0204, AH是0x02號 service (把data放到ram), AL 為讀幾個 sector
 	int	$0x13		        // read it, INT 13H/AH=02H：讀取磁區
 
+
 	jnc	ec_ok_load_setup  	    // ok - continue
 
 	// if result = bad, 下reset disk cmd 之後，在跳到最前面，看起來沒有退路，讀到成功為止，否則就是死循環
@@ -90,9 +86,13 @@ ec_load_setup:
 	jmp	ec_load_setup
 
 ec_ok_load_setup:
-	call OpFinMSg
+	# set msg x,y
+	mov $0x0118, %dx
+	call ShowDownMSg
+	jmp .
 
 ec_load_cy_sec:
+
 # Get disk drive parameters, specifically nr of sectors/track
 # 把CX的內容(也就是cy與 sec per track)存在cs:sectors+0 中，sector 為一位置，在最下面有定義
 # 要知道目前硬碟的 sector 位在哪，才知道還剩多少沒有讀取
@@ -281,21 +281,19 @@ LoadCursor:
 	mov %ds:0, %dx
 	ret
 
-OpFinMSg:
-	call LoadCursor
-
-    //要把ES重設, 否則string 會出不來
-    mov %cs, %ax
+#input %dx
+ShowDownMSg:
+	//要把ES重設, 否則string 會出不來
+	mov %cs, %ax
     mov %ax, %es
-
-	mov $0x07,%cx
+	mov $0x04,%cx
 	mov $MsgOpFin, %ax
 	call DispStr
 	ret
 
-MsgMove:.ascii "Starting mov 7C00 to 9000"
-MsgOpFin:.ascii "...down"
-MsgLoadSetup:.ascii "Starting load setup.s"
+MsgMove:.ascii "Starting mov 7C00 to 9000..."
+MsgOpFin:.ascii "down"
+MsgLoadSetup:.ascii "Starting load setup.s..."
 
 .org 510       //填充到~510~字節處
 .word 0xaa55   //結束標誌
