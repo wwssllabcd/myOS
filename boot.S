@@ -1,18 +1,13 @@
 .code16       //使用16位模式彙編
 
 .equ SETUPLEN, 4		# nr of setup-sectors
-.equ BOOTSEG, 0x07c0		# original address of boot-sector
+.equ BOOTSEG, 0x07C0		# original address of boot-sector
 .equ INITSEG, 0x9000		# we move boot here - out of the way
 .equ DX_SAVE, 0x07C0
 .equ SETUPSEG, 0x9020
-
 .equ SYSSIZE, 0x3000
-
-
-
 .equ SYSSEG, 0x1000		# system loaded at 0x10000 (65536).
 .equ ENDSEG, SYSSEG + SYSSIZE	# where to stop loading
-
 .equ ROOT_DEV, 0x301       # 這邊代表要讀取那個裝置，0x301是讀取/dev/hda1，也可以替換其他裝置
 
 
@@ -21,30 +16,40 @@ DX_SAVE: .word 0x0000
 sectors: .word 0
 root_dev: .word ROOT_DEV
 
+	#ljmp CS,IP: 因為目前就是在07C0的位置，所以若要跳到 _start這個位置，而這個位置就是0x7C00 + _start 的 offset 的地方
+	#又因為CS是少一個0，所以這邊要填0x7C00變成0x07C0
 	ljmp $BOOTSEG, $_start
+
 _start:
+	#CS 因為ljmp的關係，現在應該是0x07C0，他把所有的segment(ds,es)都設成CS所在的區段
 	mov	%cs,%ax
 	mov	%ax,%ds
 	mov	%ax,%es
 	mov	$0xFF00, %sp
 
 MovDataTo9k:
-	call LoadCursor
-	mov	$25,%cx
+	#call LoadCursor
+	# %ax為string位置, %cx為長度
 	mov	$MsgMove, %ax
+	mov	$25,%cx
 	call DispStr
 
-	mov	$BOOTSEG, %ax  
+	mov	$BOOTSEG, %ax
 	mov	%ax, %ds
 	mov	$INITSEG, %ax
 	mov	%ax, %es
-	mov	$0x100, %cx      # cx = counter
-	sub	%si, %si         # sub 是暫存器相減，這裡的意思同 xor %si, %si, 也就是si相減，清成0
+	mov	$256, %cx      # cx = counter
+	sub	%si, %si         # sub 是暫存器相減，清成0
 	sub	%di, %di
-	rep	                 
-	movsw                    # 從 [ds:si]->[es:si]
+	rep
+	movsw                    # 從 [ds:si]->[es:di]
 
-	call OpFinMSg
+	# show msg
+	mov $0x00, %dh
+	mov $25, %dl
+	mov	$MsgOpFin, %ax
+	mov	$7,%cx
+	call DispStr
 
 jumpTo9000:
 	ljmp	$INITSEG, $go_9000
@@ -57,11 +62,13 @@ go_9000:
 	mov	$0xFF00, %sp   // 9FF00
 
 ec_load_setup:
-	//reset DX
+	# show msg
     mov $0x0100, %dx
     mov $0x15, %cx
 	mov $MsgLoadSetup, %ax
 	call DispStr
+
+	jmp .
 
     //不能直接指定數值給es, 否則編譯器會報錯
     mov	$INITSEG, %ax 
@@ -249,26 +256,27 @@ fin:
 	hlt
 	jmp fin         //無限循環
 
+#=========================
+#string addr= %ax
+#strLen = %cx
+#screen X = %dl
+#screen Y = %dH
 DispStr:
-	mov %ax, %bp          //ES:BP = 串地址
-	mov $0x1301,%ax       //AH = 13, AL = 01h
-	mov $0x00c,%bx        //頁號為0(BH = 0) 黑底紅字(BL = 0Ch,高亮)
-	int $0x10             //10h 號中斷
-	
-	// calc cx
-	mov %dx, %ax
-	add %cx, %ax
-	mov %ax, %dx
-	// restore DX value to 0x9000:DxValue
+	mov %ax, %bp          // ES:BP = 串地址
+	mov $0x1301, %ax      // AH = 13, AL = 01h
+	mov $0x000C, %bx      // 頁號為0(BH = 0) 黑底紅字(BL = 0Ch,高亮)
+	int $0x10             // 10h 號中斷
+	ret
 
-	mov	$DX_SAVE, %ax	
-	mov	%ax, %ds
-	mov	%dx, %ds:0
+SetCursorByDX:
+	mov $0x02, %ah
+	mov $0x00, %bh
+	int $0x10
 	ret
 
 LoadCursor:
 	// load dx
-	mov	$DX_SAVE, %ax	
+	mov	$DX_SAVE, %ax	   // DX_SAVE = 0x07C0
 	mov	%ax, %ds
 	mov %ds:0, %dx
 	ret
