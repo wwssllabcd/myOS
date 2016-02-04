@@ -11,7 +11,7 @@
 .equ ROOT_DEV, 0x301       # 這邊代表要讀取那個裝置，0x301是讀取/dev/hda1，也可以替換其他裝置
 
 
-//保留給 DX 使用
+//保留給游標 X,Y 使用
 DX_SAVE: .word 0x0000
 sectors: .word 0
 root_dev: .word ROOT_DEV
@@ -66,12 +66,13 @@ ec_load_setup:
 	call DispStr
 
     //不能直接指定數值給es, 否則編譯器會報錯
+    // ES:BX是存放位置
     mov	$INITSEG, %ax 
     mov %ax, %es
+	mov	$0x0200, %bx        // addr=512, ES:BX=target, 由此可知這邊是要把data讀出來放到0x90200的位置
 
 	mov	$0x0000, %dx        // drive 0, head 0
 	mov	$0x0002, %cx        // sector 2, track 0, 把 sec 2 讀出來(chs mode 是以sec 1 作為開始)
-	mov	$0x0200, %bx        // addr=512, ES:BX=target, 由此可知這邊是要把data讀出來放到0x90200的位置
 	.equ    AX, 0x0200+SETUPLEN 
 	mov     $AX, %ax	    // 這邊的值為0x0204, AH是0x02號 service (把data放到ram), AL 為讀幾個 sector
 	int	$0x13		        // read it, INT 13H/AH=02H：讀取磁區
@@ -83,13 +84,11 @@ ec_load_setup:
 	mov	$0x0000, %dx
 	mov	$0x0000, %ax		// reset the diskette
 	int	$0x13
-	jmp	ec_load_setup
 
 ec_ok_load_setup:
 	# set msg x,y
 	mov $0x0118, %dx
 	call ShowDownMSg
-	jmp .
 
 ec_load_cy_sec:
 
@@ -98,18 +97,16 @@ ec_load_cy_sec:
 # 要知道目前硬碟的 sector 位在哪，才知道還剩多少沒有讀取
 	mov	$0x00, %dl          # DL= drive No, int 13, AH=8 = get param
 	mov	$0x0800, %ax		# AH=8 is get drive parameters
-	int	$0x13
-	mov	$0x00, %ch
-	#seg cs
-	mov	%cx, %cs:sectors+0  # %cs means sectors is in %cs , 其值為12
-	mov	$INITSEG, %ax       # INITSEG的值為0x9000，因為讀取磁盤的參數會改掉ES，所以重設
-	mov	%ax, %es
+	int	$0x13               # INT 13h AH=08h: Read Drive Parameters, return dx,cx
+
+	mov	$0x00, %ch          # clear high byte
+	mov	%cx, %cs:sectors+0  # %cs means sectors per track is in %cs , 其值為12，之後會用到
 
 # ok, we've written the message, now
 # we want to load the system (at 0x10000)
-
 	mov	$SYSSEG, %ax    # SYSSEG=0x1000,  system loaded at 0x10000 (65536)64k.
 	mov	%ax, %es		# segment of 0x010000
+
 	call	read_it     # read_it 在下面
 	call	kill_motor
 
@@ -161,6 +158,7 @@ die:
 	jne 	die				# es must be at 64kB boundary(也就是es = 0x1000)
 	xor 	%bx, %bx		# bx is starting address within segment
 rp_read:
+	#%es為目前讀了多少資料，ENDSEG為資料的尾端
 	mov 	%es, %ax
  	cmp 	$ENDSEG, %ax	# have we loaded all yet? # sys_start = 0x1000, sts_end = 0x3000 ，所以大小為100個sector?
 	jb		ok1_read        #
@@ -268,14 +266,14 @@ DispStr:
 	int $0x10             // 10h 號中斷
 	ret
 
-SetCursorByDX:
-	mov $0x02, %ah
-	mov $0x00, %bh
-	int $0x10
+SaveCursor:
+	mov	$DX_SAVE, %ax
+	mov	%ax, %ds
+	mov %dx, %ds:0
 	ret
 
 LoadCursor:
-	// load dx
+	# %dx register 是控制螢幕 XY的暫存器，所以把他的值保存在DX_SAVE
 	mov	$DX_SAVE, %ax	   // DX_SAVE = 0x07C0
 	mov	%ax, %ds
 	mov %ds:0, %dx
