@@ -1,15 +1,15 @@
 .code16       //使用16位模式彙編, AT&T( GAS )語法
 
-.equ SETUPLEN, 4		# nr of setup-sectors
+.equ SETUPLEN, 4		# nr of setup-sectors，boot相關的使用4個sector
 .equ BOOTSEG, 0x07C0		# original address of boot-sector
 .equ INITSEG, 0x9000		# we move boot here - out of the way
 .equ SETUPSEG, 0x9020
 
-.equ SYSSEG, 0x1000		# system loaded at 0x10000 (65536).
+.equ SYSSEG, 0x1000		    # system loaded at 0x10000 (65536).
 .equ SYSSIZE, 0x3000
 .equ ENDSEG, SYSSEG + SYSSIZE	# where to stop loading
 
-.equ ROOT_DEV, 0x301       # 這邊代表要讀取那個裝置，0x301是讀取/dev/hda1，也可以替換其他裝置
+.equ ROOT_DEV, 0x301        # 這邊代表要讀取那個裝置，0x301是讀取/dev/hda1，也可以替換其他裝置
 
 .equ DX_SAVE, 0x07C0
 
@@ -32,7 +32,7 @@ _start:
 MovDataTo9k:
 	#call LoadCursor
 	# %ax為string位置, %cx為長度
-	mov	$MsgMove, %ax
+	mov	$MsgMove, %bp
 	mov	$0x1C,%cx
 	call DispStr
 
@@ -64,7 +64,7 @@ ec_load_setup:
 	# show msg
     mov $0x0100, %dx
     mov $0x18, %cx
-	mov $MsgLoadSetup, %ax
+	mov $MsgLoadSetup, %bp
 	call DispStr
 
     //不能直接指定數值給es, 否則編譯器會報錯
@@ -72,13 +72,11 @@ ec_load_setup:
     mov	$INITSEG, %ax 
     mov %ax, %es
 	mov	$0x0200, %bx        // addr=512, ES:BX=target, 由此可知這邊是要把data讀出來放到0x90200的位置
-
 	mov	$0x0000, %dx        // drive 0, head 0
 	mov	$0x0002, %cx        // sector 2, track 0, 把 sec 2 讀出來(chs mode 是以sec 1 作為開始)
 	.equ    AX, 0x0200+SETUPLEN 
-	mov     $AX, %ax	    // 這邊的值為0x0204, AH是0x02號 service (把data放到ram), AL 為讀幾個 sector
+	mov     $AX, %ax	    // 這邊的值為0x0204, AH是0x02號 service (把data放到ram), AL 為讀幾個 sector，代表讀4個sector出來
 	int	$0x13		        // read it, INT 13H/AH=02H：讀取磁區
-
 
 	jnc	ec_ok_load_setup  	    // ok - continue
 
@@ -109,18 +107,24 @@ ec_load_cy_sec:
 	mov	$SYSSEG, %ax        # SYSSEG=0x1000,  system loaded at 0x10000 (65536)64k.
 	mov	%ax, %es		    # segment of 0x010000
 
-	jmp .
-
 	call	read_it         # read_it 在下面
 	call	kill_motor
 
-# After that we check which root-device to use. If the device is
-# defined (#= 0), nothing is done and the given device is used.
-# Otherwise, either /dev/PS0 (2,28) or /dev/at0 (2,8), depending
-# on the number of sectors that the BIOS reports currently.
+	// show msg
+	mov $0x0200, %dx
+	mov $0x18, %cx
+	mov $MsgLoadSystem, %bp
+	call DispStr
 
+	# After that we check which root-device to use. If the device is
+	# defined (#= 0), nothing is done and the given device is used.
+	# Otherwise, either /dev/PS0 (2,28) or /dev/at0 (2,8), depending
+	# on the number of sectors that the BIOS reports currently.
 	#seg cs
+
 	mov	%cs:root_dev+0, %ax  # root_dev 使用code 的方式 hard code, 預設值為 0x301
+
+
 	cmp	$0, %ax              # 檢查該直是否為 0   
 	jne	root_defined         # jne (jump not equal) 	不等於則轉移 	檢查 zf=0
 	#seg cs
@@ -150,7 +154,7 @@ jump_2_90200:
 #
 # in:	es - starting address segment (normally 0x1000)
 #
-sread:	.word 1+ SETUPLEN	# sectors read of current track
+sread:	.word 1+ SETUPLEN	# sectors read of current track，預設值為 5(1+4)，因為前面4個是setup使用的，所以system的從sector 5號開始
 head:	.word 0			# current head
 track:	.word 0			# current track
 
@@ -160,7 +164,7 @@ read_it:
 	test	$0x0fff, %ax    # 測試 es 是否為 0x1000
 die:	
 	jne 	die				# es must be at 64kB boundary(也就是es = 0x1000)
-	xor 	%bx, %bx		# bx is starting address within segment
+	xor 	%bx, %bx		# bx 設為 0，代表資料存放位置為[ES:BX] = 0x1000:0
 rp_read:
 	#%es為目前讀了多少資料，ENDSEG為資料的尾端
 	mov 	%es, %ax
@@ -168,12 +172,13 @@ rp_read:
 	jb		ok1_read        #
 	ret
 ok1_read:
-	mov		%cs:sectors+0, %ax   # 讀取之前的 secPerTrack
-	sub		%cs:sread, %ax       # ax = ax - sread, 此時ax保存的是還剩多少 sector可以read,seek read
+	#這邊主要處理要讀多少sector, 還有讀完之後的offset為多少
+	mov		%cs:sectors+0, %ax   # 讀取之前的 secPerTrack，值為12
+	sub		%cs:sread, %ax       # ax = ax - sread, cs:sread = 5, 所以這邊ax會變成0x0d，還有0x0d個sector要讀，這邊先設好AL(要讀多少sector)
 	mov		%ax, %cx
 
-	shl		$9, %cx              # cx = cx*512 (讀多少 byte)
-	add		%bx, %cx             # cx=cx+bx
+	shl		$9, %cx              # cx = cx*512 (這次讀多少 byte), shl = 左移9個bit
+	add		%bx, %cx             # cx=cx+bx, cx代表這次讀了之後，offset會跑到哪裡(可能是之後要設回bx用)
 	jnc 	ok2_read
 	je 		ok2_read
 	xor 	%ax, %ax
@@ -181,22 +186,24 @@ ok1_read:
 	shr 	$9, %ax
 ok2_read:
 	call 	read_track
-	mov 	%ax, %cx             // 本次讀多少sector 備份到 cx中
-	add 	%cs:sread, %ax
-	cmp 	%cs:sectors+0, %ax
+	mov 	%ax, %cx             // 本次讀多少sector 備份到 cx中，%ax = 0x000d, 第一次是讀  0xd個sector (0x12 - 5 )
+	add 	%cs:sread, %ax       // ax = ax + sread , 應該會讀到sector 的尾巴，也就是0x12
+	cmp 	%cs:sectors+0, %ax   // 比較ax，是否為secPerTrack(也就是判斷是否到尾巴)?如果相等，則ZF flag=1
 
-	jne 	ok3_read
+	jne 	ok3_read             // 不等於，則jmp(x86中相對應的cmd為je)
 	mov 	$1, %ax
+
 	sub 	%cs:head, %ax
-	jne 	ok4_read
+	jne 	ok4_read            // 如果cs:head==0，則jump 到 ok4_read
 	incw    %cs:track 
 ok4_read:
+	//設定 cs:head = 1，並清除ax
 	mov	%ax, %cs:head
 	xor	%ax, %ax
 ok3_read:
 	mov	%ax, %cs:sread
 	shl	$9, %cx
-	add	%cx, %bx              // 重新設定 bx( 因為es:bx)為0x0d*0x200
+	add	%cx, %bx              // 重新設定 bx(因為es:bx)到正確的offset
 	jnc	rp_read
 	mov	%es, %ax
 	add	$0x1000, %ax
@@ -210,9 +217,9 @@ read_track:
 	push	%cx
 	push	%dx
 
-	mov	%cs:track, %dx   // get track
-	mov	%cs:sread, %cx   // get cl=sector
-	inc	%cx              // cx=cx+1, 這動作主要是設cl, 即把 sector+1
+	mov	%cs:track, %dx   // cs:track 一開始是0, so dx=0
+	mov	%cs:sread, %cx   // cx=5
+	inc	%cx              // cx=cx+1, 這動作主要是設cl, 即把 sector+1 ( chs mode 以1為起始)
 	mov	%dl, %ch         // dl 此時是 track, 設給ch
 
 	mov	%cs:head, %dx    // 取 head
@@ -234,7 +241,7 @@ read_track:
 	jc	bad_rt
 
 	pop	%dx
-	pop	%cx              // cx 還原為 "本次到底前進多少 byte"也就是 讀取sec數*512
+	pop	%cx
 	pop	%bx
 	pop	%ax
 	ret
@@ -260,54 +267,49 @@ kill_motor:
 	pop		%dx
 	ret
 
-
-
 jmp_setup:
 	ljmp	$SETUPSEG, $0  # 跳到0x90200，執行setup.S
 
-    
 fin:
 	hlt
 	jmp fin         //無限循環
 
 #=========================
-#string addr= %ax
+#string addr= ES:BP = 串地址
 #strLen = %cx
 #screen X = %dl
 #screen Y = %dH
 DispStr:
-	mov %ax, %bp          // ES:BP = 串地址
+
+	push %ax
+	push %es
+
+	mov	$BOOTSEG, %ax
+    mov %ax, %es
+
 	mov $0x1301, %ax      // AH = 13, AL = 01h
 	mov $0x000C, %bx      // 頁號為0(BH = 0) 黑底紅字(BL = 0Ch,高亮)
 	int $0x10             // 10h 號中斷
-	ret
 
-SaveCursor:
-	mov	$DX_SAVE, %ax
-	mov	%ax, %ds
-	mov %dx, %ds:0
-	ret
+	pop %es
+	pop %ax
 
-LoadCursor:
-	# %dx register 是控制螢幕 XY的暫存器，所以把他的值保存在DX_SAVE
-	mov	$DX_SAVE, %ax	   // DX_SAVE = 0x07C0
-	mov	%ax, %ds
-	mov %ds:0, %dx
 	ret
 
 #input %dx
 ShowDownMSg:
-	//要把ES重設, 否則string 會出不來
+	//要把ES重設, 因為如果ES設離開了9000 or 7C0，string 會出不來，特別是經過load system那段組語，會改變ES的值
 	mov %cs, %ax
     mov %ax, %es
 	mov $0x04,%cx
-	mov $MsgOpFin, %ax
+	mov $MsgOpFin, %bp
 	call DispStr
 	ret
 
-MsgMove:.ascii "Starting mov 7C00 to 9000..."
-MsgOpFin:.ascii "down"
-MsgLoadSetup:.ascii "Starting load setup.s..."
+MsgOpFin:      .ascii "down"
+MsgMove:       .ascii "Starting mov 7C00 to 9000..."
+MsgLoadSetup:  .ascii "Starting load setup.s..."
+MsgLoadSystem: .ascii "load system down........"
 
 .org 510       //填充到~510~字節處
 .word 0xaa55   //結束標誌
