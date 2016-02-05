@@ -284,6 +284,7 @@ DispStr:
 	push %ax
 	push %es
 
+	//要把ES重設, 因為如果ES設離開了9000 or 7C0，string 會出不來，特別是經過load system那段組語，會改變ES的值
 	mov	$BOOTSEG, %ax
     mov %ax, %es
 
@@ -298,7 +299,7 @@ DispStr:
 
 #input %dx
 ShowDownMSg:
-	//要把ES重設, 因為如果ES設離開了9000 or 7C0，string 會出不來，特別是經過load system那段組語，會改變ES的值
+
 	mov %cs, %ax
     mov %ax, %es
 	mov $0x04,%cx
