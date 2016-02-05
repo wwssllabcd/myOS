@@ -1,9 +1,17 @@
 define local_connect
 	set architecture i8086
 	target remote localhost:1234
+end
+
+define myBk
 	b *0x7C00
 	b *0x90200
 end
+
+define symbol_load
+	file ../obj/boot.o
+end
+
 
 define sii
 	si
@@ -11,7 +19,7 @@ define sii
 	compute_regs
 	pr
 	printf "---------------------------[ CODE ]----\n"
-	cur_intstruction
+	current_intstruction
 end
 
 define eric_stepo_2
@@ -20,14 +28,12 @@ define eric_stepo_2
 	p/x $brPtr
 	c
 	delete
-	cur_intstruction
+	current_intstruction
 end
 
-
-define cur_intstruction
+define current_intstruction
 	x/8i $cs*16 + $eip
 end
-
 
 # By default A20 is present
 set $ADDRESS_MASK = 0x1FFFFF

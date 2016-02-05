@@ -3,7 +3,7 @@ LD = ld
 LDFILE = solrex_x86.ld
 OBJCOPY = objcopy
 
-CFLAGS = -c -g
+CFLAGS = -c -g  -ggdb
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 
 

@@ -1,18 +1,20 @@
-.code16       //使用16位模式彙編
+.code16       //使用16位模式彙編, AT&T( GAS )語法
 
 .equ SETUPLEN, 4		# nr of setup-sectors
 .equ BOOTSEG, 0x07C0		# original address of boot-sector
 .equ INITSEG, 0x9000		# we move boot here - out of the way
-.equ DX_SAVE, 0x07C0
 .equ SETUPSEG, 0x9020
-.equ SYSSIZE, 0x3000
+
 .equ SYSSEG, 0x1000		# system loaded at 0x10000 (65536).
+.equ SYSSIZE, 0x3000
 .equ ENDSEG, SYSSEG + SYSSIZE	# where to stop loading
+
 .equ ROOT_DEV, 0x301       # 這邊代表要讀取那個裝置，0x301是讀取/dev/hda1，也可以替換其他裝置
 
+.equ DX_SAVE, 0x07C0
 
-//保留給游標 X,Y 使用
-DX_SAVE: .word 0x0000
+//保留給游標 X,Y 使用DX register
+dx_reg: .word 0x0000
 sectors: .word 0
 root_dev: .word ROOT_DEV
 
@@ -100,14 +102,16 @@ ec_load_cy_sec:
 	int	$0x13               # INT 13h AH=08h: Read Drive Parameters, return dx,cx
 
 	mov	$0x00, %ch          # clear high byte
-	mov	%cx, %cs:sectors+0  # %cs means sectors per track is in %cs , 其值為12，之後會用到
+	mov	%cx, %cs:sectors+0  # %cs means sectors per track, save SecPerTrack，這裡讀出來的是SecPerTrack = 0x12
 
 # ok, we've written the message, now
 # we want to load the system (at 0x10000)
-	mov	$SYSSEG, %ax    # SYSSEG=0x1000,  system loaded at 0x10000 (65536)64k.
-	mov	%ax, %es		# segment of 0x010000
+	mov	$SYSSEG, %ax        # SYSSEG=0x1000,  system loaded at 0x10000 (65536)64k.
+	mov	%ax, %es		    # segment of 0x010000
 
-	call	read_it     # read_it 在下面
+	jmp .
+
+	call	read_it         # read_it 在下面
 	call	kill_motor
 
 # After that we check which root-device to use. If the device is
@@ -165,10 +169,11 @@ rp_read:
 	ret
 ok1_read:
 	mov		%cs:sectors+0, %ax   # 讀取之前的 secPerTrack
-	sub		%cs:sread, %ax       # ax = ax - sread, 此時ax保存的是還剩多少 sector可以read
+	sub		%cs:sread, %ax       # ax = ax - sread, 此時ax保存的是還剩多少 sector可以read,seek read
 	mov		%ax, %cx
-	shl		$9, %cx
-	add		%bx, %cx
+
+	shl		$9, %cx              # cx = cx*512 (讀多少 byte)
+	add		%bx, %cx             # cx=cx+bx
 	jnc 	ok2_read
 	je 		ok2_read
 	xor 	%ax, %ax
@@ -204,14 +209,25 @@ read_track:
 	push	%bx
 	push	%cx
 	push	%dx
-	mov	%cs:track, %dx
-	mov	%cs:sread, %cx
-	inc	%cx
-	mov	%dl, %ch         // dl 此時是 track, 設給ch是
-	mov	%cs:head, %dx    // head 設 0
+
+	mov	%cs:track, %dx   // get track
+	mov	%cs:sread, %cx   // get cl=sector
+	inc	%cx              // cx=cx+1, 這動作主要是設cl, 即把 sector+1
+	mov	%dl, %ch         // dl 此時是 track, 設給ch
+
+	mov	%cs:head, %dx    // 取 head
 	mov	%dl, %dh		 // head 設到 %dh, DH = head number
-	mov	$0, %dl          // DL = drive number (bit 7 set for hard disk)
-	and	$0x0100, %dx     // dx=0, 跟0x1000作 "&"動作, 還是0, 所以 head最高為1 ?
+	mov	$0, %dl          // DL = drive number ,DriveNo=0(means Drive A)
+	and	$0x0100, %dx     // dx=dx&0x100, 跟0x100作 "&"動作, 這裡為限制 dl=0, dh不超過1
+
+	#--------------------------------
+	#INT 13h AH=02h: Read Sectors From Drive
+	# AL 	Sectors To Read Count
+	# CH 	Cylinder
+	# CL 	Sector
+	# DH 	Head
+	# DL 	Drive
+	# ES:BX 	Buffer Address Pointer
 	mov	$2, %ah	         // int 13 (AH=2) , es:bx , AL = number of sectors to read (must be nonzero)
 	int	$0x13
 
