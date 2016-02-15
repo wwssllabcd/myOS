@@ -1,9 +1,13 @@
-	.code16
-	.equ INITSEG, 0x9000	# we move boot here - out of the way
-	.equ SYSSEG, 0x1000	# system loaded at 0x10000 (65536).
-	.equ SETUPSEG, 0x9020	# this is the current segment
+.code16
+.equ INITSEG, 0x9000	# we move boot here - out of the way
+.equ SYSSEG, 0x1000	    # system loaded at 0x10000 (65536).
+.equ SETUPSEG, 0x9020	# this is the current segment
+
+
+
 
 	ljmp $SETUPSEG, $_start	 # setup.s是放在 0x90200的位置
+
 _start:
 
 	mov	$INITSEG, %ax	# this is done in bootsect already, but...

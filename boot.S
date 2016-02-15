@@ -30,10 +30,11 @@ _start:
 	mov	$0xFF00, %sp
 
 MovDataTo9k:
-	#call LoadCursor
-	# %ax為string位置, %cx為長度
-	mov	$MsgMove, %bp
-	mov	$0x1C,%cx
+
+	# %bp is string位置, %cx為長度
+	mov	$str_0, %bp
+	mov	$0x1, %cx
+	mov	$0x0, %dx
 	call DispStr
 
 	mov	$BOOTSEG, %ax
@@ -47,8 +48,11 @@ MovDataTo9k:
 	movsw                    # 從 [ds:si]->[es:di]
 
 	# show msg
-	mov $0x001C, %dx
-	call ShowDownMSg
+	mov	$str_1, %bp
+	mov	$0x1, %cx
+	mov	$0x0001, %dx
+	call DispStr
+
 
 jumpTo9000:
 	ljmp	$INITSEG, $go_9000
@@ -62,9 +66,9 @@ go_9000:
 
 ec_load_setup:
 	# show msg
-    mov $0x0100, %dx
-    mov $0x18, %cx
-	mov $MsgLoadSetup, %bp
+	mov	$str_2, %bp
+	mov	$0x1, %cx
+	mov	$0x0002, %dx
 	call DispStr
 
     //不能直接指定數值給es, 否則編譯器會報錯
@@ -87,8 +91,11 @@ ec_load_setup:
 
 ec_ok_load_setup:
 	# set msg x,y
-	mov $0x0118, %dx
-	call ShowDownMSg
+	# show msg
+	mov	$str_3, %bp
+	mov	$0x1, %cx
+	mov	$0x0003, %dx
+	call DispStr
 
 ec_load_cy_sec:
 
@@ -109,12 +116,6 @@ ec_load_cy_sec:
 
 	call	read_it         # read_it 在下面
 	call	kill_motor
-
-	// show msg
-	mov $0x0200, %dx
-	mov $0x18, %cx
-	mov $MsgLoadSystem, %bp
-	call DispStr
 
 	# After that we check which root-device to use. If the device is
 	# defined (#= 0), nothing is done and the given device is used.
@@ -145,6 +146,12 @@ root_defined:
 # the setup-routine loaded directly after
 # the bootblock:
 
+	// show msg
+	mov	$str_4, %bp
+	mov	$0x1, %cx
+	mov	$0x0004, %dx
+	call DispStr
+
 jump_2_90200:
 	ljmp	$SETUPSEG, $0  # 跳到0x90200，執行setup.S
 
@@ -154,9 +161,9 @@ jump_2_90200:
 #
 # in:	es - starting address segment (normally 0x1000)
 #
-sread:	.word 1+ SETUPLEN	# sectors read of current track，預設值為 5(1+4)，因為前面4個是setup使用的，所以system的從sector 5號開始
-head:	.word 0			# current head
-track:	.word 0			# current track
+sread:	.word 1+SETUPLEN	# sectors read of current track，預設值為 5(1+4)，因為前面4個是setup使用的，所以system的從sector 5號開始
+head:	.word 0			    # current head
+track:	.word 0			    # current track
 
 #要把 system從磁碟讀到0x10000的位置
 read_it:
@@ -297,20 +304,13 @@ DispStr:
 
 	ret
 
-#input %dx
-ShowDownMSg:
-
-	mov %cs, %ax
-    mov %ax, %es
-	mov $0x04,%cx
-	mov $MsgOpFin, %bp
-	call DispStr
-	ret
-
-MsgOpFin:      .ascii "down"
-MsgMove:       .ascii "Starting mov 7C00 to 9000..."
-MsgLoadSetup:  .ascii "Starting load setup.s..."
-MsgLoadSystem: .ascii "load system down........"
+str_0:      .ascii "0"
+str_1:      .ascii "1"
+str_2:      .ascii "2"
+str_3:      .ascii "3"
+str_4:      .ascii "4"
+str_5:      .ascii "5"
+str_6:      .ascii "6"
 
 .org 510       //填充到~510~字節處
 .word 0xaa55   //結束標誌
