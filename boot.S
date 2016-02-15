@@ -37,15 +37,17 @@ MovDataTo9k:
 	mov	$0x0, %dx
 	call DispStr
 
+	# 從0x9000，也就是9w的地方開始，其原因是因為0~8FFFF的地方是之後系統使用
+	# 所以init從9w開始就不會影響到系統，此處也是被規劃成RAM的位置
 	mov	$BOOTSEG, %ax
 	mov	%ax, %ds
 	mov	$INITSEG, %ax
 	mov	%ax, %es
-	mov	$256, %cx      # cx = counter
+	mov	$256, %cx        # cx = counter
 	sub	%si, %si         # sub 是暫存器相減，清成0
 	sub	%di, %di
 	rep
-	movsw                    # 從 [ds:si]->[es:di]
+	movsw                # 從 [ds:si]->[es:di]
 
 	# show msg
 	mov	$str_1, %bp
@@ -165,7 +167,8 @@ sread:	.word 1+SETUPLEN	# sectors read of current track，預設值為 5(1+4)，
 head:	.word 0			    # current head
 track:	.word 0			    # current track
 
-#要把 system從磁碟讀到0x10000的位置
+#要把 system從磁碟讀到 0x10000 的位置，不讀到 0 的位置可能是怕蓋過 ISR
+#之後要把 system 搬到 0 的位置時，是關閉 interrupt 的
 read_it:
 	mov		%es, %ax        # es已經被設定為 0x1000
 	test	$0x0fff, %ax    # 測試 es 是否為 0x1000
