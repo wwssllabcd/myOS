@@ -1,10 +1,14 @@
 CC = gcc
 LD = ld
 LDFILE = solrex_x86.ld
+
+
 OBJCOPY = objcopy
 
-CFLAGS = -c -g -ggdb -W -c -nostdlib
+CFLAGS = -c -g -ggdb -W -nostdlib
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
+
+LINK_FILE = $(OBJDIR)/head.o $(OBJDIR)/sched.o $(OBJDIR)/main.o
 
 
 # === Rule ===
@@ -27,10 +31,17 @@ setup.bin: setup.S setup.o
 	$(LD) $(OBJDIR)/setup.o -o $(OBJDIR)/setup.elf -e c -Ttext=0x00
 	@$(OBJCOPY) $(TRIM_FLAGS)  $(OBJDIR)/setup.elf $(OBJDIR)/setup.bin
 
-head.bin: head.S head.o
+head.bin: head.S head.o main.o sched.o
 	#$(CC) $(CFLAGS) head.S -o $(OBJDIR)/head.o
-	$(LD) $(OBJDIR)/head.o -o $(OBJDIR)/head.elf -e c -Ttext=0x00
+	$(LD) $(LINK_FILE) -o $(OBJDIR)/head.elf -e c -Ttext=0x00
 	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/head.elf $(OBJDIR)/head.bin
+
+main.o: main.c
+	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@
+	
+sched.o: sched.c
+	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@
+	
 
 clean:
 	@rm -rf *.o *.elf *.bin *.img
@@ -38,6 +49,11 @@ clean:
 	
 %.o: %.S 
 	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+	
+nmFile:
+	@$(LD) $(LDFLAGS) $(OBJDIR)/boot.o $(OBJDIR)/setup.o $(OBJDIR)/head.o $(OBJDIR)/main.o \
+	-o $(OBJDIR)/nmfile
+
 	
 #=== make dir ===
 OBJDIR = ./obj
