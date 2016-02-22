@@ -21,7 +21,7 @@ startup_32:
 	mov %ax,%gs
 
 	mov $((80*2 + 0)*2), %edi
-	mov 0x0C, %ah // 黑底紅字
+	mov $0x0C, %ah // 黑底紅字
 	mov $'P', %al
 	mov %ax, %gs:(%edi)
 
