@@ -5,10 +5,15 @@ LDFILE = solrex_x86.ld
 
 OBJCOPY = objcopy
 
-CFLAGS = -c -g -ggdb -W -nostdlib
+CFLAGS = -c -W -nostdlib 
+LFLAGS = -e c -T
+
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 
-LINK_FILE = $(OBJDIR)/head.o $(OBJDIR)/sched.o $(OBJDIR)/main.o
+OBJ_FILES = \
+	$(OBJDIR)/head.o  \
+	$(OBJDIR)/sched.o \
+	$(OBJDIR)/main.o  \
 
 
 # === Rule ===
@@ -22,26 +27,16 @@ boot.img: boot.bin setup.bin head.bin
 	@dd if=/dev/zero of=boot.img seek=6 count=2879
 	
 boot.bin: boot.S boot.o
-	#$(CC) $(CFLAGS) boot.S -o $(OBJDIR)/boot.o
-	$(LD) $(OBJDIR)/boot.o -o $(OBJDIR)/boot.elf -e c -T $(LDFILE)
+	$(LD) $(OBJDIR)/boot.o -o $(OBJDIR)/boot.elf $(LFLAGS) $(LDFILE)
 	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/boot.elf $(OBJDIR)/boot.bin
 
 setup.bin: setup.S setup.o
-	#$(CC) $(CFLAGS) setup.S -o $(OBJDIR)/setup.o
 	$(LD) $(OBJDIR)/setup.o -o $(OBJDIR)/setup.elf -e c -Ttext=0x00
 	@$(OBJCOPY) $(TRIM_FLAGS)  $(OBJDIR)/setup.elf $(OBJDIR)/setup.bin
 
 head.bin: head.S head.o main.o sched.o
-	#$(CC) $(CFLAGS) head.S -o $(OBJDIR)/head.o
-	$(LD) $(LINK_FILE) -o $(OBJDIR)/head.elf -e c -Ttext=0x00
+	$(LD) $(OBJ_FILES) -o $(OBJDIR)/head.elf -e c -Ttext=0x00
 	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/head.elf $(OBJDIR)/head.bin
-
-main.o: main.c
-	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@
-	
-sched.o: sched.c
-	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@
-	
 
 clean:
 	@rm -rf *.o *.elf *.bin *.img

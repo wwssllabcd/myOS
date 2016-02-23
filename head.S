@@ -16,6 +16,11 @@
 pg_dir:
 .globl startup_32
 startup_32:
+	movl $0x10,%eax         # 0x10 代表載入 GDT segment 2
+	mov %ax,%ds
+	mov %ax,%es
+	mov %ax,%fs
+	mov %ax,%gs
 
 	movl $0x18,%eax
 	mov %ax,%gs
@@ -25,17 +30,14 @@ startup_32:
 	mov $'P', %al
 	mov %ax, %gs:(%edi)
 
-
 	jmp .
 
-	movl $0x10,%eax         # 0x10 代表載入 GDT segment 2
-	mov %ax,%ds
-	mov %ax,%es
-	mov %ax,%fs
-	mov %ax,%gs
+	lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS)
 
 
-	lss stack_start,%esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針,把指針內容裝入SS)
+
+
+
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
 	call setup_gdt          # 單純 load gdt desc
 
@@ -156,8 +158,11 @@ after_page_tables:
 	pushl $0
 	pushl $0
 	pushl $L6		 # return address for main, if it decides to.(如果不小心從main return時，會jump到L6)
-	pushl $main      # 預計返回的時候跳到main ?
-	jmp setup_paging # 這邊使用 jmp 而不使用 call 的原因是因為 call 會把current ip壓入 stack, 而jmp不會，而ret指令會把stack pop出來
+	pushl $main      # 預計返回的時候跳到main
+
+	# 這邊使用 jmp 而不使用 call 的原因是因為 call 會把current ip壓入 stack, 而jmp不會，
+	# 而ret指令會把stack pop出來，而setup_paging這邊結束時故意會寫ret，好讓之前push到stack的main可以pop出來到CS:IP
+	jmp setup_paging
 L6:
 	jmp L6			 # main should never return here, but
 				     # just in case, we know what happens.
@@ -215,6 +220,9 @@ ignore_int:
  */
 .align 2
 setup_paging:
+
+
+
 	movl $1024*5,%ecx		#/* 5 pages - pg_dir+4 page tables , 這邊的cx應該是當作count */
 	xorl %eax,%eax          # clear eax & edi
 	xorl %edi,%edi			#/* pg_dir is at 0x000 */
@@ -267,7 +275,12 @@ gdt:
 	.quad 0x00c09a0000000fff	/* 16Mb */
 	.quad 0x00c0920000000fff	/* 16Mb */
 	.quad 0x0000000000000000	/* TEMPORARY - don't use */
-	.fill 252,8,0			/* space for LDT's and TSS's etc */
+
+	//段4, 0x20, Graphic Card
+	.quad 0x00C0920B8000FFFF
+
+
+	.fill 251,8,0			/* space for LDT's and TSS's etc */
 
 /*
 設定GDT, 每條Segment Descriptor 各8 BYTE, 如0x00c0,9a00,0000,0fff
