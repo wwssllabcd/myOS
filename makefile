@@ -6,7 +6,7 @@ LDFILE = solrex_x86.ld
 OBJCOPY = objcopy
 
 CFLAGS = -c -W -nostdlib 
-LFLAGS = -e c -T
+LDFLAGS	+= -Ttext 0 
 
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 
@@ -27,15 +27,15 @@ boot.img: boot.bin setup.bin head.bin
 	@dd if=/dev/zero of=boot.img seek=6 count=2879
 	
 boot.bin: boot.S boot.o
-	$(LD) $(OBJDIR)/boot.o -o $(OBJDIR)/boot.elf $(LFLAGS) $(LDFILE)
+	$(LD) $(OBJDIR)/boot.o -o $(OBJDIR)/boot.elf  -T $(LDFILE)
 	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/boot.elf $(OBJDIR)/boot.bin
 
 setup.bin: setup.S setup.o
-	$(LD) $(OBJDIR)/setup.o -o $(OBJDIR)/setup.elf -e c -Ttext=0x00
+	$(LD) $(OBJDIR)/setup.o -o $(OBJDIR)/setup.elf $(LDFLAGS) 
 	@$(OBJCOPY) $(TRIM_FLAGS)  $(OBJDIR)/setup.elf $(OBJDIR)/setup.bin
 
 head.bin: head.S head.o main.o sched.o
-	$(LD) $(OBJ_FILES) -o $(OBJDIR)/head.elf -e c -Ttext=0x00
+	$(LD) $(OBJ_FILES) -o $(OBJDIR)/head.elf $(LDFLAGS) -e startup_32
 	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/head.elf $(OBJDIR)/head.bin
 
 clean:

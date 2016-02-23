@@ -3,8 +3,8 @@
 .equ SYSSEG, 0x1000	    # system loaded at 0x10000 (65536).
 .equ SETUPSEG, 0x9020	# this is the current segment
 
-
-	ljmp $SETUPSEG, $_start	 # setup.s是放在 0x90200的位置
+_start:
+	ljmp $SETUPSEG, $_start_s	 # setup.s是放在 0x90200的位置
 
 // string should be here
 str_S0:      .ascii "0"
@@ -28,7 +28,7 @@ DispStr:
 	pop %ax
 	ret
 
-_start:
+_start_s:
 	#===================
 	mov	$0x91000, %sp
 
