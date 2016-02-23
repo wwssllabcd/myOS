@@ -11,16 +11,25 @@
  * the page directory will exist. The startup code will be overwritten by
  * the page directory.
  */
+
+.extern stack_start
+
 .text
 .globl idt,gdt,pg_dir,tmp_floppy_area
 pg_dir:
 .globl startup_32
+
 startup_32:
 	movl $0x10, %eax         # 0x10 代表載入 GDT segment 2
 	mov %ax,%ds
 	mov %ax,%es
 	mov %ax,%fs
 	mov %ax,%gs
+
+
+
+	//	lss    (%di),%sp
+	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS)
 
 	movl $0x18,%eax
 	mov %ax,%gs
@@ -31,13 +40,11 @@ startup_32:
 
 	jmp .
 
-	lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS)
-
-
-
-
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
 	call setup_gdt          # 單純 load gdt desc
+
+
+
 
 	movl $0x10,%eax		    # reload all the segment registers
 	mov %ax,%ds		        # after changing gdt. CS was already
