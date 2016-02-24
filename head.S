@@ -23,10 +23,8 @@ startup_32:
 	mov %ax,%fs
 	mov %ax,%gs
 
-	mov %ax,%ss
-	movw $0x7500, %esp
-
-	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
+	lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
+	jmp .
 
 	movl $0x18,%eax
 	mov %ax,%gs
@@ -34,8 +32,8 @@ startup_32:
 	mov $0x0C, %ah // 黑底紅字
 	mov $'P', %al
 	mov %ax, %gs:(%edi)
-
 	jmp .
+
 
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
 	call setup_gdt          # 單純 load gdt desc
@@ -95,6 +93,7 @@ check_x87:
  *  written by the page tables.
  */
 setup_idt:
+
 
 
 	lea  ignore_int, %edx  # 把 ignore_int 這標籤的 address 值，放到 edx 中
