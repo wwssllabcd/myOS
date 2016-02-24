@@ -11,9 +11,6 @@
  * the page directory will exist. The startup code will be overwritten by
  * the page directory.
  */
-
-.extern stack_start
-
 .text
 .globl idt,gdt,pg_dir,tmp_floppy_area
 pg_dir:
@@ -26,10 +23,10 @@ startup_32:
 	mov %ax,%fs
 	mov %ax,%gs
 
+	mov %ax,%ss
+	mov stack_start, %esp
 
-
-	//	lss    (%di),%sp
-	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS)
+	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
 
 	movl $0x18,%eax
 	mov %ax,%gs
@@ -42,9 +39,6 @@ startup_32:
 
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
 	call setup_gdt          # 單純 load gdt desc
-
-
-
 
 	movl $0x10,%eax		    # reload all the segment registers
 	mov %ax,%ds		        # after changing gdt. CS was already
@@ -101,6 +95,8 @@ check_x87:
  *  written by the page tables.
  */
 setup_idt:
+
+
 	lea  ignore_int, %edx  # 把 ignore_int 這標籤的 address 值，放到 edx 中
 	movl $0x00080000, %eax # 設定 eax 的高2 byte, selector = 0x0008 = cs
 	movw %dx, %ax		   # 設定 eax 的低2 byte，把 eax 組合成 segment selector(前2 byte) + offset(後2 byte)(idt 可見 linux 011, P222)
