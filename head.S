@@ -23,8 +23,7 @@ startup_32:
 	mov %ax,%fs
 	mov %ax,%gs
 
-	lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
-	jmp .
+	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
 
 	movl $0x18,%eax
 	mov %ax,%gs
@@ -33,6 +32,7 @@ startup_32:
 	mov $'P', %al
 	mov %ax, %gs:(%edi)
 	jmp .
+
 
 
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
