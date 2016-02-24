@@ -23,12 +23,12 @@ startup_32:
 	mov %ax,%fs
 	mov %ax,%gs
 
-	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
+	lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
 
 	movl $0x18,%eax
 	mov %ax,%gs
 	mov $((80*2 + 0)*2), %edi
-	mov $0x0C, %ah // 黑底紅字
+	mov $0x0C, %ah          #黑底紅字
 	mov $'P', %al
 	mov %ax, %gs:(%edi)
 	jmp .

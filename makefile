@@ -3,7 +3,8 @@ LD = ld
 LDFILE = solrex_x86.ld
 OBJCOPY = objcopy
 CFLAGS = -c
-LDFLAGS	+= -Ttext 0 
+LDFLAGS = -m elf_i386 -Ttext 0 
+
 
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 OBJ_FILES = \
@@ -22,23 +23,19 @@ boot.img: boot.bin setup.bin system.bin
 	@dd if=$(OBJDIR)/system.bin of=boot.img seek=5 count=1
 	@dd if=/dev/zero of=boot.img seek=6 count=2800
 	
-boot.o: boot.S
-	@$(CC) $(CFLAGS) boot.S -o $(OBJDIR)/boot.o
-	
-boot.elf: boot.o
-	@$(LD) $(OBJDIR)/boot.o -o $(OBJDIR)/boot.elf -e c -T$(LDFILE)
-	
-boot.bin: boot.elf
-	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/boot.elf $(OBJDIR)/boot.bin
-	
+boot.bin: boot.s
+	@$(AS) -o $(OBJDIR)/boot.o boot.s
+	@$(LD) $(LDFLAGS) -o $(OBJDIR)/boot.bin $(OBJDIR)/boot.o
+	@objcopy -R .pdr -R .comment -R.note -S -O binary $(OBJDIR)/boot.bin
 
-setup.bin: setup.S
-	@$(CC) $(CFLAGS) setup.S -o $(OBJDIR)/setup.o 
-	@$(LD) $(OBJDIR)/setup.o -o $(OBJDIR)/setup.elf $(LDFLAGS) 
-	@$(OBJCOPY) $(TRIM_FLAGS)  $(OBJDIR)/setup.elf $(OBJDIR)/setup.bin
 
-head.o: head.S
-	@$(CC) $(CFLAGS) head.S -o $(OBJDIR)/head.o 
+setup.bin: setup.s
+	@$(AS) -o $(OBJDIR)/setup.o setup.s
+	@$(LD) $(LDFLAGS) -o $(OBJDIR)/setup.bin $(OBJDIR)/setup.o
+	@objcopy -R .pdr -R .comment -R.note -S -O binary $(OBJDIR)/setup.bin
+
+head.o: head.s
+	$(AS) -o $(OBJDIR)/head.o head.s
 	
 system.bin: head.o main.o sched.o
 	@$(LD) $(OBJ_FILES) -o $(OBJDIR)/system.elf -Ttext 0x00 $(LDFLAGS) -e startup_32
