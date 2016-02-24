@@ -8,17 +8,18 @@ LDFLAGS	+= -Ttext 0
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 OBJ_FILES = \
 	$(OBJDIR)/head.o  \
-	$(OBJDIR)/sched.o \
 	$(OBJDIR)/main.o  \
+	$(OBJDIR)/sched.o \
+	
 
 
 # === Rule ===
 all: clean mkdir boot.img nmFile
 
-boot.img: boot.bin setup.bin head.bin 
+boot.img: boot.bin setup.bin system.bin 
 	@dd if=$(OBJDIR)/boot.bin of=boot.img bs=512 count=1 conv=notrunc
 	@dd if=$(OBJDIR)/setup.bin of=boot.img seek=1 count=1
-	@dd if=$(OBJDIR)/head.bin of=boot.img seek=5 count=1
+	@dd if=$(OBJDIR)/system.bin of=boot.img seek=5 count=1
 	@dd if=/dev/zero of=boot.img seek=6 count=2800
 	
 boot.o: boot.S
@@ -36,10 +37,12 @@ setup.bin: setup.S
 	@$(LD) $(OBJDIR)/setup.o -o $(OBJDIR)/setup.elf $(LDFLAGS) 
 	@$(OBJCOPY) $(TRIM_FLAGS)  $(OBJDIR)/setup.elf $(OBJDIR)/setup.bin
 
-head.bin: head.S main.o sched.o
+head.o: head.S
 	@$(CC) $(CFLAGS) head.S -o $(OBJDIR)/head.o 
-	@$(LD) $(OBJ_FILES) -o $(OBJDIR)/head.elf -Ttext 0x00 $(LDFLAGS) -e startup_32
-	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/head.elf $(OBJDIR)/head.bin
+	
+system.bin: head.o main.o sched.o
+	@$(LD) $(OBJ_FILES) -o $(OBJDIR)/system.elf -Ttext 0x00 $(LDFLAGS) -e startup_32
+	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 
 clean:
 	@rm -rf *.o *.elf *.bin *.img
@@ -52,7 +55,7 @@ clean:
 
 	
 nmFile:
-	@nm $(OBJDIR)/head.elf |sort > system.nm
+	@nm $(OBJDIR)/system.elf |sort > system.nm
 
 	
 #=== make dir ===
