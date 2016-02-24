@@ -43,7 +43,7 @@ system.bin: head.o main.o sched.o
 	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 
 clean:
-	@rm -rf *.o *.elf *.bin *.img
+	@rm -rf *.o *.elf *.bin *.img *.nm
 	@rm -rf $(OBJDIR)
 	
 
@@ -51,11 +51,9 @@ clean:
 %.o: %.c
 	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
-	
 nmFile:
 	@nm $(OBJDIR)/system.elf |sort > system.nm
 
-	
 #=== make dir ===
 OBJDIR = ./obj
 $(OBJDIR):
