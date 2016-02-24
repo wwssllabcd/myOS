@@ -24,7 +24,7 @@ startup_32:
 	mov %ax,%gs
 
 	mov %ax,%ss
-	mov stack_start, %esp
+	movw $0x7500, %esp
 
 	//lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
 

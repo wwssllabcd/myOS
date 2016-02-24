@@ -13,7 +13,7 @@ OBJ_FILES = \
 
 
 # === Rule ===
-all: clean mkdir boot.img 
+all: clean mkdir boot.img nmFile
 
 boot.img: boot.bin setup.bin head.bin 
 	@dd if=$(OBJDIR)/boot.bin of=boot.img bs=512 count=1
@@ -47,7 +47,7 @@ clean:
 
 	
 nmFile:
-	$(LD) $(LDFLAGS) $(OBJDIR)/boot.o $(OBJDIR)/setup.o $(OBJ_FILES) -o $(OBJDIR)/nmfile
+	@nm $(OBJDIR)/head.elf |sort > system.nm
 
 	
 #=== make dir ===
