@@ -15,8 +15,8 @@
 
 //保留給游標 X,Y 使用DX register
 dx_reg: .word 0x0000
-sectors: .word 0
-root_dev: .word ROOT_DEV
+
+
 
 	#ljmp CS,IP: 因為目前就是在07C0的位置，所以若要跳到 _start這個位置，而這個位置就是0x7C00 + _start 的 offset 的地方
 	#又因為CS是少一個0，所以這邊要填0x7C00變成0x07C0
@@ -77,6 +77,7 @@ ec_load_setup:
     // ES:BX是存放位置
     mov	$INITSEG, %ax 
     mov %ax, %es
+
 	mov	$0x0200, %bx        // addr=512, ES:BX=target, 由此可知這邊是要把data讀出來放到0x90200的位置
 	mov	$0x0000, %dx        // drive 0, head 0
 	mov	$0x0002, %cx        // sector 2, track 0, 把 sec 2 讀出來(chs mode 是以sec 1 作為開始)
@@ -277,12 +278,8 @@ kill_motor:
 	pop		%dx
 	ret
 
-jmp_setup:
-	ljmp	$SETUPSEG, $0  # 跳到0x90200，執行setup.S
 
-fin:
-	hlt
-	jmp fin         //無限循環
+
 
 #=========================
 #string addr= ES:BP = 串地址
@@ -306,6 +303,8 @@ DispStr:
 	pop %ax
 
 	ret
+sectors:
+	.word 0
 
 str_0:      .ascii "0"
 str_1:      .ascii "1"
@@ -315,6 +314,17 @@ str_4:      .ascii "4"
 str_5:      .ascii "5"
 str_6:      .ascii "6"
 
-.org 510       //填充到~510~字節處
-.word 0xaa55   //結束標誌
+.org 508
+root_dev:
+	.word ROOT_DEV
+boot_flag:
+	.word 0xAA55
+
+	.text
+	endtext:
+	.data
+	enddata:
+	.bss
+	endbss:
+
 
