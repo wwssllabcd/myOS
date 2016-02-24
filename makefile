@@ -15,13 +15,13 @@ OBJ_FILES = \
 
 
 # === Rule ===
-all: clean mkdir boot.img nmFile
+all: clean mkdir system.img nmFile
 
-boot.img: boot.bin setup.bin system.bin 
-	@dd if=$(OBJDIR)/boot.bin of=boot.img bs=512 count=1 conv=notrunc
-	@dd if=$(OBJDIR)/setup.bin of=boot.img seek=1 count=1
-	@dd if=$(OBJDIR)/system.bin of=boot.img seek=5 count=1
-	@dd if=/dev/zero of=boot.img seek=6 count=2800
+system.img: boot.bin setup.bin system.bin 
+	@dd if=$(OBJDIR)/boot.bin of=system.img bs=512 count=1 conv=notrunc
+	@dd if=$(OBJDIR)/setup.bin of=system.img seek=1 count=1
+	@dd if=$(OBJDIR)/system.bin of=system.img seek=5 count=1
+	@dd if=/dev/zero of=system.img seek=6 count=2800
 	
 boot.bin: boot.s
 	@$(AS) -o $(OBJDIR)/boot.o boot.s
