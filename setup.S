@@ -257,7 +257,7 @@ gdt:    # gdt table 目前設定如下, 每段為8個byte, 例如載入第一段
 	.word	0x00C0		# granularity=4096, 386
 
 	//段2, 0x10
-	.word	0x07FF		# 8Mb - limit=2047 (2048*4096=8Mb)
+	.word	0xffFF		# 8Mb - limit=2047 (2048*4096=8Mb)
 	.word	0x0000		# base address=0
 	.word	0x9200		# data read/write
 	.word	0x00C0		# granularity=4096, 386

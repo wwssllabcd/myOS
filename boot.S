@@ -184,7 +184,7 @@ rp_read:
 ok1_read:
 	#這邊主要處理要讀多少sector, 還有讀完之後的offset為多少
 	mov		%cs:sectors+0, %ax   # 讀取之前的 secPerTrack，值為12
-	sub		%cs:sread, %ax       # ax = ax - sread, cs:sread = 5, 所以這邊ax會變成0x0d，還有0x0d個sector要讀，這邊先設好AL(要讀多少sector)
+	sub		sread, %ax       # ax = ax - sread, cs:sread = 5, 所以這邊ax會變成0x0d，還有0x0d個sector要讀，這邊先設好AL(要讀多少sector)
 	mov		%ax, %cx
 
 	shl		$9, %cx              # cx = cx*512 (這次讀多少 byte), shl = 左移9個bit
@@ -197,21 +197,21 @@ ok1_read:
 ok2_read:
 	call 	read_track
 	mov 	%ax, %cx             // 本次讀多少sector 備份到 cx中，%ax = 0x000d, 第一次是讀  0xd個sector (0x12 - 5 )
-	add 	%cs:sread, %ax       // ax = ax + sread , 應該會讀到sector 的尾巴，也就是0x12
+	add 	sread, %ax       // ax = ax + sread , 應該會讀到sector 的尾巴，也就是0x12
 	cmp 	%cs:sectors+0, %ax   // 比較ax，是否為secPerTrack(也就是判斷是否到尾巴)?如果相等，則ZF flag=1
 
 	jne 	ok3_read             // 不等於，則jmp(x86中相對應的cmd為je)
 	mov 	$1, %ax
 
-	sub 	%cs:head, %ax
+	sub 	head, %ax
 	jne 	ok4_read            // 如果cs:head==0，則jump 到 ok4_read
-	incw    %cs:track 
+	incw    track
 ok4_read:
 	//設定 cs:head = 1，並清除ax
-	mov	%ax, %cs:head
+	mov	%ax, head
 	xor	%ax, %ax
 ok3_read:
-	mov	%ax, %cs:sread
+	mov	%ax, sread
 	shl	$9, %cx
 	add	%cx, %bx              // 重新設定 bx(因為es:bx)到正確的offset
 	jnc	rp_read
@@ -227,12 +227,12 @@ read_track:
 	push	%cx
 	push	%dx
 
-	mov	%cs:track, %dx   // cs:track 一開始是0, so dx=0
-	mov	%cs:sread, %cx   // cx=5
+	mov	track, %dx   // cs:track 一開始是0, so dx=0
+	mov	sread, %cx   // cx=5
 	inc	%cx              // cx=cx+1, 這動作主要是設cl, 即把 sector+1 ( chs mode 以1為起始)
 	mov	%dl, %ch         // dl 此時是 track, 設給ch
 
-	mov	%cs:head, %dx    // 取 head
+	mov	head, %dx    // 取 head
 	mov	%dl, %dh		 // head 設到 %dh, DH = head number
 	mov	$0, %dl          // DL = drive number ,DriveNo=0(means Drive A)
 	and	$0x0100, %dx     // dx=dx&0x100, 跟0x100作 "&"動作, 這裡為限制 dl=0, dh不超過1
