@@ -23,14 +23,16 @@ startup_32:
 	mov %ax,%fs
 	mov %ax,%gs
 
-	lss stack_start, %esp    # load ss, 把這個位置，讀到 SS:ESP中，(LSS:傳送目標指針, 把指針內容裝入SS), lss (%di),%sp
-
 	movl $0x18,%eax
-	mov %ax,%gs
+	mov %ax, %gs
 	mov $((80*2 + 0)*2), %edi
 	mov $0x0C, %ah          #黑底紅字
-	mov $'P', %al
+	mov $'0', %al
 	mov %ax, %gs:(%edi)
+
+	# load ss, 把stack_start這個位置所存放的資料指ESP, +2byte的指給SS( ex: lee esp ds:74f8)
+	# 但載入的值跟nm file 給出來的offset 差了0x1000，原因未明
+	lss stack_start, %esp
 
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
 	call setup_gdt          # 單純 load gdt desc
@@ -60,7 +62,7 @@ startup_32:
 	orl $2,%eax		# set MP
 	movl %eax,%cr0
 	call check_x87
-	jmp after_page_tables  #//最後一個指令，且不會再回來
+	jmp after_page_tables  #//最後一個指令，且不會再回來, jmp到0x5400
 
 /*
  * We depend on ET to be correct. This checks for 287/387.
@@ -90,24 +92,24 @@ check_x87:
  *  written by the page tables.
  */
 setup_idt:
-
-
-
-	lea  ignore_int, %edx  # 把 ignore_int 這標籤的 address 值，放到 edx 中
+	# 以下的動作為先把啞中斷的Segment Descriptor建立在eax中，再把這個中斷，填滿idt(256條)
+	lea  ignore_int, %edx  # 把 ignore_int(ds:5428h，可由nm檔看出) 這標籤的 address 值，放到 edx 中
 	movl $0x00080000, %eax # 設定 eax 的高2 byte, selector = 0x0008 = cs
 	movw %dx, %ax		   # 設定 eax 的低2 byte，把 eax 組合成 segment selector(前2 byte) + offset(後2 byte)(idt 可見 linux 011, P222)
 	movw $0x8E00, %dx	   # edx 的低 2 byte 是設定權限，固定為 0x8E00, interrupt gate - dpl=0, present
-	lea idt, %edi          # 把 idt 這個標籤的位置，放到 edi 中, edi 為 idt所在的 offset,
+	lea idt, %edi          # 把 idt(ds:54b8h，可由nm檔看出)的位置，放到 edi 中, 以此例來說 edi=0x54b8
 	mov $256, %ecx         # 設置repeat 256次, 因為idt最多256個, 而 idt 在本檔案的最後面，為256個item, 所以大小為 256*8 = 2048
 
 rp_sidt:
-	movl %eax,(%edi)       # 把 eax 的值(也就是啞中斷)，放入到edi所指的"位置"中
+	movl %eax,(%edi)       # 把 eax 的值(也就是啞中斷的Segment Descriptor)，放入到edi所指的"位置"中
 	movl %edx,4(%edi)      # edx 目前是權限，放到 edi 後面 4 BYTE，可見idt結構應為 8 byte
 	addl $8,%edi           # 移動edi+=8
 	dec %ecx               # ecx為次數
 
+	#會填成 ( low->high) 0008,5428,0000,8E00
+
 	jne rp_sidt
-	lidt idt_descr         # load idt table的位置到iDPTR
+	lidt idt_descr         # load idt table的位置到iDPTR(lidt ds:0x54a4，其內容為 FF,07,B8,54，即IDT位置)
 	ret
 
 /*
@@ -151,6 +153,7 @@ tmp_floppy_area:
 	.fill 1024,1,0
 
 after_page_tables:
+	# 這裡的ip值應為0x5400
 	pushl $0		 # These are the parameters to main :-)
 	pushl $0
 	pushl $0
@@ -217,16 +220,19 @@ ignore_int:
  */
 .align 2
 setup_paging:
-
-
-
 	movl $1024*5,%ecx		#/* 5 pages - pg_dir+4 page tables , 這邊的cx應該是當作count */
 	xorl %eax,%eax          # clear eax & edi
 	xorl %edi,%edi			#/* pg_dir is at 0x000 */
-	cld;rep;stosl           #// 把eax的值，存到 ES:edi上，且一次加4
+	cld;                    # cld即告訴程序si，di向前移動
+	rep;                    # cx當cnt,repeat下面動作
+
+	# STOSL指令相當於將EAX中的值保存到ES:EDI指向的地址中，
+	# 若設置了EFLAGS中的方向位置位(即在STOSL指令前使用STD指令)則EDI自減4，否則(使用CLD指令)EDI自增4。
+	stosl
 
 	# pg0~3與，各是0x1000~0x4FFF, pg_dir是本段的開頭
-	# page table 是用來管理記憶體的，4 byte 管理4k
+	# page table 是用來管理記憶體的，4byte 管理4k
+	# pg0 = 0x1000, pg_dir=0
 	movl $pg0+7,pg_dir		# 把每個 $page+7的位置，也就是把0x1007這個值，放到 addr=0的位置，7代表可讀寫
 	movl $pg1+7,pg_dir+4	# pg_dir 位在 addr=0的位置，這邊把$pg0+7(也就是0x1007)，存入addr=0的位置
 	movl $pg2+7,pg_dir+8	#  而這邊的 code 不會被蓋到的原因是因為 這段code 放在 .org 0x5000 的原因
@@ -234,10 +240,11 @@ setup_paging:
 
 	movl $pg3+4092,%edi     # 現在要把pageTable填滿，方法是從最後一項往前填，pg3+4092代表最後一項
 	movl $0xfff007,%eax		#/*  16Mb - 4096 + 7 (r/w user,p) */
-	std
+	std                     # 在STOSL指令前使用STD指令)則EDI自減4
 
+	# 以下會把 0x4FFC ~ 0x1000都填成  00000007,00001007,00002007, ~ FFFD007,FFE007, FFF007
 1:	stosl			        #/* fill pages backwards - more efficient :-) */
-	subl $0x1000,%eax       #// 利用eax 遞減0x1000, 把所有的page table的值填正確, 如fff007,ffe007,fffd007等
+	subl $0x1000,%eax       #// 利用eax 遞減0x1000, 把所有的page table的值填正確, 如fff007,ffE007,fffD007等
 	jge 1b
 	cld
 	xorl %eax,%eax		   #/* pg_dir is at 0x0000 */
@@ -245,6 +252,7 @@ setup_paging:
 	movl %cr0,%eax
 	orl $0x80000000,%eax
 	movl %eax,%cr0		   #/* set paging (PG) bit */
+	//跳到 main的位置
 	ret			           #/* this also flushes prefetch-queue */
 
 .align 2
