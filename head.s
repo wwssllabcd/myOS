@@ -31,9 +31,6 @@ startup_32:
 	mov $0x0C, %ah          #黑底紅字
 	mov $'P', %al
 	mov %ax, %gs:(%edi)
-	jmp .
-
-
 
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置
 	call setup_gdt          # 單純 load gdt desc
