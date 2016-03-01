@@ -283,8 +283,6 @@ gdt:
 
 	//段4, 0x20, Graphic Card
 	.quad 0x00C0920B8000FFFF
-
-
 	.fill 251,8,0			/* space for LDT's and TSS's etc */
 
 /*
