@@ -24,14 +24,14 @@ boot/boot.bin:
 head.o: head.s
 	$(AS) -o $(OBJDIR)/head.o head.s
 
-kliba.o: lib/kliba.asm
-	$(AS) -o $(OBJDIR)/kliba.o lib/kliba.asm
+kliba.o: kliba.asm
+	$(AS) -o $(OBJDIR)/kliba.o kliba.asm
 	
-sched.o: kernel/sched.c
-	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@  
-
-start.o: kernel/start.c
-	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+start.o: start.c
+	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+	
+sched.o: sched.c
+	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
 system.bin: head.o sched.o kliba.o start.o main.o 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
@@ -45,13 +45,13 @@ clean:
 
 # == rule for .c ==
 %.o: %.c
-	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
 nmFile:
 	@nm $(OBJDIR)/system.elf |sort > system.nm
 
 #=== make dir ===
-OBJDIR = ./obj
+
 $(OBJDIR):
 	@mkdir -p $@
 	
