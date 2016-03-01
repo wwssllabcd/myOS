@@ -1,9 +1,10 @@
 #include "type.h"
 #include "const.h"
 #include "protect.h"
+#include "global.h"
 
-PUBLIC u8 gdt_ptr;
-PUBLIC DESCRIPTOR gdt[GDT_SIZE];
+
+
 
 void showMsg()
 {
@@ -14,6 +15,12 @@ void showMsg()
             "mov $'m', %al \n"
             "mov %ax, %gs:(%edi) \n"
     );
+}
+
+PUBLIC void init_idt()
+{
+    u16* p_idt_limit = (u16*)(&idt_ptr[0]);
+
 }
 
 PUBLIC void cstart()
