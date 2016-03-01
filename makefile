@@ -4,11 +4,19 @@ BOOT_DIR = ./boot
 LDFLAGS_BOOT = $(LDFLAGS) -Ttext 0
 LDFLAGS_SYS = $(LDFLAGS) -Ttext 0 -e startup_32
 
+OBJDIR = ./obj
+OBJDIR_K = $(OBJDIR)
+
+# obj file
 OBJ_FILES = \
+	$(KERNEL_FILE) \
 	$(OBJDIR)/head.o  \
 	$(OBJDIR)/main.o  \
-	$(OBJDIR)/sched.o \
-	$(OBJDIR)/start.o \
+
+KERNEL_FILE = \
+	$(OBJDIR_K)/sched.o \
+	$(OBJDIR_K)/start.o \
+	
 
 # === Rule ===
 all: clean mkdir system.img nmFile
@@ -51,7 +59,6 @@ nmFile:
 	@nm $(OBJDIR)/system.elf |sort > system.nm
 
 #=== make dir ===
-
 $(OBJDIR):
 	@mkdir -p $@
 	
