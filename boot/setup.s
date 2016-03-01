@@ -199,7 +199,7 @@ end_move:
 	# 這邊有個規則就是， 0x21 若循序寫入的話，會寫到ICW2, ICW3, ICW4, OCW1 (注意，只有兩個記憶體位置)
 	
 	mov	$0x11, %al		# initialization sequence(ICW1)
-					# ICW4 needed(1),CASCADE mode,Level-triggered
+	# ICW4 needed(1),CASCADE mode,Level-triggered
 	# ( 把 Master PIC的ICW1 register 填成 0x11, 而ICW1的意義如下
 	# Bit0: 0: 選擇要不要使用ICW4, 1: 選擇使用ICW4, 
 	# Bit1: 0: 串接 mode, 1: 單顆mode, 

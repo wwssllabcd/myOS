@@ -8,6 +8,7 @@ OBJ_FILES = \
 	$(OBJDIR)/head.o  \
 	$(OBJDIR)/main.o  \
 	$(OBJDIR)/sched.o \
+	$(OBJDIR)/start.o \
 
 # === Rule ===
 all: clean mkdir system.img nmFile
@@ -18,14 +19,23 @@ system.img: boot/boot.bin boot/setup.bin system.bin
 	@dd if=$(OBJDIR)/system.bin  of=system.img bs=512 count=2883 seek=5 conv=notrunc
 
 boot/boot.bin:
-	@make -C boot
-
+	make -C boot
+	
 head.o: head.s
 	$(AS) -o $(OBJDIR)/head.o head.s
+
+kliba.o: lib/kliba.asm
+	$(AS) -o $(OBJDIR)/kliba.o lib/kliba.asm
 	
-system.bin: head.o main.o sched.o
-	@$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
-	@$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
+sched.o: kernel/sched.c
+	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@  
+
+start.o: kernel/start.c
+	@$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+
+system.bin: head.o sched.o kliba.o start.o main.o 
+	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
+	$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 
 clean:
 	@make -C boot clean
