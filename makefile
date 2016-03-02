@@ -45,7 +45,7 @@ kernel/start.o: kernel/start.c
 sched.o: sched.c
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
-system.bin: head.o sched.o lib/kliba.o kernel/start.o main.o 
+system.bin: head.o sched.o $(OBJ_LIB) $(OBJ_KERNEL) main.o 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 
