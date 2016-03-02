@@ -5,3 +5,4 @@ CFLAGS = -I ./inc -c
 LDFLAGS = -m elf_i386
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 
+OBJDIR = ./obj
