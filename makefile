@@ -41,8 +41,8 @@ start.o: start.c
 sched.o: sched.c
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
-system.bin: head.o sched.o kliba.o start.o main.o 
-	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
+system.bin: head.o sched.o kliba.o start.o main.o inc/global.h
+	$(LD) $(LDFLAGS_SYS)  $(OBJ_FILES)  -o $(OBJDIR)/system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 
 clean:

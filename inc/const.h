@@ -5,6 +5,6 @@
 #define IDT_SIZE 256
 
 #define PUBLIC
-#define EXTERN extern
+#define EXTERN
 
 #endif

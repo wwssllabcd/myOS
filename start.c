@@ -3,9 +3,6 @@
 #include "protect.h"
 #include "global.h"
 
-
-
-
 void showMsg()
 {
     __asm__ ("movl $0x20, %eax;"
