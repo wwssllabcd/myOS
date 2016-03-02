@@ -46,7 +46,9 @@ system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL)
 clean:
 	@make -C boot clean
 	@rm -rf *.o *.elf *.bin *.img *.nm
+	@rm -rf $(OBJ_FILES)
 	@rm -rf $(OBJDIR)
+	
 	
 
 # == rule for kernel/*.c ==
