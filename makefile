@@ -12,11 +12,14 @@ OBJ_FILES = \
 	$(OBJDIR)/head.o  \
 	$(OBJDIR)/main.o  \
 	$(OBJDIR)/sched.o \
-	$(OBJDIR)/start.o \
 	$(OBJ_LIB) \
+	$(OBJ_KERNEL) \
 	
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
+	
+OBJ_KERNEL = \
+	$(DIR_KERENL)/start.o  \
 	
 
 # === Rule ===
@@ -36,13 +39,13 @@ head.o: head.s
 lib/kliba.o: lib/kliba.asm
 	$(AS) $< -o $@  
 	
-start.o: start.c
-	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+kernel/start.o: kernel/start.c
+	$(CC) $(CFLAGS) $< -o $@   
 	
 sched.o: sched.c
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
-system.bin: head.o sched.o lib/kliba.o start.o main.o 
+system.bin: head.o sched.o lib/kliba.o kernel/start.o main.o 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 

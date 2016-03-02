@@ -3,7 +3,7 @@
 #include "protect.h"
 
 PUBLIC u8 gdt_ptr;
-PUBLIC DESCRIPTOR gdt[GDT_SIZE];
+PUBLIC DESCRIPTOR gdtt[GDT_SIZE];
 
 void showMsg()
 {
