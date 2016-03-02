@@ -10,8 +10,6 @@ LDFLAGS_SYS = $(LDFLAGS) -Ttext 0 -e startup_32
 
 OBJ_FILES = \
 	$(OBJDIR)/head.o  \
-	$(OBJDIR)/main.o  \
-	$(OBJDIR)/sched.o \
 	$(OBJ_LIB) \
 	$(OBJ_KERNEL) \
 	
@@ -19,6 +17,8 @@ OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
 	
 OBJ_KERNEL = \
+	$(DIR_KERENL)/main.o  \
+	$(DIR_KERENL)/sched.o  \
 	$(DIR_KERENL)/start.o  \
 	
 
@@ -38,14 +38,8 @@ head.o: head.s
 
 lib/kliba.o: lib/kliba.asm
 	$(AS) $< -o $@  
-	
-kernel/start.o: kernel/start.c
-	$(CC) $(CFLAGS) $< -o $@   
-	
-sched.o: sched.c
-	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
-system.bin: head.o sched.o $(OBJ_LIB) $(OBJ_KERNEL) main.o 
+system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL) 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
 
@@ -55,6 +49,10 @@ clean:
 	@rm -rf $(OBJDIR)
 	
 
+# == rule for kernel/*.c ==
+$(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
+	$(CC) $(CFLAGS) $< -o $@  
+	
 # == rule for .c ==
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
@@ -63,7 +61,6 @@ nmFile:
 	@nm $(OBJDIR)/system.elf |sort > system.nm
 
 #=== make dir ===
-
 $(OBJDIR):
 	@mkdir -p $@
 	

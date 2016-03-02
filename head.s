@@ -12,7 +12,7 @@
  * the page directory.
  */
 .text
-.globl idt,gdt,pg_dir,tmp_floppy_area
+.globl idt_h, gdt_h, pg_dir, tmp_floppy_area
 pg_dir:
 .globl startup_32
 
@@ -97,7 +97,7 @@ setup_idt:
 	movl $0x00080000, %eax # 設定 eax 的高2 byte, selector = 0x0008 = cs
 	movw %dx, %ax		   # 設定 eax 的低2 byte，把 eax 組合成 segment selector(前2 byte) + offset(後2 byte)(idt 可見 linux 011, P222)
 	movw $0x8E00, %dx	   # edx 的低 2 byte 是設定權限，固定為 0x8E00, interrupt gate - dpl=0, present
-	lea idt, %edi          # 把 idt(ds:54b8h，可由nm檔看出)的位置，放到 edi 中, 以此例來說 edi=0x54b8
+	lea idt_h, %edi          # 把 idt(ds:54b8h，可由nm檔看出)的位置，放到 edi 中, 以此例來說 edi=0x54b8
 	mov $256, %ecx         # 設置repeat 256次, 因為idt最多256個, 而 idt 在本檔案的最後面，為256個item, 所以大小為 256*8 = 2048
 
 rp_sidt:
@@ -262,19 +262,19 @@ setup_paging:
 # The lower 16 bits tell the size of the GDT, and the upper 32 bits tell the location of the GDT in memory.
 idt_descr:          # 6 byte, 低的2 byte, 代表table長度, 高的4 byte為 table 所在的offset , 同 gdt descriptor
 	.word 256*8-1	# idt contains 256 entries，其值為 0x7FF
-	.long idt       # 大概是idt的 address
+	.long idt_h       # 大概是idt的 address
 
 .align 2
 .word 0
 gdt_descr:          # 低的2 byte, 代表table長度, 高的4 byte為 table 所在的offset , 同 idt descriptor
 	.word 256*8-1	# so does gdt (not that that's any
-	.long gdt		# magic number, but it works for me :^)
+	.long gdt_h		# magic number, but it works for me :^)
 
 	.align 8
 
-idt:	.fill 256,8,0		# idt is uninitialized
+idt_h:	.fill 256,8,0		# idt is uninitialized
 
-gdt:
+gdt_h:
 	# 見linux 011, P91
 	.quad 0x0000000000000000	/* NULL descriptor */
 	.quad 0x00c09a0000000fff	/* 16Mb */
