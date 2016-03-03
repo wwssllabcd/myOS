@@ -16,8 +16,8 @@ PUBLIC void init_idt()
 
 PUBLIC void cstart()
 {
-    disp_str("css\n");
+    disp_str("cstart-start\n");
     init_idt();
     init_prot();
-    disp_str("cstart end\n");
+    disp_str("cse\n");
 }

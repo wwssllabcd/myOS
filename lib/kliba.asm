@@ -39,15 +39,15 @@ tag_1:
 	# edi: disp_pos
 	push %eax
 	mov %edi, %eax
-	mov 160, %bl          # 貌似螢幕的大小 ，接下來除pos,好知道要顯示在第幾行?
+	mov $160, %bl          # 貌似螢幕的大小 ，接下來除pos,好知道要顯示在第幾行?
 
 
-	# div只有一个操作数，此操作数为除数，而被除数则为EDX:EAX中的内容（一个64位的整数），
-	# 操作的结果有两部分：商和余数，其中商放在eax寄存器中，而余数则放在edx寄存器中。其语法如下所示：
+	# div 指令，後面接除數，被除數為%ax, 如果除數為 8 位元，則 result stored in AL = Quotient, AH = Remainder.
+	# 如果 ax=2 的話，這邊除下來會讓 AX= 0x0200
 	div %bl
-	and 0xFF, %eax
+	and $0xFF, %eax
 	inc %eax              # 把eax加1
-	mov 160, %bl
+	mov $160, %bl
 	mul %bl               # "MUL SRC" 無符號數的乘法, 當SRC為8位時  ：AX<----AL*SRC
 	mov %eax, %edi        # 取得新的行數
 	pop %eax              # 還原eax
