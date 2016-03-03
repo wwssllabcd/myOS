@@ -31,7 +31,8 @@ startup_32:
 	mov %ax, %gs:(%edi)
 
 	# load ss, 把stack_start這個位置所存放的資料指ESP, +2byte的指給SS( ex: lee esp ds:74f8)
-	# 但載入的值跟nm file 給出來的offset 差了0x1000，原因未明
+	# 但載入的值跟nm file 給出來的offset 差了0x1000，因為在給值的時候是故意給最尾端的值而非最前端，
+	# 就像是 tmp=&user_stack 與 tmp=&user_stack[size] 的差異
 	lss stack_start, %esp
 
 	call setup_idt          # 初始IDT, 即把每個 interrup 都填成 ignore_int(即unknow interrup，啞中斷)的位置

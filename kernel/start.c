@@ -16,6 +16,7 @@ void showMsg()
     );
 }
 
+//init idt_desc
 PUBLIC void init_idt()
 {
     u16* p_idt_limit = (u16*)(&idt_ptr[0]);
@@ -28,7 +29,7 @@ PUBLIC void init_idt()
 PUBLIC void cstart()
 {
     showMsg();
-    //disp_color_str("-----\"cstart\" ends-----\n", 0x0f);
-    //init_prot();
-    //init_idt();
+    init_idt();
+    init_prot();
+    disp_color_str("cstart ends\n", 0x0f);
 }

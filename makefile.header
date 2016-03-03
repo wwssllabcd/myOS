@@ -1,7 +1,7 @@
 CC = gcc
 LD = ld
 OBJCOPY = objcopy
-CFLAGS = -I ./inc -c
+CFLAGS = -I ./inc -c -g
 LDFLAGS = -m elf_i386
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 OBJDIR = ./obj

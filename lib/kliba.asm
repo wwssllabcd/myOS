@@ -1,5 +1,9 @@
 
 
+.extern	disp_pos
+
+.text
+
 .global disp_color_str
 
 out_byte:
