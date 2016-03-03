@@ -28,12 +28,12 @@ disp_color_str:
 	mov 8(%ebp), %esi     # 取出1號參數, 應該是string 的pointer
 	mov (disp_pos), %edi
 	mov 12(%ebp), %ah     # 取出2號參數 color
-1:
+tag_1:
 	lodsb                 # Load string byte, 會把SI所指的位置的值，拿出來放在al中, (ex: if (DF==0) AL = *SI++; else AL = *SI--)
 	test %al, %al         # 測試(ex: TEST AL，80H；測試AL中最高位), 此句為改變ZF標誌位，測試AL是否為 0(0就是結束符號)
-	jz 2
+	jz tag_2
 	cmp $0x0A, %al        # 是否為換行，否的話，執行 3:
-	jnz 3
+	jnz tag_3
 
 	# al: string ptr
 	# edi: disp_pos
@@ -51,12 +51,12 @@ disp_color_str:
 	mul %bl               # "MUL SRC" 無符號數的乘法, 當SRC為8位時  ：AX<----AL*SRC
 	mov %eax, %edi        # 取得新的行數
 	pop %eax              # 還原eax
-	jmp 1
-3:
+	jmp tag_1
+tag_3:
 	mov %ax, %gs:(%edi)   # 顯示字元
 	add 2, %edi           # 移動一個字元
-	jmp 1
-2:
+	jmp tag_1
+tag_2:
 	mov %edi, (disp_pos)    # 備份 pos
 	pop %ebp                # 還原 ebp
 	ret
