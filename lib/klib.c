@@ -28,10 +28,17 @@ PUBLIC char * itoa(char* str, int num){
     return str;
 }
 
+PUBLIC void disp_str(char* str)
+{
+    disp_color_str(str, 0x0F);
+}
+
+
 PUBLIC void disp_int(int input)
 {
     char output[16];
     itoa(output, input);
-    disp_color_str(output, 0x0F);
+    disp_color_str(output);
 
 }
+

@@ -20,7 +20,12 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
 	$(DIR_KERENL)/sched.o  \
 	$(DIR_KERENL)/start.o  \
+	$(DIR_KERENL)/protect.o  \
+	$(DIR_KERENL)/kernel.o  \
 	
+
+	
+.PHONY : clean
 
 # === Rule ===
 all: clean mkdir system.img nmFile
@@ -28,7 +33,7 @@ all: clean mkdir system.img nmFile
 system.img: boot/boot.bin boot/setup.bin system.bin 
 	@dd if=$(DIR_BOOT)/boot.bin    of=system.img bs=512 count=1 
 	@dd if=$(DIR_BOOT)/setup.bin   of=system.img bs=512 count=4 seek=1
-	@dd if=$(OBJDIR)/system.bin  of=system.img bs=512 count=2883 seek=5 conv=notrunc
+	@dd if=$(OBJDIR)/system.bin    of=system.img bs=512 count=2883 seek=5 conv=notrunc
 
 boot/boot.bin:
 	make -C boot
@@ -42,25 +47,26 @@ lib/kliba.o: lib/kliba.asm
 system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL) 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o $(OBJDIR)/system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) $(OBJDIR)/system.elf $(OBJDIR)/system.bin
-
-clean:
-	@make -C boot clean
-	@rm -rf *.o *.elf *.bin *.img *.nm
-	@rm -rf $(OBJ_FILES)
-	@rm -rf $(OBJDIR)
+	 
+# == rule for kernel/ ==
+$(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
+	$(AS) $< -o $@
 	
-	
-
-# == rule for kernel/*.c ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
 	$(CC) $(CFLAGS) $< -o $@  
-	
-# == rule for .c ==
+
+# == rule for /*.c ==
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
 nmFile:
 	@nm $(OBJDIR)/system.elf |sort > system.nm
+	
+clean:
+	@make -C boot clean
+	@rm -rf *.o *.elf *.bin *.img *.nm
+	@rm -rf $(OBJ_FILES)
+	@rm -rf $(OBJDIR)
 
 #=== make dir ===
 $(OBJDIR):

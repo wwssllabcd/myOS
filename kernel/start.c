@@ -1,7 +1,9 @@
 #include "type.h"
 #include "const.h"
-#include "protect.h"
+#include "proto.h"
 #include "global.h"
+#include "protect.h"
+
 
 void showMsg()
 {
@@ -26,5 +28,7 @@ PUBLIC void init_idt()
 PUBLIC void cstart()
 {
     showMsg();
+    //disp_color_str("-----\"cstart\" ends-----\n", 0x0f);
+    //init_prot();
     //init_idt();
 }
