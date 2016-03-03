@@ -4,18 +4,6 @@
 #include "global.h"
 #include "protect.h"
 
-
-void showMsg()
-{
-    __asm__ ("movl $0x20, %eax;"
-            "mov %ax,%gs \n "
-            "mov $((80*3 + 0)*2), %edi \n"
-            "mov $0x0C, %ah \n"
-            "mov $'m', %al \n"
-            "mov %ax, %gs:(%edi) \n"
-    );
-}
-
 //init idt_desc
 PUBLIC void init_idt()
 {
@@ -28,8 +16,8 @@ PUBLIC void init_idt()
 
 PUBLIC void cstart()
 {
-    showMsg();
+    disp_str("css\n");
     init_idt();
     init_prot();
-    disp_color_str("cstart ends\n", 0x0f);
+    disp_str("cstart end\n");
 }

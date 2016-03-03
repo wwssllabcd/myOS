@@ -54,7 +54,7 @@ tag_1:
 	jmp tag_1
 tag_3:
 	mov %ax, %gs:(%edi)   # 顯示字元
-	add 2, %edi           # 移動一個字元
+	add $2, %edi           # 移動一個字元
 	jmp tag_1
 tag_2:
 	mov %edi, (disp_pos)    # 備份 pos
