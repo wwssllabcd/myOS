@@ -1,4 +1,4 @@
-.global
+.global divide_error
 
 extern idt_ptr
 	lidt idt_ptr

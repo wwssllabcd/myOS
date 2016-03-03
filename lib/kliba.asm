@@ -1,3 +1,7 @@
+
+
+.global disp_color_str
+
 out_byte:
 	mov 4(%esp), %edx
 	mov 8(%esp), %al
