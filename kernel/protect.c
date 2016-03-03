@@ -23,7 +23,7 @@ PUBLIC void init_prot()
 
 }
 
-PUBLIC void exception_handle()
+PUBLIC void exception_handler()
 {
 
 }
