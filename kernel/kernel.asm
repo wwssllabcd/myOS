@@ -55,8 +55,8 @@ ldIdt:
 	lidt	idt_ptr
 	ret
 
-
 divide_error:
+	#此時 CPU會自動push 3 個參數進來，分別是eflag, CS, IP
 	push	$0xFFFFFFFF	# no err code
 	push	$0		    # vector_no	= 0
 	jmp	exception
@@ -117,6 +117,8 @@ copr_error:
 
 exception:
 	call	exception_handler
+	// C std 是呼叫者恢復esp
+	add     $(4*2), %esp
 	hlt
 
 .align   16

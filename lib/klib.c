@@ -36,9 +36,9 @@ PUBLIC void disp_str(char* str)
 
 PUBLIC void disp_int(int input)
 {
-    //char output[16];
-    //itoa(output, input);
-    //disp_color_str(output);
+    char output[16];
+    itoa(output, input);
+    disp_str(output);
 
 }
 

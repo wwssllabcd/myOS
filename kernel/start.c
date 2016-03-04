@@ -17,6 +17,7 @@ PUBLIC void init_idt()
 PUBLIC void cstart()
 {
     disp_str("cstart-start\n");
+    disp_int(0x67AB);
     init_idt();
     init_prot();
     ldIdt();
