@@ -19,5 +19,6 @@ PUBLIC void cstart()
     disp_str("cstart-start\n");
     init_idt();
     init_prot();
+    ldIdt();
     disp_str("cse\n");
 }

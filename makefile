@@ -23,6 +23,7 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/start.o  \
 	$(DIR_KERENL)/protect.o  \
 	$(DIR_KERENL)/kernel.o  \
+	$(DIR_KERENL)/i8259.o  \
 	
 
 	

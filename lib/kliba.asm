@@ -5,6 +5,8 @@
 .text
 
 .global disp_color_str
+.global	out_byte
+.global	in_byte
 
 out_byte:
 	mov 4(%esp), %edx
