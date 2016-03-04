@@ -1,7 +1,9 @@
 CC = gcc
 LD = ld
 OBJCOPY = objcopy
-CFLAGS = -I ./inc -c -g -fno-stack-protector
+CFLAGS = -I $(INC_FD) -c -g -fno-stack-protector
 LDFLAGS = -m elf_i386 
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
+
 OBJDIR = ./obj
+INC_FD = ./inc

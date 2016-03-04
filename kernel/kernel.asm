@@ -1,4 +1,7 @@
+.include "sconst.inc"
+
 .equ SELECTOR_KERNEL_CS, 8
+.equ TSS3_S_SP0, 4
 
 .extern	cstart
 .extern	exception_handler
@@ -45,11 +48,9 @@
 .global  hwint14
 .global  hwint15
 
-
 .global ldIdt
-
 .global start_k
-
+.global restart
 
 .bss
 
@@ -58,7 +59,6 @@ StackSpace:
 StackTop:
 
 endbss:
-
 .text
 
 start_k:
@@ -73,6 +73,7 @@ start_k:
 
 csinit:
 	sti
+	call kernel_main
 	hlt
 	jmp .
 
@@ -222,3 +223,21 @@ hwint14:                # Interrupt routine for irq 14 (AT winchester)
 .align   16
 hwint15:                # Interrupt routine for irq 15
         hwint_slave     15
+
+
+restart:
+	mov	p_proc_ready, %esp
+	lldt P_LDT_SEL(%esp)
+	lea	P_STACKTOP(%esp), %eax
+	mov	%eax, (tss + TSS3_S_SP0)
+
+	pop	%gs
+	pop	%fs
+	pop	%es
+	pop	%ds
+	popal    # 不太確定是否為popad的代替品
+
+	add	$4, %esp
+	iretl   # 不太確定是否為iretd的代替品
+
+endtext:

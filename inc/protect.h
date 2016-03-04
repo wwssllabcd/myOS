@@ -1,14 +1,16 @@
+#include "type.h"
+
 #ifndef _PROTECT_H_
 #define _PROTECT_H_
 
-#include "type.h"
+
 
 typedef struct s_descriptor
 {
     u16 limit_low;
     u16 base_low;
     u8 base_mid;
-    u8 attr;
+    u8 attr1;
     u8 limit_high_attri;
     u8 base_high;
 }DESCRIPTOR;
@@ -23,6 +25,36 @@ typedef struct s_gate
 }GATE;
 
 
+typedef struct s_tss {
+    u32 backlink;
+    u32 esp0;   /* stack pointer to use during interrupt */
+    u32 ss0;    /*   "   segment  "  "    "        "     */
+    u32 esp1;
+    u32 ss1;
+    u32 esp2;
+    u32 ss2;
+    u32 cr3;
+    u32 eip;
+    u32 flags;
+    u32 eax;
+    u32 ecx;
+    u32 edx;
+    u32 ebx;
+    u32 esp;
+    u32 ebp;
+    u32 esi;
+    u32 edi;
+    u32 es;
+    u32 cs;
+    u32 ss;
+    u32 ds;
+    u32 fs;
+    u32 gs;
+    u32 ldt;
+    u16 trap;
+    u16 iobase; /* I/O位图基址大于或等于TSS段界限，就表示没有I/O许可位图 */
+}TSS;
+
 
 /* GDT */
 /* 描述符索引 */
@@ -35,9 +67,28 @@ typedef struct s_gate
 #define SELECTOR_FLAT_C     0x08        // ├ LOADER 裡面已經確定了的.
 #define SELECTOR_FLAT_RW    0x10        // │
 #define SELECTOR_VIDEO      (0x18+3)    // ┘<-- RPL=3
+#define SELECTOR_TSS        0x20    /* TSS                       */
+#define SELECTOR_LDT_FIRST  0x28
 
 #define SELECTOR_KERNEL_CS  SELECTOR_FLAT_C
 #define SELECTOR_KERNEL_DS  SELECTOR_FLAT_RW
+#define SELECTOR_KERNEL_GS  SELECTOR_VIDEO
+
+/* 每个任务有一个单独的 LDT, 每个 LDT 中的描述符个数: */
+#define LDT_SIZE        2
+
+/* 选择子类型值说明 */
+/* 其中, SA_ : Selector Attribute */
+#define SA_RPL_MASK 0xFFFC
+#define SA_RPL0     0
+#define SA_RPL1     1
+#define SA_RPL2     2
+#define SA_RPL3     3
+
+#define SA_TI_MASK  0xFFFB
+#define SA_TIG      0
+#define SA_TIL      4
+
 
 
 /* 描述符類型值說明 */
@@ -84,6 +135,8 @@ typedef struct s_gate
 /* 中斷向量 */
 #define INT_VECTOR_IRQ0         0x20
 #define INT_VECTOR_IRQ8         0x28
+
+
 
 
 #endif

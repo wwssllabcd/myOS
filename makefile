@@ -7,6 +7,7 @@ DIR_LIB = ./lib
 LDFLAGS_BOOT = $(LDFLAGS) -Ttext 0
 LDFLAGS_SYS = $(LDFLAGS) -Ttext 0 -e startup_32
 
+ASMKFLAGS = -I $(INC_FD) 
 
 OBJ_FILES = \
 	$(OBJDIR)/head.o  \
@@ -24,6 +25,7 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/protect.o  \
 	$(DIR_KERENL)/kernel.o  \
 	$(DIR_KERENL)/i8259.o  \
+	$(DIR_KERENL)/global.o  \
 	
 
 	
@@ -44,7 +46,7 @@ head.o: head.s
 	$(AS) -o $(OBJDIR)/head.o head.s
 
 lib/kliba.o: lib/kliba.asm
-	$(AS) $< -o $@  
+	$(AS) $(ASMKFLAGS) $< -o $@  
 
 system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL) 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
@@ -53,7 +55,7 @@ system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL)
 	 
 # == rule for kernel/ ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
-	$(AS) $< -o $@
+	$(AS) $(ASMKFLAGS) $< -o $@
 	
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
 	$(CC) $(CFLAGS) $< -o $@  

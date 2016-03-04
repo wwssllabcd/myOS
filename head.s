@@ -280,10 +280,12 @@ gdt_h:
 	.quad 0x0000000000000000	/* NULL descriptor */
 	.quad 0x00c09a0000000fff	/* 16Mb */
 	.quad 0x00c0920000000fff	/* 16Mb */
+
+	//段3, 0x18, Graphic Card
+	.quad 0x00C0920B8000FFFF
+
 	.quad 0x0000000000000000	/* TEMPORARY - don't use */
 
-	//段4, 0x20, Graphic Card
-	.quad 0x00C0920B8000FFFF
 	.fill 251,8,0			/* space for LDT's and TSS's etc */
 
 /*
