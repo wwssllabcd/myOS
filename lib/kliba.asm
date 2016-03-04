@@ -75,9 +75,9 @@ memcpy:
 	mov	8(%ebp), %edi 	# Destination
 	mov	12(%ebp), %esi  # Source
 	mov	16(%ebp), %ecx  # Counter
-tag_11:
+1:
 	cmp	$0, %ecx	 	# 判断计数器
-	jz	tag_22		    # 计数器为零时跳出
+	jz	2f		        # 计数器为零时跳出
 
 	mov	%ds:(%esi), %al		      # ┓
 	inc	%esi			          # ┃
@@ -86,8 +86,8 @@ tag_11:
 	inc	%edi			          # ┛
 
 	dec	%ecx		              # 计数器减一
-	jmp	tag_11		              # 循环
-tag_22:
+	jmp	1b  		              # 循环
+2:
 	mov	8(%ebp), %eax 	          # 返回值
 	pop	%ecx
 	pop	%edi
