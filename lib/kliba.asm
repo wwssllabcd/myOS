@@ -7,6 +7,7 @@
 .global disp_color_str
 .global	out_byte
 .global	in_byte
+.global	memcpy
 
 out_byte:
 	mov 4(%esp), %edx
@@ -62,6 +63,39 @@ tag_2:
 	mov %edi, (disp_pos)    # 備份 pos
 	pop %ebp                # 還原 ebp
 	ret
+
+memcpy:
+	push %ebp
+	mov	%esp, %ebp
+
+	push	%esi
+	push	%edi
+	push	%ecx
+
+	mov	8(%ebp), %edi 	# Destination
+	mov	12(%ebp), %esi  # Source
+	mov	16(%ebp), %ecx  # Counter
+tag_11:
+	cmp	$0, %ecx	 	# 判断计数器
+	jz	tag_22		    # 计数器为零时跳出
+
+	mov	%ds:(%esi), %al		      # ┓
+	inc	%esi			          # ┃
+					              # ┣ 逐字节移动
+	mov	%al, %es:(%edi) 	      # ┃
+	inc	%edi			          # ┛
+
+	dec	%ecx		              # 计数器减一
+	jmp	tag_11		              # 循环
+tag_22:
+	mov	8(%ebp), %eax 	          # 返回值
+	pop	%ecx
+	pop	%edi
+	pop	%esi
+	mov	%ebp, %esp
+	pop	%ebp
+	ret
+
 
 
 

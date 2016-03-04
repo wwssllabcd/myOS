@@ -67,15 +67,15 @@ start_k:
 	mov	$StackTop ,%esp
 	call cstart
 
+	lidt	idt_ptr
+
 	jmp	$SELECTOR_KERNEL_CS, $csinit
 
 csinit:
 	sti
 	hlt
+	jmp .
 
-ldIdt:
-	lidt	idt_ptr
-	ret
 
 divide_error:
 	#此時 CPU會自動push 3 個參數進來，分別是eflag, CS, IP

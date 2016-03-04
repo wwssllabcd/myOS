@@ -129,7 +129,7 @@ ec_load_cy_sec:
 	mov	%cs:root_dev+0, %ax  # root_dev 使用code 的方式 hard code, 預設值為 0x301
 
 
-	cmp	$0, %ax              # 檢查該直是否為 0   
+	cmp	$0, %ax              # 檢查該值是否為 0
 	jne	root_defined         # jne (jump not equal) 	不等於則轉移 	檢查 zf=0
 	#seg cs
 	mov	%cs:sectors+0, %bx
