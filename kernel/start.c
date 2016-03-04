@@ -4,6 +4,19 @@
 #include "global.h"
 #include "protect.h"
 
+void showMsg()
+{
+    __asm__ ("movl $0x20, %eax;"
+            "mov %ax,%gs \n "
+            "mov $((80*3 + 0)*2), %edi \n"
+            "mov $0x0C, %ah \n"
+            "mov $'m', %al \n"
+            "mov %ax, %gs:(%edi) \n"
+    );
+}
+
+
+
 //init idt_desc
 PUBLIC void init_idt()
 {
@@ -16,10 +29,12 @@ PUBLIC void init_idt()
 
 PUBLIC void cstart()
 {
-    disp_str("cstart-start\n");
+    showMsg();//set gs first, or you will get error when you show msg
+    disp_str("\ncstart-start");
+    disp_str("\n");
     disp_int(0x67AB);
     init_idt();
     init_prot();
     ldIdt();
-    disp_str("cse\n");
+    disp_str("\ncse");
 }

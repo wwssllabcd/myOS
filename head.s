@@ -159,7 +159,7 @@ after_page_tables:
 	pushl $0
 	pushl $0
 	pushl $L6		 # return address for main, if it decides to.(如果不小心從main return時，會jump到L6)
-	pushl $main      # 預計返回的時候跳到main
+	pushl $cstart      # 預計返回的時候跳到main
 
 	# 這邊使用 jmp 而不使用 call 的原因是因為 call 會把current ip壓入 stack, 而jmp不會，
 	# 而ret指令會把stack pop出來，而setup_paging這邊結束時故意會寫ret，好讓之前push到stack的main可以pop出來到CS:IP
