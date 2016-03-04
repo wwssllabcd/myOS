@@ -48,8 +48,30 @@
 
 .global ldIdt
 
+.global start_k
+
+
+.bss
+
+StackSpace:
+.org StackSpace+1024
+StackTop:
+
+endbss:
+
 .text
 
+start_k:
+	mov	$0, %eax
+	mov	%eax, disp_pos
+	mov	$StackTop ,%esp
+	call cstart
+
+	jmp	$SELECTOR_KERNEL_CS, $csinit
+
+csinit:
+	sti
+	hlt
 
 ldIdt:
 	lidt	idt_ptr

@@ -50,6 +50,8 @@ PRIVATE void init_idt_desc(u8 vector, u8 desc_type, int_handle handler, u8 privi
 
 PUBLIC void init_prot()
 {
+    init_8259A();
+
     init_idt_desc(INT_VECTOR_DIVIDE, DA_386IGate, divide_error, PRIVILEGE_KRNL);
 
     init_idt_desc(INT_VECTOR_DEBUG, DA_386IGate,
