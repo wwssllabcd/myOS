@@ -28,6 +28,24 @@ void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
     p_des->base_high = data_3>>16;
 }
 
+void printMem(u32 addr, u32 len)
+{
+    u32 end = addr+len;
+    u32 i;
+    disp_str("\nMEM=");
+    disp_int(addr);
+    for(i=0; i<len; i++){
+        if((i & 0xF) == 0){
+            disp_str("\n");
+            disp_int(addr+i);
+            disp_str("|");
+        }
+        u8 tmp = (*(u8*)(addr+i));
+        disp_u8(tmp);
+        disp_str(",");
+    }
+}
+
 void kernel_main(void)
 {
     PROCESS* p_proc = proc_table;
@@ -44,6 +62,8 @@ void kernel_main(void)
 
     memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
     p_proc->ldts[1].attr1 = DA_DRW | PRIVILEGE_TASK << 5;   // change the DPL
+
+    printMem( (u32)(&gdt), 0x20);
 
     disp_str("\nKernel_main");
 
