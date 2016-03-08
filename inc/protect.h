@@ -9,7 +9,7 @@ typedef struct s_descriptor
     u16 base_low;
     u8 base_mid;
     u8 attr1;
-    u8 limit_high_attri;
+    u8 limit_high_attr2;
     u8 base_high;
 }DESCRIPTOR;
 
@@ -56,10 +56,13 @@ typedef struct s_tss {
 
 /* GDT */
 /* 描述符索引 */
-#define INDEX_DUMMY     0   // ┐
-#define INDEX_FLAT_C        1   // ├ LOADER 裡面已經確定了的.
-#define INDEX_FLAT_RW       2   // │
-#define INDEX_VIDEO     3   // ┘
+#define INDEX_DUMMY     0
+#define INDEX_FLAT_C        1   /* | LOADER 里面已经确定了的 */
+#define INDEX_FLAT_RW       2   /* |                         */
+#define INDEX_VIDEO     3   /* /                         */
+#define INDEX_TSS       4
+#define INDEX_LDT_FIRST     5
+
 /* 選擇子 */
 #define SELECTOR_DUMMY         0        // ┐
 #define SELECTOR_FLAT_C     0x08        // ├ LOADER 裡面已經確定了的.
@@ -134,7 +137,9 @@ typedef struct s_tss {
 #define INT_VECTOR_IRQ0         0x20
 #define INT_VECTOR_IRQ8         0x28
 
-
+/* 宏 */
+/* 线性地址 → 物理地址 */
+#define vir2phys(seg_base, vir) (u32)(((u32)seg_base) + (u32)(vir))
 
 
 #endif

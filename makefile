@@ -17,6 +17,7 @@ OBJ_FILES = \
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
 	$(DIR_LIB)/klib.o  \
+	$(DIR_LIB)/string.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
@@ -45,9 +46,6 @@ boot/boot.bin:
 head.o: head.s
 	$(AS) -o $(OBJDIR)/head.o head.s
 
-lib/kliba.o: lib/kliba.asm
-	$(AS) $(ASMKFLAGS) $< -o $@  
-
 system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL) 
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
@@ -62,7 +60,7 @@ $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
 	
 # == rule for lib/ ==
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
-	$(AS) $< -o $@
+	$(AS)  $(ASMKFLAGS) $< -o $@
 	
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 	$(CC) $(CFLAGS) $< -o $@  
