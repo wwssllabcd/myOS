@@ -3,8 +3,6 @@
 #ifndef _PROTECT_H_
 #define _PROTECT_H_
 
-
-
 typedef struct s_descriptor
 {
     u16 limit_low;

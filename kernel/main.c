@@ -3,7 +3,6 @@
 #include "proc.h"
 #include "global.h"
 
-
 void TestA(void)
 {
     int i=0;
@@ -24,18 +23,10 @@ void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
     p_des->base_low = data_1;
 
     p_des->base_mid = data_2 & 0xFF;
-    p_des->attr1 = (data_2>>16)&0xFF;
+    p_des->attr1 = (data_2>>8)&0xFF;
 
     p_des->limit_high_attri = data_3 & 0xFF;
-    p_des->base_high = (data_3>>16)&0xFF;
-
-
-    disp_str("\nitem");
-    disp_int(itemNum);
-    disp_str(", addr=");
-    disp_int(p_des);
-
-
+    p_des->base_high = (data_3>>8)&0xFF;
 }
 
 void printMem(u32 addr, u32 len)
@@ -58,19 +49,13 @@ void printMem(u32 addr, u32 len)
 
 void kernel_main(void)
 {
-    set_gdt(0, 0x0000, 0x0000, 0x0000, 0x0000);
-
     PROCESS* p_proc = proc_table;
-
     p_proc->ldt_sel = SELECTOR_LDT_FIRST;
 
-
+    set_gdt(0, 0x0000, 0x0000, 0x0000, 0x0000);
     set_gdt(1, 0x0FFF, 0x0000, 0x9A00, 0x00C0);
     set_gdt(2, 0x0FFF, 0x0000, 0x9200, 0x00C0);
     set_gdt(3, 0x0FFF, 0x0000, 0x9200, 0x00C0);
-
-    printMem( (u32)(&gdt), 0x20);
-    disp_str("\nb");
 
     memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
     p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5; // change the DPL
@@ -78,9 +63,8 @@ void kernel_main(void)
     memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
     p_proc->ldts[1].attr1 = DA_DRW | PRIVILEGE_TASK << 5;   // change the DPL
 
-    printMem( (u32)(&gdt), 0x20);
-
     disp_str("\nKernel_main");
+    //printMem( (u32)(&gdt), 0x20);
 
     //BIT 0~1: RPL
     //BIT2 :TIL: 1代表位在 LDT
