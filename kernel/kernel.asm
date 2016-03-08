@@ -154,7 +154,7 @@ exception:
 .endm
 
 hwint00:                # Interrupt routine for irq 0 (the clock).
-        hwint_master    0
+        iretl
 
 .align   16
 hwint01:                # Interrupt routine for irq 1 (keyboard)
@@ -224,9 +224,8 @@ hwint14:                # Interrupt routine for irq 14 (AT winchester)
 hwint15:                # Interrupt routine for irq 15
         hwint_slave     15
 
-
 restart:
-	mov	p_proc_ready, %esp
+	mov	p_proc_ready, %esp      # load process to esp
 	lldt P_LDT_SEL(%esp)
 	lea	P_STACKTOP(%esp), %eax
 	mov	%eax, (tss + TSS3_S_SP0)
@@ -235,6 +234,7 @@ restart:
 	pop	%fs
 	pop	%es
 	pop	%ds
+
 	popal    # 不太確定是否為popad的代替品
 
 	add	$4, %esp

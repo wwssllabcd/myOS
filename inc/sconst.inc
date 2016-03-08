@@ -20,7 +20,7 @@
 .equ SSREG	,ESPREG + 4
 
 .equ P_STACKTOP	,SSREG + 4
-.equ P_LDT_SEL	,P_STACKTOP + 4
+.equ P_LDT_SEL	,P_STACKTOP
 .equ P_LDT	,P_LDT_SEL + 4
 
 .equ TSS3_S_SP0	,4
