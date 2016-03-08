@@ -33,8 +33,6 @@ void printMem(u32 addr, u32 len)
 {
     u32 end = addr+len;
     u32 i;
-    disp_str("\nMEM=");
-    disp_int(addr);
     for(i=0; i<len; i++){
         if((i & 0xF) == 0){
             disp_str("\n");
@@ -49,6 +47,7 @@ void printMem(u32 addr, u32 len)
 
 void kernel_main(void)
 {
+    disp_str("\nKernel_main");
     PROCESS* p_proc = proc_table;
     p_proc->ldt_sel = SELECTOR_LDT_FIRST;
 
@@ -58,13 +57,10 @@ void kernel_main(void)
     set_gdt(3, 0x0FFF, 0x0000, 0x9200, 0x00C0);
 
     memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
-    p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5; // change the DPL
+    p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5; // change the DPL val=0xB8
 
     memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
-    p_proc->ldts[1].attr1 = DA_DRW | PRIVILEGE_TASK << 5;   // change the DPL
-
-    disp_str("\nKernel_main");
-    //printMem( (u32)(&gdt), 0x20);
+    p_proc->ldts[1].attr1 = DA_DRW | PRIVILEGE_TASK << 5;   // change the DPL, val=0xB2
 
     //BIT 0~1: RPL
     //BIT2 :TIL: 1代表位在 LDT

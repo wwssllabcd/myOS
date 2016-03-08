@@ -186,7 +186,7 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 //    }
 //    disp_pos = 0;
 
-    disp_color_str("Exception! --> ", text_color);
+    disp_color_str("\nException! --> ", text_color);
     disp_color_str(err_msg[vec_no], text_color);
     disp_color_str("\n", text_color);
     disp_color_str("EFLAGS:", text_color);
