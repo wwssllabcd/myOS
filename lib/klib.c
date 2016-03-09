@@ -83,7 +83,7 @@ PUBLIC void delay(int time)
 {
     int i, j, k;
     for(k=0; k<time; k++){
-        for(i=0; i<20; i++){
+        for(i=0; i<150; i++){
             for(j=0; j<10000; j++){
 
             }
