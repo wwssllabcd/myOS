@@ -33,7 +33,7 @@ OBJ_KERNEL = \
 .PHONY : clean
 
 # === Rule ===
-all: clean mkdir system.img nm
+all: clean mkdir system.img nm diasm
 
 system.img: boot/boot.bin boot/setup.bin system.bin 
 	@dd if=$(DIR_BOOT)/boot.bin    of=system.img bs=512 count=1 
@@ -72,6 +72,9 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 
 nm:
 	nm system.elf |sort > system.nm
+	
+diasm:
+	objdump -d  system.elf > system.diasm
 
 	
 clean:

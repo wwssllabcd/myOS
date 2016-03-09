@@ -52,6 +52,11 @@
 .global start_k
 .global restart
 
+
+.data
+clock_int_msg: .ascii "A\0"
+
+enddata:
 .bss
 
 StackSpace:
@@ -159,10 +164,39 @@ exception:
 .endm
 
 hwint00:                # Interrupt routine for irq 0 (the clock).
-        incb %gs:0
-		mov	$EOI, %al
-		out %al, $INT_M_CTL
-        iretl
+	#sub	$4, %esp
+	pushal
+	push	%ds
+	push	%es
+	push	%fs
+	push	%gs
+
+	#mov	%ss, %dx
+	#mov	%dx, %ds
+	#mov	%dx, %es
+	#mov	StackTop, %esp
+
+
+    incb %gs:0
+	mov	$EOI, %al
+	out %al, $INT_M_CTL
+
+	//push clock_int_msg
+	//call disp_str_t
+
+	#add	$4, %esp
+	#mov	p_proc_ready, %esp
+	#lea	P_STACKTOP(%esp), %eax
+	#movl %eax, (tss + TSS3_S_SP0)
+
+	pop	%gs
+	pop	%fs
+	pop	%es
+	pop	%ds
+	popal
+	#add	$4, %esp
+
+    iretl
 
 .align   16
 hwint01:                # Interrupt routine for irq 1 (keyboard)

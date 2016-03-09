@@ -58,6 +58,12 @@ PUBLIC char * itob(char* str, u8 num){
     return str;
 }
 
+//for debug
+PUBLIC void disp_str_t(char* str)
+{
+    disp_color_str(str, 0x0F);
+}
+
 
 PUBLIC void disp_str(char* str)
 {

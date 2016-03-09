@@ -79,6 +79,8 @@ void kernel_main(void)
 
     while( 1 )
     {
+        disp_str("m");
+        disp_str(".");
     }
 
 }
