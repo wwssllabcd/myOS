@@ -6,6 +6,7 @@
 .extern	cstart
 .extern	exception_handler
 .extern	spurious_irq
+.extern	disp_str
 
 
 .extern	gdt_ptr
@@ -54,7 +55,7 @@
 
 
 .data
-clock_int_msg: .ascii "A\0"
+clock_int_msg: .ascii "-\0"
 
 enddata:
 .bss
@@ -164,37 +165,40 @@ exception:
 .endm
 
 hwint00:                # Interrupt routine for irq 0 (the clock).
-	#sub	$4, %esp
+	sub	$4, %esp
 	pushal
 	push	%ds
 	push	%es
 	push	%fs
 	push	%gs
 
-	#mov	%ss, %dx
-	#mov	%dx, %ds
-	#mov	%dx, %es
-	#mov	StackTop, %esp
-
+	#切回內核 stack
+	mov	%ss, %dx
+	mov	%dx, %ds
+	mov	%dx, %es
+	mov	$StackTop, %esp
 
     incb %gs:0
 	mov	$EOI, %al
 	out %al, $INT_M_CTL
 
-	//push clock_int_msg
-	//call disp_str_t
+	push $clock_int_msg
 
-	#add	$4, %esp
-	#mov	p_proc_ready, %esp
-	#lea	P_STACKTOP(%esp), %eax
-	#movl %eax, (tss + TSS3_S_SP0)
+	call disp_str
+
+	add $4, %esp
+
+	# 以下幾乎相同 restart
+	mov	p_proc_ready, %esp
+	lea	P_STACKTOP(%esp), %eax
+	movl %eax, TSS3_S_SP0 + tss
 
 	pop	%gs
 	pop	%fs
 	pop	%es
 	pop	%ds
 	popal
-	#add	$4, %esp
+	add	$4, %esp
 
     iretl
 

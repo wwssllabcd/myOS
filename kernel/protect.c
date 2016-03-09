@@ -99,9 +99,8 @@ PUBLIC void init_prot()
     //把GDT 5的 descriptor, 填成以 ldt 為base的 desc
     init_descriptor(
             &gdt[INDEX_LDT_FIRST],
-            vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[0].ldts),
-            LDT_SIZE * sizeof(DESCRIPTOR) - 1,
-            DA_LDT);
+            vir2phys(seg2phys(SELECTOR_KERNEL_DS),
+            proc_table[0].ldts), LDT_SIZE * sizeof(DESCRIPTOR) - 1, DA_LDT);
 }
 
 PUBLIC u32 seg2phys(u16 seg)

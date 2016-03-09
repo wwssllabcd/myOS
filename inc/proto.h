@@ -19,7 +19,7 @@ PUBLIC void cstart();
 //PUBLIC void disp_color_str(char * info, int color);
 
 //klib
-//PUBLIC void disp_str(char* str);
+PUBLIC void disp_str(char* str);
 //PUBLIC void delay(int time);
 
 
