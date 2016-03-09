@@ -28,4 +28,9 @@
 
 .equ SELECTOR_TSS, 0x20
 
+.equ EOI, 0x20
+
+.equ INT_M_CTL,  0x20
+
+
 

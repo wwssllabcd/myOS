@@ -159,6 +159,9 @@ exception:
 .endm
 
 hwint00:                # Interrupt routine for irq 0 (the clock).
+        incb %gs:0
+		mov	$EOI, %al
+		out %al, $INT_M_CTL
         iretl
 
 .align   16
@@ -230,18 +233,18 @@ hwint15:                # Interrupt routine for irq 15
         hwint_slave     15
 
 restart:
-	mov	p_proc_ready, %esp      # load process to esp
+	mov	p_proc_ready, %esp          # load process to esp
 	lldt P_LDT_SEL(%esp)            # load LDTR, 低的 2 byte, 代表 table 長度, 高的 4 byte為 table 所在的 offset , 同 idt descriptor
 	lea	P_STACKTOP(%esp), %eax
 
 	mov	%eax, (tss + TSS3_S_SP0)
 
-	pop	%gs
+	pop	%gs   # pop 是往高處移動，所以可以把struct的最前面指給他
 	pop	%fs
 	pop	%es
 	pop	%ds
 
-	popal    # 不太確定是否為popad的代替品
+	popal    # 不太確定是否為popad的代替品, 貌似pop edi ~ eax
 
 	add	$4, %esp
 	iretl   # 不太確定是否為iretd的代替品

@@ -89,7 +89,7 @@ PUBLIC void init_prot()
 
 
     /* 填充 GDT 中 TSS 这个描述符 */
-    memset(&tss, 0, sizeof(tss));
+    memset_a(&tss, 0, sizeof(tss));
     tss.ss0 = SELECTOR_KERNEL_DS;
 
     //把GDT 4的 descriptor, 填成以 tss 為base的 desc
