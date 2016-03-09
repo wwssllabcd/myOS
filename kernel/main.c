@@ -63,12 +63,13 @@ void kernel_main(void)
     //BIT2 :TIL: 1代表位在 LDT
     //BIT3~7: selector
     // CS 指向 LDT 第0條
+    // 如果GS,SS..等SS載入時，發現TIL被設成1，代表這條code 要去LDT去找
     p_proc->regs.cs = (0 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | RPL_TASK;
     p_proc->regs.ds = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | RPL_TASK;
     p_proc->regs.es = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | RPL_TASK;
     p_proc->regs.fs = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | RPL_TASK;
     p_proc->regs.ss = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | RPL_TASK;
-    p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | RPL_TASK;  // val = 0x19
+    p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | RPL_TASK;  // 放在 GDT, val = 0x19
     p_proc->regs.eip = (u32) TestA;
     p_proc->regs.esp = (u32) task_stack + STACK_SIZE_TOTAL;
     p_proc->regs.eflags = 0x1202;   // IF=1, IOPL=1, bit 2 is always 1.

@@ -231,8 +231,9 @@ hwint15:                # Interrupt routine for irq 15
 
 restart:
 	mov	p_proc_ready, %esp      # load process to esp
-	lldt P_LDT_SEL(%esp)        # 低的 2 byte, 代表 table 長度, 高的 4 byte為 table 所在的 offset , 同 idt descriptor
+	lldt P_LDT_SEL(%esp)            # load LDTR, 低的 2 byte, 代表 table 長度, 高的 4 byte為 table 所在的 offset , 同 idt descriptor
 	lea	P_STACKTOP(%esp), %eax
+
 	mov	%eax, (tss + TSS3_S_SP0)
 
 	pop	%gs
