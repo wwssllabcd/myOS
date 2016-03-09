@@ -26,5 +26,6 @@
 .equ TSS3_S_SP0	,4
 
 
+.equ SELECTOR_TSS, 0x20
 
 

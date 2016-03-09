@@ -67,12 +67,17 @@ start_k:
 	mov	$StackTop ,%esp
 	call cstart
 
+	lgdt	gdt_ptr
 	lidt	idt_ptr
 
 	jmp	$SELECTOR_KERNEL_CS, $csinit
 
 csinit:
-	sti
+
+	xor	%eax, %eax
+	mov	$SELECTOR_TSS, %ax
+	ltr	%ax
+
 	call kernel_main
 	hlt
 	jmp .
@@ -226,7 +231,7 @@ hwint15:                # Interrupt routine for irq 15
 
 restart:
 	mov	p_proc_ready, %esp      # load process to esp
-	lldt P_LDT_SEL(%esp)
+	lldt P_LDT_SEL(%esp)        # 低的 2 byte, 代表 table 長度, 高的 4 byte為 table 所在的 offset , 同 idt descriptor
 	lea	P_STACKTOP(%esp), %eax
 	mov	%eax, (tss + TSS3_S_SP0)
 

@@ -50,12 +50,8 @@ void kernel_main(void)
 {
     disp_str("\nKernel_main");
     PROCESS* p_proc = proc_table;
-    p_proc->ldt_sel = SELECTOR_LDT_FIRST;
+    p_proc->ldt_sel = SELECTOR_LDT_FIRST; // item 5
 
-    set_gdt(0, 0x0000, 0x0000, 0x0000, 0x0000);
-    set_gdt(1, 0x0FFF, 0x0000, 0x9A00, 0x00C0);
-    set_gdt(2, 0x0FFF, 0x0000, 0x9200, 0x00C0);
-    set_gdt(3, 0x0FFF, 0x0000, 0x9200, 0x00C0);
 
     memcpy_a(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
     p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5; // change the DPL val=0xB8

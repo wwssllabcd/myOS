@@ -17,17 +17,17 @@ void showMsg()
 
 
 //init idt_desc
-PUBLIC void init_gdt()
+PUBLIC void init_gptr()
 {
     u16* p_gdt_limit = (u16*) (&gdt_ptr[0]);
-    u32* p_gdt_base = (u32*) (&gdt_ptr[2]);
+    u32* p_gdt_base  = (u32*) (&gdt_ptr[2]);
     *p_gdt_limit = GDT_SIZE * sizeof(DESCRIPTOR) - 1;
     *p_gdt_base = (u32) &gdt;
 }
 
 
 //init idt_desc
-PUBLIC void init_idt()
+PUBLIC void init_iptr()
 {
     u16* p_idt_limit = (u16*)(&idt_ptr[0]);
     u32* p_idt_base  = (u32*)(&idt_ptr[2]);
@@ -40,16 +40,16 @@ PUBLIC void cstart()
     showMsg();//set gs first, or you will get error when you show msg
     disp_str("\ncstart-start");
     disp_str("\n");
+
+    set_gdt(0, 0x0000, 0x0000, 0x0000, 0x0000);
+    set_gdt(1, 0x0FFF, 0x0000, 0x9A00, 0x00C0);
+    set_gdt(2, 0x0FFF, 0x0000, 0x9200, 0x00C0);
+    set_gdt(3, 0x0FFF, 0x0000, 0x9200, 0x00C0);
+
     disp_int(0x67AB);
 
-//    memcpy(&gdt,                   // New GDT
-//           (void*) (*((u32*) (&gdt_ptr[2]))),   // Base  of Old GDT
-//           *((u16*) (&gdt_ptr[0])) + 1      // Limit of Old GDT
-//            );
-
-
-//    init_gdt();
-    init_idt();
+    init_gptr();
+    init_iptr();
     init_prot();
 
     disp_str("\ncse");

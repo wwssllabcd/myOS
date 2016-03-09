@@ -267,7 +267,7 @@ idt_descr:          # 6 byte, 低的2 byte, 代表table長度, 高的4 byte為 t
 
 .align 2
 .word 0
-gdt_descr:          # 低的2 byte, 代表table長度, 高的4 byte為 table 所在的offset , 同 idt descriptor
+gdt_descr:          # 低的 2 byte, 代表 table 長度, 高的 4 byte為 table 所在的offset , 同 idt descriptor
 	.word 256*8-1	# so does gdt (not that that's any
 	.long gdt_h		# magic number, but it works for me :^)
 

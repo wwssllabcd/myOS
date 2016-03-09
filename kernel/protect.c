@@ -89,13 +89,14 @@ PUBLIC void init_prot()
 
 
     /* 填充 GDT 中 TSS 这个描述符 */
-    memset_a(&tss, 0, sizeof(tss));
+    memset(&tss, 0, sizeof(tss));
     tss.ss0 = SELECTOR_KERNEL_DS;
 
+    //把GDT 4的 descriptor, 填成以 tss 為base的 desc
     init_descriptor(&gdt[INDEX_TSS], vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), sizeof(tss) - 1, DA_386TSS);
     tss.iobase = sizeof(tss); /* 没有I/O许可位图 */
 
-    /* 填充 GDT 中进程的 LDT 的描述符 */
+    //把GDT 5的 descriptor, 填成以 ldt 為base的 desc
     init_descriptor(
             &gdt[INDEX_LDT_FIRST],
             vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[0].ldts),
