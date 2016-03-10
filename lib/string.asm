@@ -1,6 +1,7 @@
 
 .global	memcpy_a
 .global	memset_a
+.global strcpy_a
 
 memcpy_a:
 	push %ebp
@@ -65,5 +66,25 @@ memset_a:
 
 	ret			# 函数结束，返回
 
+strcpy_a:
+	push    %ebp
+	mov     %esp, %ebp
 
+	mov     12(%ebp), %esi  # Source
+	mov     8(%ebp), %edi   # Destination
+
+1:
+	mov     (%esi), %al             # ┓
+	inc     %esi                    # ┃
+					                # ┣ 逐字节移动
+	movb    %al, (%edi)             # ┃
+	inc     %edi                     # ┛
+
+	cmp     $0, %al         # 是否遇到 '\0'
+	jnz     1b              # 没遇到就继续循环，遇到就结束
+
+	mov     8(%ebp), %eax   # 返回值
+
+	pop     %ebp
+	ret                     # 函数结束，返回
 

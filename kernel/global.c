@@ -1,6 +1,9 @@
 
 
-#define GLOBAL_VARIABLES_HERE
+#ifdef  GLOBAL_VARIABLES_HERE
+#undef  EXTERN
+#define EXTERN
+#endif
 
 #include "type.h"
 #include "const.h"
@@ -9,15 +12,16 @@
 #include "proc.h"
 #include "global.h"
 
+PUBLIC  char            task_stack[STACK_SIZE_TOTAL];
 
 PUBLIC	PROCESS			proc_table[NR_TASKS];
 
-PUBLIC	char			task_stack[STACK_SIZE_TOTAL];
+
 
 PUBLIC	TASK	task_table[NR_TASKS] =
 {
         {TestA, STACK_SIZE_TESTA, "TestA"},
-        {TestB, STACK_SIZE_TESTB, "TestB"},
+        {TestB, STACK_SIZE_TESTB, "TestB"}
 };
 
 //
