@@ -27,8 +27,7 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/kernel.o  \
 	$(DIR_KERENL)/i8259.o  \
 	$(DIR_KERENL)/global.o  \
-	
-
+	$(DIR_KERENL)/clock.o  \
 	
 .PHONY : clean
 
@@ -65,7 +64,6 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 	$(CC) $(CFLAGS) $< -o $@  
 	
-
 # == rule for /*.c ==
 %.o: %.c
 	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
@@ -76,7 +74,6 @@ nm:
 diasm:
 	objdump -d  system.elf > system.diasm
 
-	
 clean:
 	@make -C boot clean
 	@rm -rf *.o *.elf *.bin *.img *.nm

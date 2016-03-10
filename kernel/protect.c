@@ -102,7 +102,7 @@ PUBLIC void init_prot()
     PROCESS* p_proc = proc_table;
     u16 selector_ldt = INDEX_LDT_FIRST << 3;
     for (i = 0; i < NR_TASKS; i++){
-        //把GDT 5-6 的 descriptor, 填成以 ldt 為base的 desc
+        //把GDT 5-6 的 descriptor, 填成 ldt 為base的 desc
         init_descriptor(
                 &gdt[selector_ldt >> 3], vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
                 LDT_SIZE * sizeof(DESCRIPTOR) - 1, DA_LDT

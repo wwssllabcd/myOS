@@ -192,14 +192,15 @@ hwint00:                # Interrupt routine for irq 0 (the clock).
 
 	sti
 
-	push $clock_int_msg
-	call disp_str
+	push 0
+	call clock_handler
 	add $4, %esp
 
 	cli
 
-	# 以下幾乎相同 restart
+	# 以下相同 restart
 	mov	p_proc_ready, %esp
+	lldt P_LDT_SEL(%esp)
 	lea	P_STACKTOP(%esp), %eax
 	movl %eax, TSS3_S_SP0 + tss
 
