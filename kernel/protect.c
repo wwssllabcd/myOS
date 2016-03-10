@@ -37,7 +37,7 @@ void hwint13();
 void hwint14();
 void hwint15();
 
-PRIVATE void init_idt_desc(u8 vector, u8 desc_type, int_handle handler, u8 privilege)
+PRIVATE void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
 {
     GATE* p_gate = &idt[vector];
     u32 base = (u32) handler;
@@ -93,7 +93,7 @@ PUBLIC void init_prot()
     tss.ss0 = SELECTOR_KERNEL_DS;
 
     // 把GDT 4的 descriptor, 填成以 tss 為base的 desc
-    // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"
+    // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
     init_descriptor(&gdt[INDEX_TSS], vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), sizeof(tss) - 1, DA_386TSS);
     tss.iobase = sizeof(tss); /* 没有I/O许可位图 */
 

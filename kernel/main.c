@@ -6,9 +6,19 @@
 void TestA(void)
 {
     int i=0;
-
     while(1){
         disp_str("A");
+        disp_int(i++);
+        disp_str(".");
+        delay(1);
+    }
+}
+
+void TestB(void)
+{
+    int i=0x1000;
+    while(1){
+        disp_str("B");
         disp_int(i++);
         disp_str(".");
         delay(1);
@@ -49,9 +59,14 @@ void printMem(u32 addr, u32 len)
 void kernel_main(void)
 {
     disp_str("\nKernel_main");
-    PROCESS* p_proc = proc_table;
-    p_proc->ldt_sel = SELECTOR_LDT_FIRST; // item 5
+    k_reenter = -1;
+//    TASK* p_task = task_table;
 
+    PROCESS* p_proc = proc_table;
+
+//    char* p_task_stack = task_stack + STACK_SIZE_TOTAL;
+
+    p_proc->ldt_sel = SELECTOR_LDT_FIRST; // item 5
 
     memcpy_a(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
     p_proc->ldts[0].attr1 = DA_C | PRIVILEGE_TASK << 5; // change the DPL val=0xB8

@@ -7,6 +7,7 @@
 .extern	exception_handler
 .extern	spurious_irq
 .extern	disp_str
+.extern	k_reenter
 
 
 .extern	gdt_ptr
@@ -176,22 +177,34 @@ hwint00:                # Interrupt routine for irq 0 (the clock).
 	mov	%ss, %dx
 	mov	%dx, %ds
 	mov	%dx, %es
-	mov	$StackTop, %esp
+
 
     incb %gs:0
 	mov	$EOI, %al
 	out %al, $INT_M_CTL
 
+	incl k_reenter
+	cmp	$0, k_reenter
+	jne	re_enter
+
+
+	mov	$StackTop, %esp
+
+	sti
+
 	push $clock_int_msg
-
 	call disp_str
-
 	add $4, %esp
+
+	cli
 
 	# 以下幾乎相同 restart
 	mov	p_proc_ready, %esp
 	lea	P_STACKTOP(%esp), %eax
 	movl %eax, TSS3_S_SP0 + tss
+
+re_enter:
+	decl k_reenter
 
 	pop	%gs
 	pop	%fs

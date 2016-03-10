@@ -30,4 +30,10 @@ PUBLIC u32 seg2phys(u16 seg);
 PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute);
 
 
+//main
+void TestA(void);
+void TestB(void);
+
+
+
 #endif
