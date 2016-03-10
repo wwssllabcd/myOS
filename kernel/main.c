@@ -96,10 +96,11 @@ void kernel_main(void)
         p_proc->regs.eflags = 0x1202; /* IF=1, IOPL=1 */
 
         p_task_stack -= p_task->stacksize;
+
         p_proc++;
         p_task++;
-        selector_ldt += 1 << 3;
 
+        selector_ldt += 1 << 3;
     }
 
     k_reenter = -1;
