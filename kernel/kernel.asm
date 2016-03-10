@@ -82,7 +82,7 @@ csinit:
 
 	xor	%eax, %eax
 	mov	$SELECTOR_TSS, %ax
-	ltr	%ax
+	ltr	%ax   # 載入TDTR, 值為0x20，代表 TSS 在 GDT 0x20的位置
 
 	call kernel_main
 	hlt

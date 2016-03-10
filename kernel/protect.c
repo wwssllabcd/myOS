@@ -87,12 +87,13 @@ PUBLIC void init_prot()
     init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate,            hwint14, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate,            hwint15, PRIVILEGE_KRNL);
 
-
-    /* 填充 GDT 中 TSS 这个描述符 */
     memset_a(&tss, 0, sizeof(tss));
+
+    // 設定 ring 0 的SS與EIP
     tss.ss0 = SELECTOR_KERNEL_DS;
 
-    //把GDT 4的 descriptor, 填成以 tss 為base的 desc
+    // 把GDT 4的 descriptor, 填成以 tss 為base的 desc
+    // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"
     init_descriptor(&gdt[INDEX_TSS], vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), sizeof(tss) - 1, DA_386TSS);
     tss.iobase = sizeof(tss); /* 没有I/O许可位图 */
 
