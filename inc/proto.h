@@ -37,4 +37,8 @@ void TestB(void);
 //8259
 PUBLIC void spurious_irq(int irq);
 
+
+//clock
+PUBLIC void clock_handler(int irq);
+
 #endif
