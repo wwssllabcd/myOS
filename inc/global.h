@@ -3,6 +3,12 @@
 #include "protect.h"
 #include "proc.h"
 
+#ifdef  GLOBAL_VARIABLES_HERE
+#undef  EXTERN
+#define EXTERN
+#endif
+
+
 EXTERN int disp_pos;
 EXTERN u8 gdt_ptr[6];
 EXTERN DESCRIPTOR gdt[GDT_SIZE];

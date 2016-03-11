@@ -1,7 +1,7 @@
 #ifndef _CONST_H_
 #define _CONST_H_
 
-#define EXTERN
+#define EXTERN extern
 
 /* 函数类型 */
 #define PUBLIC      /* PUBLIC is the opposite of PRIVATE */
