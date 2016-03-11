@@ -1,9 +1,14 @@
 include ./makefile.header
 
+NASM = nasm
+NASM_FLG = -I inc/ -f elf
+
+#======== Folder =======
 DIR_BOOT = ./boot
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
 
+#======== Flag ========
 LDFLAGS_BOOT = $(LDFLAGS) -Ttext 0
 LDFLAGS_SYS = $(LDFLAGS) -Ttext 0 -e startup_32
 
@@ -52,8 +57,8 @@ system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL)
 	 
 # == rule for kernel/ ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
-	$(AS) $(ASMKFLAGS) $< -o $@
-	
+	$(NASM) $(NASM_FLG) $< -o $@
+
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
 	$(CC) $(CFLAGS) $< -o $@  
 	
