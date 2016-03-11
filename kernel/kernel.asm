@@ -17,6 +17,7 @@ extern	clock_handler
 extern	disp_str
 extern	delay
 
+
 ; 导入全局变量
 extern	gdt_ptr
 extern	idt_ptr
@@ -24,6 +25,7 @@ extern	p_proc_ready
 extern	tss
 extern	disp_pos
 extern	k_reenter
+extern	irq_table
 
 bits 32
 
