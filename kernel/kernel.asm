@@ -156,50 +156,26 @@ csinit:		; “这个跳转指令强制使用刚刚初始化的结构”——<<O
 
 ALIGN	16
 hwint00:		; Interrupt routine for irq 0 (the clock).
-	sub	esp, 4
-	pushad		; `.
-	push	ds	;  |
-	push	es	;  | 保存原寄存器值
-	push	fs	;  |
-	push	gs	; /
-	mov	dx, ss
-	mov	ds, dx
-	mov	es, dx
+	call	save
 
-	inc	byte [gs:0]		; 改变屏幕第 0 行, 第 0 列的字符
+	in	al, INT_M_CTLMASK	; `.
+	or	al, 1			;  | 不允许再发生时钟中断
+	out	INT_M_CTLMASK, al	; /
 
 	mov	al, EOI			; `. reenable
 	out	INT_M_CTL, al		; /  master 8259
 
-	inc	dword [k_reenter]
-	cmp	dword [k_reenter], 0
-	jne	.re_enter
-	
-	mov	esp, StackTop		; 切到内核栈
-
 	sti
-	
 	push	0
 	call	clock_handler
 	add	esp, 4
-	
 	cli
-	
-	mov	esp, [p_proc_ready]	; 离开内核栈
-	lldt	[esp + P_LDT_SEL]
-	lea	eax, [esp + P_STACKTOP]
-	mov	dword [tss + TSS3_S_SP0], eax
 
-.re_enter:	; 如果(k_reenter != 0)，会跳转到这里
-	dec	dword [k_reenter]
-	pop	gs	; `.
-	pop	fs	;  |
-	pop	es	;  | 恢复原寄存器值
-	pop	ds	;  |
-	popad		; /
-	add	esp, 4
+	in	al, INT_M_CTLMASK	; `.
+	and	al, 0xFE		;  | 又允许时钟中断发生
+	out	INT_M_CTLMASK, al	; /
 
-	iretd
+	ret
 
 ALIGN	16
 hwint01:		; Interrupt routine for irq 1 (keyboard)
@@ -338,6 +314,29 @@ exception:
 	hlt
 
 
+save:
+        pushad          ; `.
+        push    ds      ;  |
+        push    es      ;  | 保存原寄存器值
+        push    fs      ;  |
+        push    gs      ; /
+        mov     dx, ss
+        mov     ds, dx
+        mov     es, dx
+
+        mov     eax, esp                    ;eax = 进程表起始地址
+
+        inc     dword [k_reenter]           ;k_reenter++;
+        cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
+        jne     .1                          ;{
+        mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
+        push    restart                     ;  push restart
+        jmp     [eax + RETADR - P_STACKBASE];  return;
+.1:                                         ;} else { 已经在内核栈，不需要再切换
+        push    restart_reenter             ;  push restart_reenter
+        jmp     [eax + RETADR - P_STACKBASE];  return;
+                                            ;}
+
 ; ====================================================================================
 ;                                   restart
 ; ====================================================================================
@@ -346,6 +345,8 @@ restart:
 	lldt	[esp + P_LDT_SEL] 
 	lea	eax, [esp + P_STACKTOP]
 	mov	dword [tss + TSS3_S_SP0], eax
+restart_reenter:
+	dec	dword [k_reenter]
 	pop	gs
 	pop	fs
 	pop	es
@@ -353,4 +354,3 @@ restart:
 	popad
 	add	esp, 4
 	iretd
-
