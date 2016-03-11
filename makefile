@@ -64,7 +64,7 @@ $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
 	
 # == rule for lib/ ==
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
-	$(AS)  $(ASMKFLAGS) $< -o $@
+	$(NASM) $(NASM_FLG) $< -o $@
 	
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 	$(CC) $(CFLAGS) $< -o $@  
