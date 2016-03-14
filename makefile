@@ -89,7 +89,7 @@ nm:
 	nm system.elf |sort > system.nm
 	
 diasm:
-	objdump -d  system.elf > system.diasm
+	objdump -S  system.elf > system.diasm
 
 clean:
 	@make -C boot clean
