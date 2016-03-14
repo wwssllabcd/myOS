@@ -8,6 +8,7 @@ DIR_BOOT = ./boot
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
 
+
 #======== Flag ========
 LDFLAGS_BOOT = $(LDFLAGS) -Ttext 0
 LDFLAGS_SYS = $(LDFLAGS) -Ttext 0 -e startup_32
@@ -36,6 +37,11 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/syscall.o  \
 	$(DIR_KERENL)/proc.o  \
 	
+OBJ_FILES += $(OBJ_UNIT_TEST)
+DIR_UNIT_TEST = ./unit_test
+OBJ_UNIT_TEST = \
+	$(DIR_UNIT_TEST)/ericut.o  \
+	
 .PHONY : clean
 
 # === Rule ===
@@ -52,10 +58,10 @@ boot/boot.bin:
 head.o: head.s
 	$(AS) -o $(OBJDIR)/head.o head.s
 
-system.bin: head.o $(OBJ_LIB) $(OBJ_KERNEL) 
+system.bin: head.o $(OBJ_FILES)
 	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
 	$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
-	objcopy --only-keep-debug system.elf system.sym
+	$(OBJCOPY) --only-keep-debug system.elf system.sym
 	 
 # == rule for kernel/ ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
@@ -69,7 +75,11 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
 	$(NASM) $(NASM_FLG) $< -o $@
 	
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
-	$(CC) $(CFLAGS) $< -o $@  
+	$(CC) $(CFLAGS) $< -o $@
+	
+# ut
+$(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c
+	$(CC) $(CFLAGS) $< -o $@    
 	
 # == rule for /*.c ==
 %.o: %.c
