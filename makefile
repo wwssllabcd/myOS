@@ -52,17 +52,17 @@ system.img: boot/boot.bin boot/setup.bin system.bin
 	@dd if=$(DIR_BOOT)/setup.bin   of=system.img bs=512 count=4 seek=1
 	@dd if=system.bin    of=system.img bs=512 count=2883 seek=5 conv=notrunc
 
+system.bin: head.o $(OBJ_FILES)
+	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
+	$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
+	$(OBJCOPY) --only-keep-debug system.elf system.sym
+	
 boot/boot.bin:
 	make -C boot
 	
 head.o: head.s
 	$(AS) -o $(OBJDIR)/head.o head.s
 
-system.bin: head.o $(OBJ_FILES)
-	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
-	$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
-	$(OBJCOPY) --only-keep-debug system.elf system.sym
-	 
 # == rule for kernel/ ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
 	$(NASM) $(NASM_FLG) $< -o $@

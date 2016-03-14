@@ -40,6 +40,7 @@ PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute
 //main
 void TestA(void);
 void TestB(void);
+void TestC(void);
 
 //8259
 PUBLIC void spurious_irq(int irq);

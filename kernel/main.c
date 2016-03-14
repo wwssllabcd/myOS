@@ -9,24 +9,25 @@
 
 void TestA(void)
 {
-    int i=0;
     while(1){
-        get_ticks();
-        disp_str("A");
-        disp_int(i++);
-        disp_str(".");
-        delay(1);
+        disp_str("A.");
+        milli_delay(200);
     }
 }
 
 void TestB(void)
 {
-    int i=0x1000;
     while(1){
-        disp_str("B");
-        disp_int(i++);
-        disp_str(".");
-        delay(1);
+        disp_str("B.");
+        milli_delay(200);
+    }
+}
+
+void TestC(void)
+{
+    while(1){
+        disp_str("C.");
+        milli_delay(200);
     }
 }
 
@@ -65,6 +66,7 @@ void kernel_main(void)
 {
     disp_str("\nKernel_main");
     compiler_time_assert( 1, cast_fail);
+
 
     TASK* p_task = task_table;
     PROCESS* p_proc = proc_table;
@@ -109,9 +111,19 @@ void kernel_main(void)
         selector_ldt += 1 << 3;
     }
 
+    proc_table[0].ticks = proc_table[0].priority = 150;
+    proc_table[1].ticks = proc_table[1].priority = 50;
+    proc_table[2].ticks = proc_table[2].priority = 30;
+
     k_reenter = 0;
+    ticks = 0;
 
     p_proc_ready = proc_table;
+
+    /* 初始化 8253 PIT */
+    out_byte(TIMER_MODE, RATE_GENERATOR);
+    out_byte(TIMER0, (u8) (TIMER_FREQ / HZ));
+    out_byte(TIMER0, (u8) ((TIMER_FREQ / HZ) >> 8));
 
     put_irq_handler(CLOCK_IRQ, clock_handler); /* 设定时钟中断处理程序 */
     enable_irq(CLOCK_IRQ); /* 让8259A可以接收时钟中断 */
@@ -120,8 +132,7 @@ void kernel_main(void)
 
     while( 1 )
     {
-        disp_str("m");
-        disp_str(".");
+        disp_str("should not be here");
     }
 
 }
