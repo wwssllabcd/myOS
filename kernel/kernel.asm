@@ -16,7 +16,7 @@ extern	spurious_irq
 extern	clock_handler
 extern	disp_str
 extern	delay
-
+extern	irq_table
 
 ; 导入全局变量
 extern	gdt_ptr
@@ -25,7 +25,9 @@ extern	p_proc_ready
 extern	tss
 extern	disp_pos
 extern	k_reenter
-extern	irq_table
+extern	sys_call_table
+
+
 
 bits 32
 
@@ -39,8 +41,8 @@ StackTop:		; 栈顶
 [section .text]	; 代码在此
 
 global _start_k	; 导出 _start_k
-
 global restart
+global sys_call
 
 global	divide_error
 global	single_step_exception
@@ -153,8 +155,10 @@ csinit:		; “这个跳转指令强制使用刚刚初始化的结构”——<<O
 	in	al, INT_M_CTLMASK	; `.
 	or	al, (1 << %1)		;  | 屏蔽当前中断
 	out	INT_M_CTLMASK, al	; /
+
 	mov	al, EOI			; `. 置EOI位
 	out	INT_M_CTL, al		; /
+
 	sti	; CPU在响应中断的过程中会自动关中断，这句之后就允许响应新的中断
 	push	%1			; `.
 	call	[irq_table + 4 * %1]	;  | 中断处理程序
@@ -319,18 +323,27 @@ save:
         mov     ds, dx
         mov     es, dx
 
-        mov     eax, esp                    ;eax = 进程表起始地址
+        mov     esi, esp                    ;esi = 进程表起始地址
 
         inc     dword [k_reenter]           ;k_reenter++;
         cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
         jne     .1                          ;{
         mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
         push    restart                     ;  push restart
-        jmp     [eax + RETADR - P_STACKBASE];  return;
+        jmp     [esi + RETADR - P_STACKBASE];  return;
 .1:                                         ;} else { 已经在内核栈，不需要再切换
         push    restart_reenter             ;  push restart_reenter
-        jmp     [eax + RETADR - P_STACKBASE];  return;
+        jmp     [esi + RETADR - P_STACKBASE];  return;
                                             ;}
+
+
+sys_call:
+        call    save
+        sti
+        call    [sys_call_table + eax * 4]
+        mov     [esi + EAXREG - P_STACKBASE], eax
+        cli
+        ret
 
 ; ====================================================================================
 ;                                   restart

@@ -1,7 +1,10 @@
+#include "type.h"
 #include "const.h"
 #include "protect.h"
-#include "global.h"
 #include "proto.h"
+#include "proc.h"
+#include "global.h"
+
 
 void divide_error();
 void single_step_exception();
@@ -36,19 +39,6 @@ void hwint12();
 void hwint13();
 void hwint14();
 void hwint15();
-
-PRIVATE void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
-{
-    GATE* p_gate = &idt[vector];
-    u32 base = (u32) handler;
-
-    p_gate->offset_low = base & 0xFFFF;
-    p_gate->selector = SELECTOR_KERNEL_CS;
-    p_gate->dcount = 0;
-    p_gate->attr = desc_type | (privilege << 8);
-    p_gate->offset_high = (base >> 16) & 0xFFFF;
-}
-
 
 
 PUBLIC void init_prot()
@@ -87,6 +77,11 @@ PUBLIC void init_prot()
     init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate,            hwint14, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate,            hwint15, PRIVILEGE_KRNL);
 
+    init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate,
+                  sys_call,         PRIVILEGE_USER);
+
+
+
     memset_a(&tss, 0, sizeof(tss));
 
     // 設定 ring 0 的SS與EIP
@@ -94,7 +89,10 @@ PUBLIC void init_prot()
 
     // 把GDT 4的 descriptor, 填成以 tss 為base的 desc
     // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
-    init_descriptor(&gdt[INDEX_TSS], vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), sizeof(tss) - 1, DA_386TSS);
+    init_descriptor(&gdt[INDEX_TSS], 
+		vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), 
+		sizeof(tss) - 1, 
+		DA_386TSS);
     tss.iobase = sizeof(tss); /* 没有I/O许可位图 */
 
 
@@ -112,6 +110,22 @@ PUBLIC void init_prot()
     }
 
 }
+
+
+PUBLIC void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
+{
+    GATE* p_gate = &idt[vector];
+    u32 base = (u32) handler;
+
+    p_gate->offset_low = base & 0xFFFF;
+    p_gate->selector = SELECTOR_KERNEL_CS;
+    p_gate->dcount = 0;
+    p_gate->attr = desc_type | (privilege << 8);
+    p_gate->offset_high = (base >> 16) & 0xFFFF;
+}
+
+
+
 
 PUBLIC u32 seg2phys(u16 seg)
 {

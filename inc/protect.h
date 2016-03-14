@@ -137,6 +137,8 @@ typedef struct s_tss {
 #define INT_VECTOR_IRQ0         0x20
 #define INT_VECTOR_IRQ8         0x28
 
+#define INT_VECTOR_SYS_CALL             0x90
+
 /* 宏 */
 /* 线性地址 → 物理地址 */
 #define vir2phys(seg_base, vir) (u32)(((u32)seg_base) + (u32)(vir))

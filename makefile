@@ -33,6 +33,8 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/i8259.o  \
 	$(DIR_KERENL)/global.o  \
 	$(DIR_KERENL)/clock.o  \
+	$(DIR_KERENL)/syscall.o  \
+	$(DIR_KERENL)/proc.o  \
 	
 .PHONY : clean
 

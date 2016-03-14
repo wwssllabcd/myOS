@@ -15,8 +15,15 @@
 PUBLIC void cstart();
 
 
-//kliba
-//PUBLIC void disp_color_str(char * info, int color);
+/* proc.c */
+PUBLIC  int     sys_get_ticks();        /* sys_call */
+
+
+/* syscall.asm */
+PUBLIC  void    sys_call();             /* int_handler */
+PUBLIC  int     get_ticks();
+
+
 
 //klib
 PUBLIC void disp_str(char* str);
