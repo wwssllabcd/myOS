@@ -4,6 +4,8 @@
 #include "global.h"
 #include "const.h"
 
+#include "ericut.h"
+
 
 void TestA(void)
 {
@@ -62,6 +64,7 @@ void printMem(u32 addr, u32 len)
 void kernel_main(void)
 {
     disp_str("\nKernel_main");
+    compiler_time_assert( 1, cast_fail);
 
     TASK* p_task = task_table;
     PROCESS* p_proc = proc_table;

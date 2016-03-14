@@ -77,8 +77,7 @@ PUBLIC void init_prot()
     init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate,            hwint14, PRIVILEGE_KRNL);
     init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate,            hwint15, PRIVILEGE_KRNL);
 
-    init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate,
-                  sys_call,         PRIVILEGE_USER);
+    init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate, sys_call, PRIVILEGE_USER);
 
 
 
@@ -108,13 +107,11 @@ PUBLIC void init_prot()
         p_proc++;
         selector_ldt += 1 << 3;
     }
-
 }
 
-
-PUBLIC void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
+PUBLIC void init_idt_desc_imp(u32 addr, u8 desc_type, u32 handler, u8 privilege)
 {
-    GATE* p_gate = &idt[vector];
+    GATE* p_gate = addr;
     u32 base = (u32) handler;
 
     p_gate->offset_low = base & 0xFFFF;
@@ -124,8 +121,12 @@ PUBLIC void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privi
     p_gate->offset_high = (base >> 16) & 0xFFFF;
 }
 
-
-
+PUBLIC void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
+{
+    GATE* p_gate = &idt[vector];
+    u32 base = (u32) handler;
+    init_idt_desc_imp((u32)p_gate, desc_type, base, privilege);
+}
 
 PUBLIC u32 seg2phys(u16 seg)
 {
