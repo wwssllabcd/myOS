@@ -10,7 +10,7 @@
 void TestA(void)
 {
     while(1){
-        disp_str("A.");
+        //disp_str("A.");
         milli_delay(200);
     }
 }
@@ -18,7 +18,7 @@ void TestA(void)
 void TestB(void)
 {
     while(1){
-        disp_str("B.");
+        //disp_str("B.");
         milli_delay(200);
     }
 }
@@ -26,7 +26,7 @@ void TestB(void)
 void TestC(void)
 {
     while(1){
-        disp_str("C.");
+        //disp_str("C.");
         milli_delay(200);
     }
 }
@@ -127,6 +127,8 @@ void kernel_main(void)
 
     put_irq_handler(CLOCK_IRQ, clock_handler); /* 设定时钟中断处理程序 */
     enable_irq(CLOCK_IRQ); /* 让8259A可以接收时钟中断 */
+
+    init_keyboard();
 
     restart();
 

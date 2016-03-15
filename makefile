@@ -36,6 +36,7 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/clock.o  \
 	$(DIR_KERENL)/syscall.o  \
 	$(DIR_KERENL)/proc.o  \
+	$(DIR_KERENL)/keyboard.o  \
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test
