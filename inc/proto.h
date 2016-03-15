@@ -49,4 +49,7 @@ PUBLIC void spurious_irq(int irq);
 //clock
 PUBLIC void clock_handler(int irq);
 
+PUBLIC void task_tty();
+
+
 #endif
