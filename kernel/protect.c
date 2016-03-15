@@ -40,6 +40,10 @@ void hwint13();
 void hwint14();
 void hwint15();
 
+/* 本文件内函数声明 */
+PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
+PRIVATE void init_descriptor(DESCRIPTOR * p_desc, u32 base, u32 limit, u16 attribute);
+PUBLIC void init_idt_desc_imp(u32 addr, u8 desc_type, u32 handler, u8 privilege);
 
 PUBLIC void init_prot()
 {
@@ -111,7 +115,7 @@ PUBLIC void init_prot()
 
 PUBLIC void init_idt_desc_imp(u32 addr, u8 desc_type, u32 handler, u8 privilege)
 {
-    GATE* p_gate = addr;
+    GATE* p_gate = (GATE*)addr;
     u32 base = (u32) handler;
 
     p_gate->offset_low = base & 0xFFFF;
