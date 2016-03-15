@@ -56,7 +56,7 @@ PUBLIC void keyboard_read()
     char    output[2];
     int make;   /* TRUE: make;  FALSE: break. */
 
-    memset(output, 0, 2);
+    memset_a(output, 0, 2);
 
     if(kb_in.count > 0){
         disable_int();
