@@ -38,6 +38,7 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/proc.o  \
 	$(DIR_KERENL)/keyboard.o  \
 	$(DIR_KERENL)/tty.o  \
+	$(DIR_KERENL)/console.o  \
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test
