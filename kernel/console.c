@@ -24,6 +24,7 @@
 
 PRIVATE void set_cursor(unsigned int position);
 PRIVATE void set_video_start_addr(u32 addr);
+PRIVATE void flush(CONSOLE* p_con);
 
 /*======================================================================*
 			   init_screen
@@ -73,11 +74,46 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 {
 	u8* p_vmem = (u8*)(V_MEM_BASE + p_con->cursor * 2);
 
-	*p_vmem++ = ch;
-	*p_vmem++ = DEFAULT_CHAR_COLOR;
-	p_con->cursor++;
+	switch(ch) {
+	case '\n':
+		if (p_con->cursor < p_con->original_addr +
+		    p_con->v_mem_limit - SCREEN_WIDTH) {
+			p_con->cursor = p_con->original_addr + SCREEN_WIDTH * 
+				((p_con->cursor - p_con->original_addr) /
+				 SCREEN_WIDTH + 1);
+		}
+		break;
+	case '\b':
+		if (p_con->cursor > p_con->original_addr) {
+			p_con->cursor--;
+			*(p_vmem-2) = ' ';
+			*(p_vmem-1) = DEFAULT_CHAR_COLOR;
+		}
+		break;
+	default:
+		if (p_con->cursor <
+		    p_con->original_addr + p_con->v_mem_limit - 1) {
+			*p_vmem++ = ch;
+			*p_vmem++ = DEFAULT_CHAR_COLOR;
+			p_con->cursor++;
+		}
+		break;
+	}
 
-	set_cursor(p_con->cursor);
+	while (p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE) {
+		scroll_screen(p_con, SCR_DN);
+	}
+
+	flush(p_con);
+}
+
+/*======================================================================*
+                           flush
+*======================================================================*/
+PRIVATE void flush(CONSOLE* p_con)
+{
+        set_cursor(p_con->cursor);
+        set_video_start_addr(p_con->current_start_addr);
 }
 
 /*======================================================================*
@@ -123,22 +159,33 @@ PUBLIC void select_console(int nr_console)	/* 0 ~ (NR_CONSOLES - 1) */
 	set_video_start_addr(console_table[nr_console].current_start_addr);
 }
 
+/*======================================================================*
+			   scroll_screen
+ *----------------------------------------------------------------------*
+ 滚屏.
+ *----------------------------------------------------------------------*
+ direction:
+	SCR_UP	: 向上滚屏
+	SCR_DN	: 向下滚屏
+	其它	: 不做处理
+ *======================================================================*/
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction)
 {
-    if (direction == SCR_UP) {
-        if (p_con->current_start_addr > p_con->original_addr) {
-            p_con->current_start_addr -= SCREEN_WIDTH;
-        }
-    }
-    else if (direction == SCR_DN) {
-        if (p_con->current_start_addr + SCREEN_SIZE < p_con->original_addr + p_con->v_mem_limit) {
-            p_con->current_start_addr += SCREEN_WIDTH;
-        }
-    }
-    else{
-    }
+	if (direction == SCR_UP) {
+		if (p_con->current_start_addr > p_con->original_addr) {
+			p_con->current_start_addr -= SCREEN_WIDTH;
+		}
+	}
+	else if (direction == SCR_DN) {
+		if (p_con->current_start_addr + SCREEN_SIZE <
+		    p_con->original_addr + p_con->v_mem_limit) {
+			p_con->current_start_addr += SCREEN_WIDTH;
+		}
+	}
+	else{
+	}
 
-    set_video_start_addr(p_con->current_start_addr);
-    set_cursor(p_con->cursor);
+	set_video_start_addr(p_con->current_start_addr);
+	set_cursor(p_con->cursor);
 }
 
