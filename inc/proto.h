@@ -56,4 +56,9 @@ PUBLIC void task_tty();
 PUBLIC void out_char(CONSOLE* p_con, char ch);
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
 
+
+//vsprintf
+int vsprintf(char *buf, const char *fmt, va_list args);
+
+
 #endif

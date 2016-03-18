@@ -113,6 +113,8 @@ void kernel_main(void)
         p_proc->regs.esp = (u32) p_task_stack;
         p_proc->regs.eflags = eflags;
 
+        p_proc->nr_tty = 0;
+
         p_task_stack -= p_task->stacksize;
         p_proc++;
         p_task++;
@@ -122,6 +124,13 @@ void kernel_main(void)
     proc_table[0].ticks = proc_table[0].priority = 150;
     proc_table[1].ticks = proc_table[1].priority = 50;
     proc_table[2].ticks = proc_table[2].priority = 30;
+
+    proc_table[1].nr_tty = 0;
+    proc_table[2].nr_tty = 1;
+    proc_table[3].nr_tty = 1;
+
+
+
 
     k_reenter = 0;
     ticks = 0;

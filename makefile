@@ -39,6 +39,8 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/keyboard.o  \
 	$(DIR_KERENL)/tty.o  \
 	$(DIR_KERENL)/console.o  \
+	$(DIR_KERENL)/printf.o  \
+	$(DIR_KERENL)/vsprintf.o  \
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test
