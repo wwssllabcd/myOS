@@ -5,6 +5,7 @@
 #include "const.h"
 #include "type.h"
 #include "protect.h"
+#include "console.h"
 
 
 
@@ -51,5 +52,8 @@ PUBLIC void clock_handler(int irq);
 
 PUBLIC void task_tty();
 
+
+PUBLIC void out_char(CONSOLE* p_con, char ch);
+PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
 
 #endif
