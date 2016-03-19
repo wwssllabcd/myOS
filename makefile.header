@@ -1,7 +1,8 @@
 CC = gcc
 LD = ld
 OBJCOPY = objcopy
-CFLAGS = -I $(INC_FD) -c -g -fno-stack-protector -fno-builtin
+CFLAGS = -m32 -I $(INC_FD) -c -g -fno-stack-protector -fno-builtin
+ASFLAG = --32 -o
 LDFLAGS = -m elf_i386 
 TRIM_FLAGS = -R .pdr -R .comment -R.note -S -O binary
 

@@ -66,7 +66,7 @@ boot/boot.bin:
 	make -C boot
 	
 head.o: head.s
-	$(AS) -o $(OBJDIR)/head.o head.s
+	$(AS) $(ASFLAG) $(OBJDIR)/head.o head.s
 
 # == rule for kernel/ ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
