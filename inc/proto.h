@@ -6,6 +6,7 @@
 #include "type.h"
 #include "protect.h"
 #include "console.h"
+#include "proc.h"
 
 
 
@@ -59,6 +60,10 @@ PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
 
 //vsprintf
 int vsprintf(char *buf, const char *fmt, va_list args);
+
+
+//tty
+PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc);
 
 
 #endif

@@ -10,7 +10,7 @@
 void TestA(void)
 {
     while( 1 ){
-        //disp_str("A.");
+        printf("A=%X", get_ticks());
         milli_delay(200);
     }
 }
@@ -18,7 +18,8 @@ void TestA(void)
 void TestB(void)
 {
     while( 1 ){
-        //disp_str("B.");
+        disp_str("B");
+        //printf("B.");
         milli_delay(200);
     }
 }
@@ -26,7 +27,8 @@ void TestB(void)
 void TestC(void)
 {
     while( 1 ){
-        //disp_str("C.");
+        disp_str("C");
+        //printf("C.");
         milli_delay(200);
     }
 }
