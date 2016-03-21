@@ -85,7 +85,7 @@ PUBLIC void init_prot()
 
 
 
-    memset_a(&tss, 0, sizeof(tss));
+    memset(&tss, 0, sizeof(tss));
 
     // 設定 ring 0 的SS與EIP
     tss.ss0 = SELECTOR_KERNEL_DS;

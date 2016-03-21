@@ -8,6 +8,7 @@
 
 %include "sconst.inc"
 
+
 ; 导入函数
 extern	cstart
 extern	kernel_main
@@ -335,16 +336,22 @@ save:
         push    restart_reenter             ;  push restart_reenter
         jmp     [esi + RETADR - P_STACKBASE];  return;
                                             ;}
-
-
 sys_call:
         call    save
+		push	dword [p_proc_ready]
         sti
+
+		push	ecx
+		push	ebx
         call    [sys_call_table + eax * 4]
+		add	esp, 4 * 3
+
         mov     [esi + EAXREG - P_STACKBASE], eax
         cli
         ret
 
+
+;
 ; ====================================================================================
 ;                                   restart
 ; ====================================================================================

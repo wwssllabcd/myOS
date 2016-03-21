@@ -88,14 +88,14 @@ void kernel_main(void)
             eflags = 0x202; /* IF=1, bit 2 is always 1 */
         }
 
-        strcpy_a(p_proc->p_name, p_task->name);   // name of the process
+        strcpy(p_proc->p_name, p_task->name);   // name of the process
         p_proc->pid = i;            // pid
 
         p_proc->ldt_sel = selector_ldt;
 
-        memcpy_a(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
+        memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[0].attr1 = DA_C | privilege << 5;
-        memcpy_a(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
+        memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
 		//BIT 0~1: RPL
         //BIT2 :TIL: 1代表位在 LDT
