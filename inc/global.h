@@ -34,3 +34,12 @@ extern  TTY     tty_table[];
 extern  CONSOLE         console_table[];
 
 
+#define GEN_SYS_CALL_FUN( NAME) index_##NAME,
+
+enum sys_call_Fun
+{
+    #include "systemCallGen.h"
+    TABLE_SIZE
+};
+
+

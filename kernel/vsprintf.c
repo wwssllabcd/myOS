@@ -32,12 +32,14 @@ int vsprintf(char *buf, const char *fmt, va_list args)
 
 		switch (*fmt) {
 		case 'x':
+		case 'X':
 			itoa(tmp, *((int*)p_next_arg));
 			strcpy(p, tmp);
 			p_next_arg += 4;
 			p += strlen(tmp);
 			break;
 		case 's':
+		case 'S':
 			break;
 		default:
 			break;
