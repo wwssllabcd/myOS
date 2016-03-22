@@ -42,6 +42,7 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/console.o  \
 	$(DIR_KERENL)/printf.o  \
 	$(DIR_KERENL)/vsprintf.o  \
+	$(DIR_KERENL)/systask.o  \
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test

@@ -313,16 +313,27 @@ exception:
 	add	esp, 4*2	; 让栈顶指向 EIP，堆栈中从顶向下依次是：EIP、CS、EFLAGS
 	hlt
 
-
+; =============================================================================
+;                                   save
+; =============================================================================
 save:
         pushad          ; `.
         push    ds      ;  |
         push    es      ;  | 保存原寄存器值
         push    fs      ;  |
         push    gs      ; /
+
+	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
+	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
+
+	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
+				;（没用栈，而是用了另一个寄存器 esi）
         mov     dx, ss
         mov     ds, dx
         mov     es, dx
+	mov	fs, dx
+
+	mov	edx, esi	; 恢复 edx
 
         mov     esi, esp                    ;esi = 进程表起始地址
 
@@ -336,22 +347,30 @@ save:
         push    restart_reenter             ;  push restart_reenter
         jmp     [esi + RETADR - P_STACKBASE];  return;
                                             ;}
+
+
+; =============================================================================
+;                                 sys_call
+; =============================================================================
 sys_call:
         call    save
-		push	dword [p_proc_ready]
-        sti
 
+        sti
+		push	esi
+
+		push	dword [p_proc_ready]
+		push	edx
 		push	ecx
 		push	ebx
         call    [sys_call_table + eax * 4]
-		add	esp, 4 * 3
+		add	esp, 4 * 4
 
+		pop	esi
         mov     [esi + EAXREG - P_STACKBASE], eax
         cli
         ret
 
 
-;
 ; ====================================================================================
 ;                                   restart
 ; ====================================================================================

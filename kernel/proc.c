@@ -32,8 +32,8 @@ PUBLIC void schedule()
 
         if (!greatest_ticks){
             for (p = &FIRST_PROC; p <= &LAST_PROC; p++)
-            if (p->p_flags == 0)
-            p->ticks = p->priority;
+            	if (p->p_flags == 0)
+            		p->ticks = p->priority;
         }
     }
 }
@@ -89,17 +89,13 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
 	return 0;
 }
 
-PUBLIC int sys_get_ticks()
-{
-	return ticks;
-}
-
 PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
 {
     int ret = 0;
 
     if (function == RECEIVE)
         memset(msg, 0, sizeof(MESSAGE));
+
 
     switch (function) {
     case BOTH:
@@ -112,8 +108,7 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
         ret = sendrec(function, src_dest, msg);
         break;
     default:
-        assert((function == BOTH) ||
-               (function == SEND) || (function == RECEIVE));
+        assert((function == BOTH) || (function == SEND) || (function == RECEIVE));
         break;
     }
 
@@ -312,8 +307,10 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 		assert(m);
 
-		phys_copy(va2la(proc2pid(p_who_wanna_recv), m), &msg,
-			  sizeof(MESSAGE));
+		phys_copy(
+		        va2la(proc2pid(p_who_wanna_recv), m)
+		        , &msg
+		        , sizeof(MESSAGE));
 
 		p_who_wanna_recv->has_int_msg = 0;
 

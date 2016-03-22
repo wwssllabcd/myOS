@@ -18,7 +18,7 @@ PUBLIC void cstart();
 
 
 /* proc.c */
-PUBLIC  int     sys_get_ticks();        /* sys_call */
+//PUBLIC  int     sys_get_ticks();        /* sys_call */
 
 
 /* syscall.asm */
@@ -53,6 +53,8 @@ PUBLIC void clock_handler(int irq);
 
 PUBLIC void task_tty();
 
+/* systask.c */
+PUBLIC void task_sys();
 
 PUBLIC void out_char(CONSOLE* p_con, char ch);
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
