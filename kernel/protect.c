@@ -5,6 +5,10 @@
 #include "proc.h"
 #include "global.h"
 
+/* 本文件内函数声明 */
+PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
+PRIVATE void init_descriptor(struct descriptor * p_desc, u32 base, u32 limit, u16 attribute);
+
 
 void divide_error();
 void single_step_exception();
@@ -40,10 +44,6 @@ void hwint13();
 void hwint14();
 void hwint15();
 
-/* 本文件内函数声明 */
-PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
-PRIVATE void init_descriptor(DESCRIPTOR * p_desc, u32 base, u32 limit, u16 attribute);
-PUBLIC void init_idt_desc_imp(u32 addr, u8 desc_type, u32 handler, u8 privilege);
 
 PUBLIC void init_prot()
 {
@@ -135,7 +135,7 @@ PUBLIC void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privi
 PUBLIC u32 seg2phys(u16 seg)
 {
     DESCRIPTOR* p_dest = &gdt[seg >> 3];
-    return (p_dest->base_high<<24 | p_dest->base_mid<<16 | p_dest->base_low);
+	return (p_dest->base_high << 24) | (p_dest->base_mid << 16) | (p_dest->base_low);
 }
 
 PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute)
@@ -154,7 +154,6 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 {
     int i;
     int text_color = 0x74; /* 灰底红字 */
-
     char * err_msg[] = {
             "#DE Divide Error",
             "#DB RESERVED",
