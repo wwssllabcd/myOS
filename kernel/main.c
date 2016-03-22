@@ -10,7 +10,7 @@
 void TestA(void)
 {
     while( 1 ){
-        printf("A=%X", get_ticks());
+        printf("A=%x", get_ticks());
         milli_delay(200);
     }
 }
@@ -18,7 +18,7 @@ void TestA(void)
 void TestB(void)
 {
     while( 1 ){
-        printf(",B=%X", CALL_TABLE_SIZE);
+        printf(",B=%x", CALL_TABLE_SIZE);
         milli_delay(200);
     }
 }
@@ -26,7 +26,7 @@ void TestB(void)
 void TestC(void)
 {
     while( 1 ){
-        printf(",C=%X", CALL_TABLE_SIZE);
+        printf(",C=%x", CALL_TABLE_SIZE);
         milli_delay(200);
     }
 }
