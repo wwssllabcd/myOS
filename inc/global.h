@@ -19,14 +19,16 @@ EXTERN  u8      idt_ptr[6]; // 0~15:Limit  16~47:Base
 EXTERN  GATE        idt[IDT_SIZE];
 
 EXTERN  u32     k_reenter;
+EXTERN  int nr_current_console;
 
 EXTERN  TSS     tss;
 EXTERN  PROCESS*    p_proc_ready;
 
 EXTERN  int     nr_current_console;
 
-extern  PROCESS     proc_table[];
+
 extern  char        task_stack[];
+extern  PROCESS     proc_table[];
 extern  TASK            task_table[];
 extern  TASK            user_proc_table[];
 extern  irq_handler irq_table[];

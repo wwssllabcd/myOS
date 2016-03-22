@@ -93,7 +93,7 @@ void kernel_main(void)
             eflags = 0x202; /* IF=1, bit 2 is always 1 */
         }
 
-        strcpy(p_proc->p_name, p_task->name);   // name of the process
+        strcpy(p_proc->name, p_task->name);   // name of the process
         p_proc->pid = i;            // pid
 
         p_proc->ldt_sel = selector_ldt;
