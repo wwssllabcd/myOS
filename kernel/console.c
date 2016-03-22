@@ -77,10 +77,10 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 	switch(ch) {
 	case '\n':
 		if (p_con->cursor < p_con->original_addr +
-		    p_con->v_mem_limit - SCREEN_WIDTH) {
-			p_con->cursor = p_con->original_addr + SCREEN_WIDTH * 
+		    p_con->v_mem_limit - SCR_WIDTH) {
+			p_con->cursor = p_con->original_addr + SCR_WIDTH * 
 				((p_con->cursor - p_con->original_addr) /
-				 SCREEN_WIDTH + 1);
+				 SCR_WIDTH + 1);
 		}
 		break;
 	case '\b':
@@ -100,7 +100,7 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 		break;
 	}
 
-	while (p_con->cursor >= p_con->current_start_addr + SCREEN_SIZE) {
+	while (p_con->cursor >= p_con->current_start_addr + SCR_SIZE) {
 		scroll_screen(p_con, SCR_DN);
 	}
 
@@ -112,8 +112,10 @@ PUBLIC void out_char(CONSOLE* p_con, char ch)
 *======================================================================*/
 PRIVATE void flush(CONSOLE* p_con)
 {
+    if(is_current_console(p_con)){
         set_cursor(p_con->cursor);
         set_video_start_addr(p_con->current_start_addr);
+    }
 }
 
 /*======================================================================*
@@ -155,8 +157,7 @@ PUBLIC void select_console(int nr_console)	/* 0 ~ (NR_CONSOLES - 1) */
 
 	nr_current_console = nr_console;
 
-	set_cursor(console_table[nr_console].cursor);
-	set_video_start_addr(console_table[nr_console].current_start_addr);
+	flush(&console_table[nr_console]);
 }
 
 /*======================================================================*
@@ -173,19 +174,18 @@ PUBLIC void scroll_screen(CONSOLE* p_con, int direction)
 {
 	if (direction == SCR_UP) {
 		if (p_con->current_start_addr > p_con->original_addr) {
-			p_con->current_start_addr -= SCREEN_WIDTH;
+			p_con->current_start_addr -= SCR_WIDTH;
 		}
 	}
 	else if (direction == SCR_DN) {
-		if (p_con->current_start_addr + SCREEN_SIZE <
+		if (p_con->current_start_addr + SCR_SIZE <
 		    p_con->original_addr + p_con->v_mem_limit) {
-			p_con->current_start_addr += SCREEN_WIDTH;
+			p_con->current_start_addr += SCR_WIDTH;
 		}
 	}
 	else{
 	}
 
-	set_video_start_addr(p_con->current_start_addr);
-	set_cursor(p_con->cursor);
+	flush(p_con);
 }
 

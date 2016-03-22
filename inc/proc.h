@@ -76,7 +76,7 @@ typedef struct task {
 #define NR_TASKS    1
 #define NR_PROCS    3
 #define FIRST_PROC  proc_table[0]
-#define LAST_PROC   proc_table[NR_TASKS + NR_PROCS - 1]
+#define LAST_PROC   proc_table[NR_TASKS + NR_PROCS]
 
 /* stacks of tasks */
 #define STACK_SIZE_TTY      0x8000
@@ -86,7 +86,8 @@ typedef struct task {
 #define STACK_SIZE_TESTC    0x8000
 
 
-#define STACK_SIZE_TOTAL    (STACK_SIZE_TTY + \
+#define STACK_SIZE_TOTAL    (    \
+                STACK_SIZE_TTY + \
                 STACK_SIZE_SYS + \
                 STACK_SIZE_TESTA + \
                 STACK_SIZE_TESTB + \

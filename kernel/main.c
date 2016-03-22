@@ -11,8 +11,6 @@ void TestA(void)
 {
     while( 1 ){
         printf("A=%X", get_ticks());
-        printf("aa=%X", CALL_TABLE_SIZE);
-
         milli_delay(200);
     }
 }
@@ -20,9 +18,7 @@ void TestA(void)
 void TestB(void)
 {
     while( 1 ){
-
-        //printf("B=%X", TABLE_SIZE);
-        //printf("B.");
+        printf("B=%X", CALL_TABLE_SIZE);
         milli_delay(200);
     }
 }
@@ -31,7 +27,6 @@ void TestC(void)
 {
     while( 1 ){
         disp_str("C");
-        //printf("C.");
         milli_delay(200);
     }
 }
@@ -85,8 +80,7 @@ void kernel_main(void)
             privilege = PRIVILEGE_TASK;
             rpl = RPL_TASK;
             eflags = 0x1202; /* IF=1, IOPL=1, bit 2 is always 1 */
-        }
-        else{ /* 用户进程 */
+        }else{ /* 用户进程 */
             p_task = user_proc_table + (i - NR_TASKS);
             privilege = PRIVILEGE_USER;
             rpl = RPL_USER;
@@ -133,9 +127,6 @@ void kernel_main(void)
     proc_table[1].nr_tty = 0;
     proc_table[2].nr_tty = 1;
     proc_table[3].nr_tty = 1;
-
-
-
 
     k_reenter = 0;
     ticks = 0;
