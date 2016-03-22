@@ -9,12 +9,24 @@
 #define	_ORANGES_CONST_H_
 
 
+/* the assert macro */
+#define ASSERT
+#ifdef ASSERT
+void assertion_failure(char *exp, char *file, char *base_file, int line);
+#define assert(exp)  if (exp) ; \
+        else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__)
+#else
+#define assert(exp)
+#endif
+
 /* EXTERN */
 #define	EXTERN	extern	/* EXTERN is defined as extern except in global.c */
 
 /* 函数类型 */
 #define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
 #define	PRIVATE	static	/* PRIVATE x limits the scope of x */
+
+#define STR_DEFAULT_LEN 1024
 
 /* Color */
 /*
@@ -29,7 +41,7 @@
 #define BLUE    0x1     /* 0001 */
 #define FLASH   0x80    /* 1000 0000 */
 #define BRIGHT  0x08    /* 0000 1000 */
-#define MAKE_COLOR(x,y) (x | y) /* MAKE_COLOR(Background,Foreground) */
+#define MAKE_COLOR(x,y) ((x<<4) | y) /* MAKE_COLOR(Background,Foreground) */
 
 /* GDT 和 IDT 中描述符的个数 */
 #define	GDT_SIZE	128
@@ -43,6 +55,10 @@
 #define	RPL_KRNL	SA_RPL0
 #define	RPL_TASK	SA_RPL1
 #define	RPL_USER	SA_RPL3
+
+/* Process */
+#define SENDING   0x02  /* set when proc trying to send */
+#define RECEIVING 0x04  /* set when proc trying to recv */
 
 /* TTY */
 #define NR_CONSOLES	3	/* consoles */
@@ -97,7 +113,45 @@
 #define	PRINTER_IRQ	7
 #define	AT_WINI_IRQ	14	/* at winchester */
 
+/* tasks */
+/* 注意 TASK_XXX 的定义要与 global.c 中对应 */
+#define INVALID_DRIVER  -20
+#define INTERRUPT   -10
+#define TASK_TTY    0
+#define TASK_SYS    1
+/* #define TASK_WINCH   2 */
+/* #define TASK_FS  3 */
+/* #define TASK_MM  4 */
+#define ANY     (NR_TASKS + NR_PROCS + 10)
+#define NO_TASK     (NR_TASKS + NR_PROCS + 20)
+
 /* system call */
-#define NR_SYS_CALL    2
+#define NR_SYS_CALL 3
+
+/* ipc */
+#define SEND        1
+#define RECEIVE     2
+#define BOTH        3   /* BOTH = (SEND | RECEIVE) */
+
+/* magic chars used by `printx' */
+#define MAG_CH_PANIC    '\002'
+#define MAG_CH_ASSERT   '\003'
+
+/**
+ * @enum msgtype
+ * @brief MESSAGE types
+ */
+enum msgtype {
+    /*
+     * when hard interrupt occurs, a msg (with type==HARD_INT) will
+     * be sent to some tasks
+     */
+    HARD_INT = 1,
+
+    /* SYS task */
+    GET_TICKS,
+};
+
+#define RETVAL      u.m3.m3i1
 
 #endif /* _ORANGES_CONST_H_ */

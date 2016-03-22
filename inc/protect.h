@@ -3,7 +3,7 @@
 #ifndef _PROTECT_H_
 #define _PROTECT_H_
 
-typedef struct s_descriptor
+typedef struct descriptor
 {
     u16 limit_low;
     u16 base_low;
@@ -13,7 +13,7 @@ typedef struct s_descriptor
     u8 base_high;
 }DESCRIPTOR;
 
-typedef struct s_gate
+typedef struct gate
 {
     u16 offset_low;
     u16 selector;

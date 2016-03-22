@@ -25,7 +25,7 @@ typedef struct s_stackframe {
 }STACK_FRAME;
 
 
-typedef struct s_proc {
+typedef struct proc {
     STACK_FRAME regs;          /* process registers saved in stack frame */
 
     u16 ldt_sel;               /* gdt selector giving ldt base and limit */
@@ -40,7 +40,7 @@ typedef struct s_proc {
     int nr_tty;
 }PROCESS;
 
-typedef struct s_task {
+typedef struct task {
     task_f  initial_eip;
     int stacksize;
     char    name[32];
