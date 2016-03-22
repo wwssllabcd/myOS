@@ -71,6 +71,8 @@ typedef struct task {
     char    name[32];
 }TASK;
 
+#define proc2pid(x) (x - proc_table)
+
 
 /* Number of tasks */
 #define NR_TASKS    1
