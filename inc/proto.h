@@ -36,7 +36,7 @@ PUBLIC void disp_str(char* str);
 //protect.c
 PUBLIC void init_prot();
 PUBLIC u32 seg2phys(u16 seg);
-PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute);
+//PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute);
 
 
 //main
@@ -68,6 +68,27 @@ PUBLIC  int sprintf(char *buf, const char *fmt, ...);
 
 /* proc.c */
 PUBLIC  void    schedule();
+PUBLIC  void*   va2la(int pid, void* va);
+PUBLIC  int ldt_seg_linear(struct proc* p, int idx);
+PUBLIC  void    reset_msg(MESSAGE* p);
+PUBLIC  void    dump_msg(const char * title, MESSAGE* m);
+PUBLIC  void    dump_proc(struct proc * p);
+PUBLIC  int send_recv(int function, int src_dest, MESSAGE* msg);
+
+/* lib/misc.c */
+PUBLIC void spin(char * func_name);
+/* 系统调用 - 系统级 */
+/* proc.c */
+PUBLIC  int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
+PUBLIC  int sys_printx(int _unused1, int _unused2, char* s, struct proc * p_proc);
+
+/* syscall.asm */
+PUBLIC  void    sys_call();             /* int_handler */
+
+
+/* 系统调用 - 用户级 */
+PUBLIC  int sendrec(int function, int src_dest, MESSAGE* p_msg);
+PUBLIC  int printx(char* str);
 
 //tty
 PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc);

@@ -24,8 +24,6 @@ EXTERN  int nr_current_console;
 EXTERN  TSS     tss;
 EXTERN  PROCESS*    p_proc_ready;
 
-EXTERN  int     nr_current_console;
-
 
 extern  char        task_stack[];
 extern  PROCESS     proc_table[];

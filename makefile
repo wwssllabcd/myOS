@@ -24,6 +24,7 @@ OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
 	$(DIR_LIB)/klib.o  \
 	$(DIR_LIB)/string.o  \
+	$(DIR_LIB)/misc.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \

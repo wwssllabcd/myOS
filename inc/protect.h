@@ -56,19 +56,18 @@ typedef struct s_tss {
 
 /* GDT */
 /* 描述符索引 */
-#define INDEX_DUMMY     0
-#define INDEX_FLAT_C        1   /* | LOADER 里面已经确定了的 */
-#define INDEX_FLAT_RW       2   /* |                         */
-#define INDEX_VIDEO     3   /* /                         */
+#define INDEX_DUMMY     0   /* ┓                          */
+#define INDEX_FLAT_C        1   /* ┣ LOADER 里面已经确定了的. */
+#define INDEX_FLAT_RW       2   /* ┃                          */
+#define INDEX_VIDEO     3   /* ┛                          */
 #define INDEX_TSS       4
 #define INDEX_LDT_FIRST     5
-
-/* 選擇子 */
-#define SELECTOR_DUMMY         0        // ┐
-#define SELECTOR_FLAT_C     0x08        // ├ LOADER 裡面已經確定了的.
-#define SELECTOR_FLAT_RW    0x10        // │
-#define SELECTOR_VIDEO      (0x18+3)    // ┘<-- RPL=3
-#define SELECTOR_TSS        0x20    /* TSS                       */
+/* 选择子 */
+#define SELECTOR_DUMMY         0        /* ┓                          */
+#define SELECTOR_FLAT_C     0x08        /* ┣ LOADER 里面已经确定了的. */
+#define SELECTOR_FLAT_RW    0x10        /* ┃                          */
+#define SELECTOR_VIDEO      (0x18+3)    /* ┛<-- RPL=3                 */
+#define SELECTOR_TSS        0x20        /* TSS. 从外层跳到内存时 SS 和 ESP 的值从里面获得. */
 #define SELECTOR_LDT_FIRST  0x28
 
 #define SELECTOR_KERNEL_CS  SELECTOR_FLAT_C
@@ -77,6 +76,32 @@ typedef struct s_tss {
 
 /* 每个任务有一个单独的 LDT, 每个 LDT 中的描述符个数: */
 #define LDT_SIZE        2
+/* descriptor indices in LDT */
+#define INDEX_LDT_C             0
+#define INDEX_LDT_RW            1
+
+/* 描述符类型值说明 */
+#define DA_32           0x4000  /* 32 位段                */
+#define DA_LIMIT_4K     0x8000  /* 段界限粒度为 4K 字节         */
+#define DA_DPL0         0x00    /* DPL = 0              */
+#define DA_DPL1         0x20    /* DPL = 1              */
+#define DA_DPL2         0x40    /* DPL = 2              */
+#define DA_DPL3         0x60    /* DPL = 3              */
+/* 存储段描述符类型值说明 */
+#define DA_DR           0x90    /* 存在的只读数据段类型值      */
+#define DA_DRW          0x92    /* 存在的可读写数据段属性值     */
+#define DA_DRWA         0x93    /* 存在的已访问可读写数据段类型值  */
+#define DA_C            0x98    /* 存在的只执行代码段属性值     */
+#define DA_CR           0x9A    /* 存在的可执行可读代码段属性值       */
+#define DA_CCO          0x9C    /* 存在的只执行一致代码段属性值       */
+#define DA_CCOR         0x9E    /* 存在的可执行可读一致代码段属性值 */
+/* 系统段描述符类型值说明 */
+#define DA_LDT          0x82    /* 局部描述符表段类型值           */
+#define DA_TaskGate     0x85    /* 任务门类型值               */
+#define DA_386TSS       0x89    /* 可用 386 任务状态段类型值      */
+#define DA_386CGate     0x8C    /* 386 调用门类型值           */
+#define DA_386IGate     0x8E    /* 386 中断门类型值           */
+#define DA_386TGate     0x8F    /* 386 陷阱门类型值           */
 
 /* 选择子类型值说明 */
 /* 其中, SA_ : Selector Attribute */
@@ -90,32 +115,7 @@ typedef struct s_tss {
 #define SA_TIG      0
 #define SA_TIL      4
 
-
-
-/* 描述符類型值說明 */
-#define DA_32           0x4000  /* 32 位段                */
-#define DA_LIMIT_4K     0x8000  /* 段界限粒度為 4K 字節         */
-#define DA_DPL0         0x00    /* DPL = 0              */
-#define DA_DPL1         0x20    /* DPL = 1              */
-#define DA_DPL2         0x40    /* DPL = 2              */
-#define DA_DPL3         0x60    /* DPL = 3              */
-/* 存儲段描述符類型值說明 */
-#define DA_DR           0x90    /* 存在的只讀數據段類型值      */
-#define DA_DRW          0x92    /* 存在的可讀寫數據段屬性值     */
-#define DA_DRWA         0x93    /* 存在的已訪問可讀寫數據段類型值  */
-#define DA_C            0x98    /* 存在的只執行代碼段屬性值     */
-#define DA_CR           0x9A    /* 存在的可執行可讀代碼段屬性值       */
-#define DA_CCO          0x9C    /* 存在的只執行一致代碼段屬性值       */
-#define DA_CCOR         0x9E    /* 存在的可執行可讀一致代碼段屬性值 */
-/* 系統段描述符類型值說明 */
-#define DA_LDT          0x82    /* 局部描述符表段類型值           */
-#define DA_TaskGate     0x85    /* 任務門類型值               */
-#define DA_386TSS       0x89    /* 可用 386 任務狀態段類型值      */
-#define DA_386CGate     0x8C    /* 386 調用門類型值           */
-#define DA_386IGate     0x8E    /* 386 中斷門類型值           */
-#define DA_386TGate     0x8F    /* 386 陷阱門類型值           */
-
-/* 中斷向量 */
+/* 中断向量 */
 #define INT_VECTOR_DIVIDE       0x0
 #define INT_VECTOR_DEBUG        0x1
 #define INT_VECTOR_NMI          0x2
@@ -133,10 +133,11 @@ typedef struct s_tss {
 #define INT_VECTOR_PAGE_FAULT       0xE
 #define INT_VECTOR_COPROC_ERR       0x10
 
-/* 中斷向量 */
+/* 中断向量 */
 #define INT_VECTOR_IRQ0         0x20
 #define INT_VECTOR_IRQ8         0x28
 
+/* 系统调用 */
 #define INT_VECTOR_SYS_CALL             0x90
 
 /* 宏 */
