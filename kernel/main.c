@@ -70,21 +70,25 @@ void kernel_main(void)
     PROCESS* p_proc = proc_table;
     char* p_task_stack = task_stack + STACK_SIZE_TOTAL;
     u16 selector_ldt = SELECTOR_LDT_FIRST;
-    int i;
+  
     u8 privilege;
     u8 rpl;
     int eflags;
+	int   i;
+	int   prio;
     for (i = 0; i < NR_TASKS + NR_PROCS; i++){
         if(i < NR_TASKS){ /* 任务 */
             p_task = task_table + i;
             privilege = PRIVILEGE_TASK;
             rpl = RPL_TASK;
             eflags = 0x1202; /* IF=1, IOPL=1, bit 2 is always 1 */
+			prio      = 15;
         }else{ /* 用户进程 */
             p_task = user_proc_table + (i - NR_TASKS);
             privilege = PRIVILEGE_USER;
             rpl = RPL_USER;
             eflags = 0x202; /* IF=1, bit 2 is always 1 */
+			prio      = 5;
         }
 
         strcpy(p_proc->name, p_task->name);   // name of the process
@@ -114,19 +118,25 @@ void kernel_main(void)
 
         p_proc->nr_tty = 0;
 
+		p_proc->p_flags = 0;
+		p_proc->p_msg = 0;
+		p_proc->p_recvfrom = NO_TASK;
+		p_proc->p_sendto = NO_TASK;
+		p_proc->has_int_msg = 0;
+		p_proc->q_sending = 0;
+		p_proc->next_sending = 0;
+
+		p_proc->ticks = p_proc->priority = prio;
+
         p_task_stack -= p_task->stacksize;
         p_proc++;
         p_task++;
         selector_ldt += 1 << 3;
     }
 
-    proc_table[0].ticks = proc_table[0].priority = 150;
-    proc_table[1].ticks = proc_table[1].priority = 50;
-    proc_table[2].ticks = proc_table[2].priority = 30;
-
-    proc_table[1].nr_tty = 0;
-    proc_table[2].nr_tty = 1;
-    proc_table[3].nr_tty = 1;
+        proc_table[NR_TASKS + 0].nr_tty = 0;
+        proc_table[NR_TASKS + 1].nr_tty = 1;
+        proc_table[NR_TASKS + 2].nr_tty = 1;
 
     k_reenter = 0;
     ticks = 0;
