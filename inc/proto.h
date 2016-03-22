@@ -57,10 +57,17 @@ PUBLIC void task_tty();
 PUBLIC void out_char(CONSOLE* p_con, char ch);
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
 
+/* printf.c */
+PUBLIC  int     printf(const char *fmt, ...);
+#define printl  printf
 
 //vsprintf
-int vsprintf(char *buf, const char *fmt, va_list args);
+PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
+PUBLIC  int sprintf(char *buf, const char *fmt, ...);
 
+
+/* proc.c */
+PUBLIC  void    schedule();
 
 //tty
 PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc);
