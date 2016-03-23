@@ -27,15 +27,27 @@ PUBLIC void schedule()
                     greatest_ticks = p->ticks;
                     p_proc_ready = p;
                 }
+            }else{
+                //printf(",P=%x,has been block", p-&FIRST_PROC);
             }
         }
 
+        //如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
         if (!greatest_ticks){
             for (p = &FIRST_PROC; p <= &LAST_PROC; p++)
             	if (p->p_flags == 0)
             		p->ticks = p->priority;
         }
     }
+
+
+//    int i,j,k;
+//    for(i=0; i<0x1000; i++){
+//        for(j=0; j<0x1000; j++){
+//            k++;
+//
+//        }
+//    }
 }
 
 /*****************************************************************************
@@ -126,7 +138,10 @@ PUBLIC void* va2la(int pid, void* va)
 {
     struct proc* p = &proc_table[pid];
 
+    //找出該 process的 phy memory address
     u32 seg_base = ldt_seg_linear(p, INDEX_LDT_RW);
+
+    // va 應該就是message
     u32 la = seg_base + (u32)va;
 
     if (pid < NR_TASKS + NR_PROCS) {
@@ -218,12 +233,19 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         assert(p_dest->p_msg);
         assert(m);
 
+        //找出實際上雙方的 message位置後，拷貝過去
         phys_copy(va2la(dest, p_dest->p_msg),
               va2la(proc2pid(sender), m),
               sizeof(MESSAGE));
+
         p_dest->p_msg = 0;
+
+        // dest 再等 msg, 然後剛好sender又要送給他，所以就配對
         p_dest->p_flags &= ~RECEIVING; /* dest has received the msg */
         p_dest->p_recvfrom = NO_TASK;
+
+
+        // unlock 遠端
         unblock(p_dest);
 
         assert(p_dest->p_flags == 0);
@@ -234,8 +256,9 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         assert(sender->p_msg == 0);
         assert(sender->p_recvfrom == NO_TASK);
         assert(sender->p_sendto == NO_TASK);
-    }
-    else { /* dest is not waiting for the msg */
+    }else { /* dest is not waiting for the msg */
+
+
         sender->p_flags |= SENDING;
         assert(sender->p_flags == SENDING);
         sender->p_sendto = dest;
@@ -299,6 +322,9 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		/* There is an interrupt needs p_who_wanna_recv's handling and
 		 * p_who_wanna_recv is ready to handle it.
 		 */
+	    // 如果 has_int_msg=1時
+
+	   
 
 		MESSAGE msg;
 		reset_msg(&msg);
@@ -328,6 +354,8 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * ANY proc, we'll check the sending queue and pick the
 		 * first proc in it.
 		 */
+	    //sending 的queue，代表有多少人對這個process發送msg
+
 		if (p_who_wanna_recv->q_sending) {
 			p_from = p_who_wanna_recv->q_sending;
 			copyok = 1;
@@ -342,8 +370,8 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 			assert(p_from->p_recvfrom == NO_TASK);
 			assert(p_from->p_sendto == proc2pid(p_who_wanna_recv));
 		}
-	}
-	else if (src >= 0 && src < NR_TASKS + NR_PROCS) {
+
+	}else if (src >= 0 && src < NR_TASKS + NR_PROCS) {
 		/* p_who_wanna_recv wants to receive a message from
 		 * a certain proc: src.
 		 */
@@ -384,6 +412,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		}
 	}
 
+	
 	if (copyok) {
 		/* It's determined from which proc the message will
 		 * be copied. Note that this proc must have been
@@ -414,16 +443,25 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		p_from->p_flags &= ~SENDING;
 
 		unblock(p_from);
-	}
-	else {  /* nobody's sending any msg */
+	}else {  /* nobody's sending any msg */
 		/* Set p_flags so that p_who_wanna_recv will not
 		 * be scheduled until it is unblocked.
 		 */
+
+	    
+
+	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
 		p_who_wanna_recv->p_flags |= RECEIVING;
 
+		//m是外部的msg pointer, receive的話就是代表最初呼叫者所提供的容器
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
+
+		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
+		// 如果沒人發給本身，則本身這個process會被block
 		block(p_who_wanna_recv);
+
+
 
 		assert(p_who_wanna_recv->p_flags == RECEIVING);
 		assert(p_who_wanna_recv->p_msg != 0);

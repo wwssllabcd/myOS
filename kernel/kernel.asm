@@ -317,32 +317,37 @@ exception:
 ;                                   save
 ; =============================================================================
 save:
+		;這裡保存了register, 可見進來的時候，esp應該就是指向 struct process
         pushad          ; `.
         push    ds      ;  |
         push    es      ;  | 保存原寄存器值
         push    fs      ;  |
         push    gs      ; /
 
-	;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
-	;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
+		;; 注意，从这里开始，一直到 `mov esp, StackTop'，中间坚决不能用 push/pop 指令，
+		;; 因为当前 esp 指向 proc_table 里的某个位置，push 会破坏掉进程表，导致灾难性后果！
 
-	mov	esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
-				;（没用栈，而是用了另一个寄存器 esi）
+		mov		esi, edx	; 保存 edx，因为 edx 里保存了系统调用的参数
+							;（没用栈，而是用了另一个寄存器 esi）
         mov     dx, ss
         mov     ds, dx
         mov     es, dx
-	mov	fs, dx
+		mov		fs, dx
 
-	mov	edx, esi	; 恢复 edx
+		mov		edx, esi	; 恢复 edx
 
         mov     esi, esp                    ;esi = 进程表起始地址
 
         inc     dword [k_reenter]           ;k_reenter++;
         cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
         jne     .1                          ;{
+
+        ;StackTop為 kernel space
         mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
+
         push    restart                     ;  push restart
         jmp     [esi + RETADR - P_STACKBASE];  return;
+
 .1:                                         ;} else { 已经在内核栈，不需要再切换
         push    restart_reenter             ;  push restart_reenter
         jmp     [esi + RETADR - P_STACKBASE];  return;
@@ -375,16 +380,25 @@ sys_call:
 ;                                   restart
 ; ====================================================================================
 restart:
-	mov	esp, [p_proc_ready]
-	lldt	[esp + P_LDT_SEL] 
-	lea	eax, [esp + P_STACKTOP]
-	mov	dword [tss + TSS3_S_SP0], eax
+	mov	esp, [p_proc_ready]             ; p_proc_ready 為一個 PROCESS 的 struct, 最前頭就是該process所保存的reg
+										; 所以把他變成 ESP之後，就可以用來還原 process 的 reg, 包括 return address
+	lldt	[esp + P_LDT_SEL]           ; P_LDT_SEL 對應到 PROCESS 中的 ldt_sel，把該位置的"值"，指給lldt
+
+	lea	eax, [esp + P_STACKTOP]         ; for ex: esp+P_STACKTOP=37988，則把 eax = 37988 (P_STACKTOP 與 P_LDT_SEL 是相等的)
+										; 與 mov 不同的是，lea 不是取該位置儲存的值，而是取位置
+
+	mov	dword [tss + TSS3_S_SP0], eax   ; TSS3_S_SP0 為固定值4，也就是把 ldt_sel 的存在位置，放到tss
+										; 這也代表 process如果要保存 reg 時，會從這點開始，往低位保存
+										; 是不是當int發生時，cpu會自動的把這個值放到 ESP中？好讓process保存reg
+										; 當process運行時，都要保證每個TSS.esp0是對應到保存reg的地方 (orange, P192)
+
 restart_reenter:
 	dec	dword [k_reenter]
 	pop	gs
 	pop	fs
 	pop	es
 	pop	ds
-	popad
+	popad             ; popad will ingore ESP
 	add	esp, 4
-	iretd
+
+	iretd             ; 切換process, 利用 iretd 會還原 process 的 ESP, SS:IP，eflag .. 的特性

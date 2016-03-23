@@ -75,6 +75,7 @@ PUBLIC int vsprintf(char *buf, const char *fmt, va_list args)
 			p_next_arg += 4;
 			break;
 		case 'x':
+		case 'X':
 			m = *((int*)p_next_arg);
 			i2a(m, 16, &q);
 			p_next_arg += 4;

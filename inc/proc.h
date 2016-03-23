@@ -10,6 +10,7 @@ typedef struct stackframe {
     u32 fs;     /* |                                    */
     u32 es;     /* |                                    */
     u32 ds;     /* |                                    */
+
     u32 edi;        /* |                                    */
     u32 esi;        /* | pushed by save()                   */
     u32 ebp;        /* |                                    */
@@ -18,6 +19,8 @@ typedef struct stackframe {
     u32 edx;        /* |                                    */
     u32 ecx;        /* |                                    */
     u32 eax;        /* /                                    */
+
+    //離開 save的時候使用的
     u32 retaddr;    /* return addr for kernel.asm::save()   */
     u32 eip;        /* \                                    */
     u32 cs;     /* |                                    */

@@ -10,6 +10,8 @@ PUBLIC int get_ticks()
     MESSAGE msg;
     reset_msg(&msg);
     msg.type = GET_TICKS;
+    //printf("\nGT");
+    // both 就是向 task_sys 先送"我要tick"，後收 tick
     send_recv(BOTH, TASK_SYS, &msg);
     return msg.RETVAL;
 }
@@ -18,7 +20,7 @@ void TestA(void)
 {
     while( 1 ){
         printf("A=%x", get_ticks());
-        milli_delay(200);
+        milli_delay(2000);
     }
 }
 
@@ -26,7 +28,7 @@ void TestB(void)
 {
     while( 1 ){
         printf(",B=%x", CALL_TABLE_SIZE);
-        milli_delay(200);
+        milli_delay(2000);
     }
 }
 
@@ -34,7 +36,7 @@ void TestC(void)
 {
     while( 1 ){
         printf(",C=%x", CALL_TABLE_SIZE);
-        milli_delay(200);
+        milli_delay(2000);
     }
 }
 
@@ -119,6 +121,7 @@ void kernel_main(void)
         p_proc->regs.ss = (8 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;
         p_proc->regs.gs = (SELECTOR_KERNEL_GS & SA_RPL_MASK) | rpl;
 
+        // initial_eip就是該process的 fun_ptr，會在restart中，被 iret還原
         p_proc->regs.eip = (u32) p_task->initial_eip;
         p_proc->regs.esp = (u32) p_task_stack;
         p_proc->regs.eflags = eflags;
