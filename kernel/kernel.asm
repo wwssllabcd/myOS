@@ -28,6 +28,8 @@ extern	disp_pos
 extern	k_reenter
 extern	sys_call_table
 
+extern	hd_cnt
+
 
 
 bits 32
@@ -119,6 +121,10 @@ _start_k:
 	; 因为编译器有可能编译出使用它们的代码, 而编译器默认它们是一样的. 比如串拷贝操作会用到 ds 和 es.
 	;
 	;
+
+
+	mov	byte al, [0x90100]
+	mov byte [hd_cnt], al
 
 
 	; 把 esp 从 LOADER 挪到 KERNEL
