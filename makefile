@@ -7,6 +7,7 @@ NASM_FLG = -I inc/ -f elf
 DIR_BOOT = ./boot
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
+DIR_FS = ./fs
 
 
 #======== Flag ========
@@ -19,6 +20,8 @@ OBJ_FILES = \
 	$(OBJDIR)/head.o  \
 	$(OBJ_LIB) \
 	$(OBJ_KERNEL) \
+	$(OBJ_FS) \
+	
 	
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
@@ -43,8 +46,15 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/printf.o  \
 	$(DIR_KERENL)/vsprintf.o  \
 	$(DIR_KERENL)/systask.o  \
+	$(DIR_KERENL)/hd.o  \
+
+OBJ_FS = \
+	$(DIR_FS)/main.o  \
+	
+
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
+
 DIR_UNIT_TEST = ./unit_test
 OBJ_UNIT_TEST = \
 	$(DIR_UNIT_TEST)/ericut.o  \
@@ -84,6 +94,11 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 	$(CC) $(CFLAGS) $< -o $@
 	
+# == rule for fs/ ==
+$(DIR_FS)/%.o: $(DIR_FS)/%.c
+	$(CC) $(CFLAGS) $< -o $@
+	
+	
 # ut
 $(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c
 	$(CC) $(CFLAGS) $< -o $@    
@@ -100,7 +115,7 @@ diasm:
 
 clean:
 	@make -C boot clean
-	@rm -rf *.o *.elf *.bin *.img *.nm
+	@rm -rf *.o *.elf *.bin system.img *.nm
 	@rm -rf $(OBJ_FILES)
 	@rm -rf $(OBJDIR)
 

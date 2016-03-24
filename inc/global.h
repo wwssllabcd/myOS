@@ -10,6 +10,8 @@
 #define EXTERN
 #endif
 
+EXTERN  u8      hd_cnt;
+
 EXTERN  int     m_ticks;
 
 EXTERN  int     disp_pos;
