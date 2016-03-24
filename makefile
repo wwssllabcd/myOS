@@ -100,7 +100,7 @@ diasm:
 
 clean:
 	@make -C boot clean
-	@rm -rf *.o *.elf *.bin *.img *.nm
+	@rm -rf *.o *.elf *.bin system.img *.nm
 	@rm -rf $(OBJ_FILES)
 	@rm -rf $(OBJDIR)
 
