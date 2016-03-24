@@ -145,8 +145,8 @@ void kernel_main(void)
     }
 
         proc_table[NR_TASKS + 0].nr_tty = 0;
-        proc_table[NR_TASKS + 1].nr_tty = 0;
-        proc_table[NR_TASKS + 2].nr_tty = 0;
+        proc_table[NR_TASKS + 1].nr_tty = 1;
+        proc_table[NR_TASKS + 2].nr_tty = 1;
 
     k_reenter = 0;
     m_ticks = 0;

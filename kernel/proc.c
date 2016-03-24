@@ -5,7 +5,6 @@
 #include "tty.h"
 #include "console.h"
 #include "string.h"
-#include "fs.h"
 #include "proc.h"
 #include "global.h"
 #include "proto.h"
@@ -58,7 +57,7 @@ PUBLIC void schedule()
     //    }
     //}
 
-    printf(",Sch_end, sel=%x", proc2pid(p_proc_ready));
+    //printf(",Sch_end, sel=%x", proc2pid(p_proc_ready));
     //printf("\n------- Current Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -343,7 +342,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 	assert(proc2pid(p_who_wanna_recv) != src);
 
 
-	printf("\nProc=%x,RM,int=%x,src=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->has_int_msg, src);
+	//printf(",RM,int=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
 
 
 	if ((p_who_wanna_recv->has_int_msg) &&
@@ -482,7 +481,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * be scheduled until it is unblocked.
 		 */
 
-	    printf(",NoMsg");
+	    //printf(",NoMsg");
 
 	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
 		p_who_wanna_recv->p_flags |= RECEIVING;
@@ -503,40 +502,6 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 	}
 
 	return 0;
-}
-
-/*****************************************************************************
- *                                inform_int
- *****************************************************************************/
-/**
- * <Ring 0> Inform a proc that an interrupt has occured.
- * 
- * @param task_nr  The task which will be informed.
- *****************************************************************************/
-PUBLIC void inform_int(int task_nr)
-{
-	struct proc* p = proc_table + task_nr;
-
-	if ((p->p_flags & RECEIVING) && /* dest is waiting for the msg */
-	    ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) {
-
-	    p->p_msg->source = INTERRUPT;
-		p->p_msg->type = HARD_INT;
-		p->p_msg = 0;
-		p->has_int_msg = 0;
-		p->p_flags &= ~RECEIVING; /* dest has received the msg */
-		p->p_recvfrom = NO_TASK;
-		assert(p->p_flags == 0);
-		unblock(p);
-
-		assert(p->p_flags == 0);
-		assert(p->p_msg == 0);
-		assert(p->p_recvfrom == NO_TASK);
-		assert(p->p_sendto == NO_TASK);
-	}
-	else {
-		p->has_int_msg = 1;
-	}
 }
 
 /*****************************************************************************

@@ -46,17 +46,6 @@ _start_s:
 	mov	$0x0100, %dx
 	call DispStr
 
-	# save hd infor from bois data
-	mov $0, %ax
-	mov %ax, %ds
-	movb %ds:0x475, %dx
-
-	mov	$INITSEG, %ax
-	mov	%ax, %ds
-	mov	%dx, %ds:0x100  #0x90100
-
-
-
 	#init all segment
 	mov	$INITSEG, %ax	# this is done in bootsect already, but...
 	mov	%ax, %ds
