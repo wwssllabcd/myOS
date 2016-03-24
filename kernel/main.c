@@ -10,7 +10,7 @@ PUBLIC int get_ticks()
     MESSAGE msg;
     reset_msg(&msg);
     msg.type = GET_TICKS;
-    //printf("\nGT");
+    //printf("\nGT=%x", proc2pid(p_proc_ready));
     // both 就是向 task_sys 先送"我要tick"，後收 tick
     send_recv(BOTH, TASK_SYS, &msg);
     return msg.RETVAL;
@@ -19,7 +19,7 @@ PUBLIC int get_ticks()
 void TestA(void)
 {
     while( 1 ){
-        printf("A=%x", get_ticks());
+        printf("\nA=%x", get_ticks());
         milli_delay(2000);
     }
 }
@@ -27,7 +27,7 @@ void TestA(void)
 void TestB(void)
 {
     while( 1 ){
-        printf(",B=%x", CALL_TABLE_SIZE);
+        printf("\nB=%x", CALL_TABLE_SIZE);
         milli_delay(2000);
     }
 }
@@ -35,7 +35,7 @@ void TestB(void)
 void TestC(void)
 {
     while( 1 ){
-        printf(",C=%x", CALL_TABLE_SIZE);
+        printf("\nC=%x", CALL_TABLE_SIZE);
         milli_delay(2000);
     }
 }
@@ -149,7 +149,7 @@ void kernel_main(void)
         proc_table[NR_TASKS + 2].nr_tty = 1;
 
     k_reenter = 0;
-    ticks = 0;
+    m_ticks = 0;
 
     p_proc_ready = proc_table;
 

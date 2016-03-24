@@ -20,34 +20,46 @@ PUBLIC void schedule()
     PROCESS* p;
     int greatest_ticks = 0;
 
+    //printf("\nSchS=%x",  proc2pid(p_proc_ready));
+
     while( !greatest_ticks ){
         for (p = &FIRST_PROC; p <= &LAST_PROC; p++){
+
+            //printf(",p=%x-%x-%x", proc2pid(p), p->p_flags, p->ticks);
+
             if (p->p_flags == 0){
                 if (p->ticks > greatest_ticks){
                     greatest_ticks = p->ticks;
                     p_proc_ready = p;
+                    //printf(",CP=%x", proc2pid(p));
                 }
-            }else{
-                //printf(",P=%x,has been block", p-&FIRST_PROC);
+            } else{
+               // printf(",blk");
             }
         }
 
         //如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
         if (!greatest_ticks){
-            for (p = &FIRST_PROC; p <= &LAST_PROC; p++)
-            	if (p->p_flags == 0)
+            //printf("\n ------- RST Tick --------");
+            for (p = &FIRST_PROC; p <= &LAST_PROC; p++){
+                // 若是狀態在 SEND 或是 RECEIVE 的，將不會獲得tick (orange, P321)
+                if (p->p_flags == 0){
             		p->ticks = p->priority;
+            	}
+            }
         }
     }
 
+    //int i,j,k;
+    //for(i=0; i<0x1000; i++){
+    //    for(j=0; j<0x800; j++){
+    //        k++;
+    //    }
+    //}
 
-//    int i,j,k;
-//    for(i=0; i<0x1000; i++){
-//        for(j=0; j<0x1000; j++){
-//            k++;
-//
-//        }
-//    }
+    //printf(",Sch_end, sel=%x", proc2pid(p_proc_ready));
+    //printf("\n------- Current Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
+
 }
 
 /*****************************************************************************
@@ -74,6 +86,8 @@ PUBLIC int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
 	int caller = proc2pid(p);
 	MESSAGE* mla = (MESSAGE*)va2la(caller, m);
 	mla->source = caller;
+
+	//printf("\nCall=%x", caller);
 
 	assert(mla->source != src_dest);
 
@@ -108,7 +122,7 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
     if (function == RECEIVE)
         memset(msg, 0, sizeof(MESSAGE));
 
-
+    //1: send, 2 receive, 3:both
     switch (function) {
     case BOTH:
         ret = sendrec(SEND, src_dest, msg);
@@ -118,6 +132,7 @@ PUBLIC int send_recv(int function, int src_dest, MESSAGE* msg)
     case SEND:
     case RECEIVE:
         ret = sendrec(function, src_dest, msg);
+        //printf("\nb2_Send_Rcv, p=%x, F=%x", p_proc_ready-&FIRST_PROC, function);
         break;
     default:
         assert((function == BOTH) || (function == SEND) || (function == RECEIVE));
@@ -170,6 +185,7 @@ PUBLIC void reset_msg(MESSAGE* p)
  *****************************************************************************/
 PRIVATE void block(struct proc* p)
 {
+    //printf(",C_Blk");
     assert(p->p_flags);
     schedule();
 }
@@ -185,6 +201,7 @@ PRIVATE void block(struct proc* p)
  *****************************************************************************/
 PRIVATE void unblock(struct proc* p)
 {
+    //printf(",UnBLk=%x", proc2pid(p) );
     assert(p->p_flags == 0);
 }
 
@@ -227,9 +244,14 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
     }
 
+    //printf(",SM,from=%x, dest=%x,d_sts=%X", proc2pid(sender), dest, p_dest->p_flags);
+
     if ((p_dest->p_flags & RECEIVING) && /* dest is waiting for the msg */
         (p_dest->p_recvfrom == proc2pid(sender) ||
          p_dest->p_recvfrom == ANY)) {
+
+        //printf(",SM_2_Des_RDY");
+
         assert(p_dest->p_msg);
         assert(m);
 
@@ -258,6 +280,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         assert(sender->p_sendto == NO_TASK);
     }else { /* dest is not waiting for the msg */
 
+        //printf(",SM_Des_NOT_RDY");
 
         sender->p_flags |= SENDING;
         assert(sender->p_flags == SENDING);
@@ -285,6 +308,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         assert(sender->p_sendto == dest);
     }
 
+    //printf(",Send_E");
     return 0;
 }
 
@@ -317,6 +341,10 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	assert(proc2pid(p_who_wanna_recv) != src);
 
+
+	//printf(",RM,int=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
+
+
 	if ((p_who_wanna_recv->has_int_msg) &&
 	    ((src == ANY) || (src == INTERRUPT))) {
 		/* There is an interrupt needs p_who_wanna_recv's handling and
@@ -324,7 +352,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 	    // 如果 has_int_msg=1時
 
-	   
+	    //printf(",A");
 
 		MESSAGE msg;
 		reset_msg(&msg);
@@ -355,8 +383,10 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * first proc in it.
 		 */
 	    //sending 的queue，代表有多少人對這個process發送msg
-
+	    //printf(",Rcv_Any,SND_PROC=%X", proc2pid(p_who_wanna_recv->q_sending));
 		if (p_who_wanna_recv->q_sending) {
+
+		    //設定從哪接收
 			p_from = p_who_wanna_recv->q_sending;
 			copyok = 1;
 
@@ -412,15 +442,17 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		}
 	}
 
-	
+	//printf(",CPOK=%X", copyok);
 	if (copyok) {
 		/* It's determined from which proc the message will
 		 * be copied. Note that this proc must have been
 		 * waiting for this moment in the queue, so we should
 		 * remove it from the queue.
 		 */
+
 		if (p_from == p_who_wanna_recv->q_sending) { /* the 1st one */
 			assert(prev == 0);
+			//換 q_send 成下個 send
 			p_who_wanna_recv->q_sending = p_from->next_sending;
 			p_from->next_sending = 0;
 		}
@@ -433,6 +465,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(m);
 		assert(p_from->p_msg);
 
+		//printf(",CpyMsg From=%x", proc2pid(p_from));
 		/* copy the message */
 		phys_copy(va2la(proc2pid(p_who_wanna_recv), m),
 			  va2la(proc2pid(p_from), p_from->p_msg),
@@ -448,7 +481,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * be scheduled until it is unblocked.
 		 */
 
-	    
+	    //printf(",NoMsg");
 
 	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
 		p_who_wanna_recv->p_flags |= RECEIVING;
@@ -460,8 +493,6 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
 		// 如果沒人發給本身，則本身這個process會被block
 		block(p_who_wanna_recv);
-
-
 
 		assert(p_who_wanna_recv->p_flags == RECEIVING);
 		assert(p_who_wanna_recv->p_msg != 0);

@@ -19,8 +19,11 @@
  *======================================================================*/
 PUBLIC void clock_handler(int irq)
 {
-	ticks++;
-	p_proc_ready->ticks--;
+    m_ticks++;
+
+	if (p_proc_ready->ticks > 0) {
+	    p_proc_ready->ticks--;
+	}
 
 	if (k_reenter != 0) {
 		return;
@@ -30,6 +33,7 @@ PUBLIC void clock_handler(int irq)
 		return;
 	}
 
+	// tick 等於 cpu time, 用完了tick，就只能被schedule
 	schedule();
 
 }
