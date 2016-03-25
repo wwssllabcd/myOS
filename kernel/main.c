@@ -5,70 +5,6 @@
 #include "const.h"
 #include "ericut.h"
 
-PUBLIC int get_ticks()
-{
-    MESSAGE msg;
-    reset_msg(&msg);
-    msg.type = GET_TICKS;
-    // printf("\nGT=%x", proc2pid(p_proc_ready));
-    // both 就是向 task_sys 先送"我要tick"，後收 tick
-    send_recv(BOTH, TASK_SYS, &msg);
-    return msg.RETVAL;
-}
-
-void TestA(void)
-{
-    while( 1 ){
-        printf("\nA=%x", get_ticks());
-        milli_delay(2000);
-    }
-}
-
-void TestB(void)
-{
-    while( 1 ){
-        printf("\nB=%x", 0);
-        milli_delay(2000);
-    }
-}
-
-void TestC(void)
-{
-    while( 1 ){
-        printf("\nC=%x", 0);
-        milli_delay(2000);
-    }
-}
-
-void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
-{
-    DESCRIPTOR* p_des = &gdt[itemNum];
-
-    p_des->limit_low = data_0;
-    p_des->base_low = data_1;
-
-    p_des->base_mid = data_2 & 0xFF;
-    p_des->attr1 = (data_2 >> 8) & 0xFF;
-
-    p_des->limit_high_attr2 = data_3 & 0xFF;
-    p_des->base_high = (data_3 >> 8) & 0xFF;
-}
-
-void printMem(u32 addr, u32 len)
-{
-    u32 end = addr + len;
-    u32 i;
-    for (i = 0; i < len; i++){
-        if((i & 0xF) == 0){
-            disp_str("\n");
-            disp_int(addr + i);
-            disp_str("|");
-        }
-        u8 tmp = (*(u8*) (addr + i));
-        disp_u8(tmp);
-        disp_str(",");
-    }
-}
 
 void kernel_main(void)
 {
@@ -169,6 +105,70 @@ void kernel_main(void)
 
 }
 
+PUBLIC int get_ticks()
+{
+    MESSAGE msg;
+    reset_msg(&msg);
+    msg.type = GET_TICKS;
+    // printf("\nGT=%x", proc2pid(p_proc_ready));
+    // both 就是向 task_sys 先送"我要tick"，後收 tick
+    send_recv(BOTH, TASK_SYS, &msg);
+    return msg.RETVAL;
+}
+
+void TestA(void)
+{
+    while( 1 ){
+        printf("\nA=%x", get_ticks());
+        milli_delay(2000);
+    }
+}
+
+void TestB(void)
+{
+    while( 1 ){
+        printf("\nB=%x", 0);
+        milli_delay(2000);
+    }
+}
+
+void TestC(void)
+{
+    while( 1 ){
+        printf("\nC=%x", 0);
+        milli_delay(2000);
+    }
+}
+
+void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
+{
+    DESCRIPTOR* p_des = &gdt[itemNum];
+
+    p_des->limit_low = data_0;
+    p_des->base_low = data_1;
+
+    p_des->base_mid = data_2 & 0xFF;
+    p_des->attr1 = (data_2 >> 8) & 0xFF;
+
+    p_des->limit_high_attr2 = data_3 & 0xFF;
+    p_des->base_high = (data_3 >> 8) & 0xFF;
+}
+
+void printMem(u32 addr, u32 len)
+{
+    u32 end = addr + len;
+    u32 i;
+    for (i = 0; i < len; i++){
+        if((i & 0xF) == 0){
+            disp_str("\n");
+            disp_int(addr + i);
+            disp_str("|");
+        }
+        u8 tmp = (*(u8*) (addr + i));
+        disp_u8(tmp);
+        disp_str(",");
+    }
+}
 PUBLIC void panic(const char *fmt, ...)
 {
     int i;

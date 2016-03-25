@@ -48,47 +48,110 @@ void hwint15();
 PUBLIC void init_prot()
 {
     init_8259A();
-    init_idt_desc(INT_VECTOR_DIVIDE, DA_386IGate, divide_error, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_DEBUG, DA_386IGate, single_step_exception, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_NMI, DA_386IGate, nmi, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_BREAKPOINT, DA_386IGate, breakpoint_exception, PRIVILEGE_USER);
-    init_idt_desc(INT_VECTOR_OVERFLOW, DA_386IGate, overflow, PRIVILEGE_USER);
-    init_idt_desc(INT_VECTOR_BOUNDS, DA_386IGate, bounds_check, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_INVAL_OP, DA_386IGate, inval_opcode, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_COPROC_NOT, DA_386IGate, copr_not_available, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_DOUBLE_FAULT, DA_386IGate, double_fault, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_COPROC_SEG, DA_386IGate, copr_seg_overrun, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_INVAL_TSS, DA_386IGate, inval_tss, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_SEG_NOT, DA_386IGate, segment_not_present, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_STACK_FAULT, DA_386IGate, stack_exception, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_PROTECTION, DA_386IGate, general_protection, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_PAGE_FAULT, DA_386IGate, page_fault, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_COPROC_ERR, DA_386IGate, copr_error, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 0, DA_386IGate,            hwint00, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 1, DA_386IGate,            hwint01, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 2, DA_386IGate,            hwint02, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 3, DA_386IGate,            hwint03, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 4, DA_386IGate,            hwint04, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 5, DA_386IGate,            hwint05, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 6, DA_386IGate,            hwint06, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ0 + 7, DA_386IGate,            hwint07, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 0, DA_386IGate,            hwint08, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 1, DA_386IGate,            hwint09, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 2, DA_386IGate,            hwint10, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 3, DA_386IGate,            hwint11, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 4, DA_386IGate,            hwint12, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 5, DA_386IGate,            hwint13, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 6, DA_386IGate,            hwint14, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_IRQ8 + 7, DA_386IGate,            hwint15, PRIVILEGE_KRNL);
-    init_idt_desc(INT_VECTOR_SYS_CALL,  DA_386IGate, sys_call, PRIVILEGE_USER);
 
-    memset(&tss, 0, sizeof(tss));
+	/* 全部初始化成中断门(没有陷阱门) */
+	init_idt_desc(INT_VECTOR_DIVIDE,	DA_386IGate,
+		      divide_error,		PRIVILEGE_KRNL);
 
-    // 設定 ring 0 的SS與EIP
-    tss.ss0 = SELECTOR_KERNEL_DS;
+	init_idt_desc(INT_VECTOR_DEBUG,		DA_386IGate,
+		      single_step_exception,	PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_NMI,		DA_386IGate,
+		      nmi,			PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_BREAKPOINT,	DA_386IGate,
+		      breakpoint_exception,	PRIVILEGE_USER);
+
+	init_idt_desc(INT_VECTOR_OVERFLOW,	DA_386IGate,
+		      overflow,			PRIVILEGE_USER);
+
+	init_idt_desc(INT_VECTOR_BOUNDS,	DA_386IGate,
+		      bounds_check,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_INVAL_OP,	DA_386IGate,
+		      inval_opcode,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_COPROC_NOT,	DA_386IGate,
+		      copr_not_available,	PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_DOUBLE_FAULT,	DA_386IGate,
+		      double_fault,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_COPROC_SEG,	DA_386IGate,
+		      copr_seg_overrun,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_INVAL_TSS,	DA_386IGate,
+		      inval_tss,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_SEG_NOT,	DA_386IGate,
+		      segment_not_present,	PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_STACK_FAULT,	DA_386IGate,
+		      stack_exception,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_PROTECTION,	DA_386IGate,
+		      general_protection,	PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_PAGE_FAULT,	DA_386IGate,
+		      page_fault,		PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_COPROC_ERR,	DA_386IGate,
+		      copr_error,		PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 0,      DA_386IGate,
+                      hwint00,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 1,      DA_386IGate,
+                      hwint01,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 2,      DA_386IGate,
+                      hwint02,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 3,      DA_386IGate,
+                      hwint03,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 4,      DA_386IGate,
+                      hwint04,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 5,      DA_386IGate,
+                      hwint05,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 6,      DA_386IGate,
+                      hwint06,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ0 + 7,      DA_386IGate,
+                      hwint07,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 0,      DA_386IGate,
+                      hwint08,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 1,      DA_386IGate,
+                      hwint09,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 2,      DA_386IGate,
+                      hwint10,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 3,      DA_386IGate,
+                      hwint11,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 4,      DA_386IGate,
+                      hwint12,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 5,      DA_386IGate,
+                      hwint13,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 6,      DA_386IGate,
+                      hwint14,                  PRIVILEGE_KRNL);
+
+        init_idt_desc(INT_VECTOR_IRQ8 + 7,      DA_386IGate,
+                      hwint15,                  PRIVILEGE_KRNL);
+
+	init_idt_desc(INT_VECTOR_SYS_CALL,	DA_386IGate,
+		      sys_call,			PRIVILEGE_USER);
 
     // 把 [GDT 4] 的 descriptor, 填成以 tss 為base的 desc
     // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
+	tss.ss0		= SELECTOR_KERNEL_DS;
     init_descriptor(&gdt[INDEX_TSS], 
 		vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), 
 		sizeof(tss) - 1, 
@@ -104,8 +167,9 @@ PUBLIC void init_prot()
 
         //把每個process的 ldt, 放入到GDT 5~7的地方，而GDT中的base, 都是每個proc中的LDT的位置
         init_descriptor(&gdt[selector_ldt >> 3],
-                vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
-                LDT_SIZE * sizeof(DESCRIPTOR) - 1,
+				vir2phys(seg2phys(SELECTOR_KERNEL_DS),
+					proc_table[i].ldts),
+				LDT_SIZE * sizeof(struct descriptor) - 1,
                 DA_LDT);
 
         p_proc++;
