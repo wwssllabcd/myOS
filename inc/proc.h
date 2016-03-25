@@ -34,6 +34,8 @@ typedef struct proc {
     STACK_FRAME regs;          /* process registers saved in stack frame */
 
     u16 ldt_sel;               /* gdt selector giving ldt base and limit */
+
+    // offset = 0x4A
     DESCRIPTOR ldts[LDT_SIZE]; /* local descriptors for code and data */
 
     int ticks;                 /* remained ticks */
