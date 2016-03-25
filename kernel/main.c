@@ -27,7 +27,7 @@ void TestA(void)
 void TestB(void)
 {
     while( 1 ){
-        printf("\nB=%x", CALL_TABLE_SIZE);
+        printf("\nB=%x", 0);
         milli_delay(2000);
     }
 }
@@ -35,7 +35,7 @@ void TestB(void)
 void TestC(void)
 {
     while( 1 ){
-        printf("\nC=%x", CALL_TABLE_SIZE);
+        printf("\nC=%x", 0);
         milli_delay(2000);
     }
 }

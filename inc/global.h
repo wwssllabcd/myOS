@@ -4,6 +4,7 @@
 #include "proc.h"
 #include "tty.h"
 #include "console.h"
+#include "fs.h"
 
 #ifdef  GLOBAL_VARIABLES_HERE
 #undef  EXTERN
@@ -35,13 +36,17 @@ extern  irq_handler irq_table[];
 extern  TTY     tty_table[];
 extern  CONSOLE         console_table[];
 
-#undef GEN_SYS_CALL_FUN
-#define GEN_SYS_CALL_FUN( NAME) index_##NAME,
+/* FS */
+extern	struct dev_drv_map	dd_map[];
 
-enum sys_call_Fun
-{
-    #include "systemCallGen.h"
-    CALL_TABLE_SIZE
-};
 
+//#undef GEN_SYS_CALL_FUN
+//#define GEN_SYS_CALL_FUN( NAME) index_##NAME,
+//
+//enum sys_call_Fun
+//{
+//    #include "systemCallGen.h"
+//    CALL_TABLE_SIZE
+//};
+//
 

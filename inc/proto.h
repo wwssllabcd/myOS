@@ -7,6 +7,7 @@
 #include "protect.h"
 #include "console.h"
 #include "proc.h"
+#include "tty.h"
 
 //kliba
 PUBLIC void out_byte(u16 port, u8 value);
@@ -21,60 +22,68 @@ PUBLIC void port_read(u16 port, void* buf, int n);
 PUBLIC void port_write(u16 port, void* buf, int n);
 PUBLIC void glitter(int row, int col);
 
-//PUBLIC void out_byte(u16 port, u8 value);
+/* string.asm */
+PUBLIC char*	strcpy(char* dst, const char* src);
 
-
-// cstart
-PUBLIC void cstart();
-
-
-/* proc.c */
-//PUBLIC  int     sys_get_ticks();        /* sys_call */
-
-
-/* syscall.asm */
-PUBLIC  void    sys_call();             /* int_handler */
-PUBLIC  int     get_ticks();
-
-
-
-//klib
-PUBLIC void disp_str(char* str);
-//PUBLIC void delay(int time);
-
-
-
-//protect.c
+/* protect.c */
 PUBLIC void init_prot();
 PUBLIC u32 seg2phys(u16 seg);
-//PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute);
 
+/* klib.c */
+PUBLIC void	delay(int time);
+PUBLIC void	disp_int(int input);
+PUBLIC char *	itoa(char * str, int num);
 
-//main
-void TestA(void);
-void TestB(void);
-void TestC(void);
+/* kernel.asm */
+PUBLIC void restart();
 
-//8259
+/* main.c */
+PUBLIC int  get_ticks();
+PUBLIC void TestA();
+PUBLIC void TestB();
+PUBLIC void TestC();
+PUBLIC void panic(const char *fmt, ...);
+
+/* i8259.c */
+PUBLIC void init_8259A();
+PUBLIC void put_irq_handler(int irq, irq_handler handler);
 PUBLIC void spurious_irq(int irq);
 
-
-//clock
+/* clock.c */
 PUBLIC void clock_handler(int irq);
+PUBLIC void init_clock();
+PUBLIC void milli_delay(int milli_sec);
 
+/* kernel/hd.c */
+PUBLIC void	task_hd();
+PUBLIC void	hd_handler(int irq);
+
+/* keyboard.c */
+PUBLIC void init_keyboard();
+PUBLIC void keyboard_read(TTY* p_tty);
+
+/* tty.c */
 PUBLIC void task_tty();
+PUBLIC void in_process(TTY* p_tty, u32 key);
 
 /* systask.c */
 PUBLIC void task_sys();
 
+/* fs/main.c */
+PUBLIC void task_fs();
+
+/* console.c */
 PUBLIC void out_char(CONSOLE* p_con, char ch);
 PUBLIC void scroll_screen(CONSOLE* p_con, int direction);
+PUBLIC void select_console(int nr_console);
+PUBLIC void init_screen(TTY* p_tty);
+PUBLIC int  is_current_console(CONSOLE* p_con);
 
 /* printf.c */
 PUBLIC  int     printf(const char *fmt, ...);
 #define printl  printf
 
-//vsprintf
+/* vsprintf.c */
 PUBLIC  int     vsprintf(char *buf, const char *fmt, va_list args);
 PUBLIC  int sprintf(char *buf, const char *fmt, ...);
 
@@ -87,9 +96,13 @@ PUBLIC  void    reset_msg(MESSAGE* p);
 PUBLIC  void    dump_msg(const char * title, MESSAGE* m);
 PUBLIC  void    dump_proc(struct proc * p);
 PUBLIC  int send_recv(int function, int src_dest, MESSAGE* msg);
+PUBLIC void	inform_int(int task_nr);
 
 /* lib/misc.c */
 PUBLIC void spin(char * func_name);
+
+/* 以下是系统调用相关 */
+
 /* 系统调用 - 系统级 */
 /* proc.c */
 PUBLIC  int sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p);
@@ -102,15 +115,5 @@ PUBLIC  void    sys_call();             /* int_handler */
 /* 系统调用 - 用户级 */
 PUBLIC  int sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC  int printx(char* str);
-
-//tty
-PUBLIC int sys_write(char* buf, int len, PROCESS* p_proc);
-
-
-// hd.c
-PUBLIC void task_hd();
-
-// fs/main.c
-PUBLIC void task_fs();
 
 #endif
