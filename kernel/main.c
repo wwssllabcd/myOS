@@ -105,13 +105,17 @@ void kernel_main(void)
 
         p_proc->ldt_sel = selector_ldt;
 
+        // GDT[1] copy 到 LDT[0]
         memcpy(&p_proc->ldts[0], &gdt[SELECTOR_KERNEL_CS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[0].attr1 = DA_C | privilege << 5;
+
+        // GDT[2] copy 到 LDT[1]
         memcpy(&p_proc->ldts[1], &gdt[SELECTOR_KERNEL_DS >> 3], sizeof(DESCRIPTOR));
         p_proc->ldts[1].attr1 = DA_DRW | privilege << 5;
-		//BIT 0~1: RPL
-        //BIT2 :TIL: 1代表位在 LDT
-        //BIT3~7: selector
+
+		// BIT 0~1: RPL
+        // BIT2 :TIL: 1代表位在 LDT
+        // BIT3~7: selector
         // CS 指向 LDT 第0條
         // 如果GS,SS..等SS載入時，發現TIL被設成1，代表這條code 要去LDT去找
         p_proc->regs.cs = (0 & SA_RPL_MASK & SA_TI_MASK) | SA_TIL | rpl;

@@ -87,7 +87,7 @@ PUBLIC void init_prot()
     // 設定 ring 0 的SS與EIP
     tss.ss0 = SELECTOR_KERNEL_DS;
 
-    // 把GDT 4的 descriptor, 填成以 tss 為base的 desc
+    // 把 [GDT 4] 的 descriptor, 填成以 tss 為base的 desc
     // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
     init_descriptor(&gdt[INDEX_TSS], 
 		vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), 
@@ -99,12 +99,15 @@ PUBLIC void init_prot()
     int i;
     PROCESS* p_proc = proc_table;
     u16 selector_ldt = INDEX_LDT_FIRST << 3;
+
     for (i = 0; i < NR_TASKS + NR_PROCS; i++){
-        //把GDT 5-6 的 descriptor, 填成 ldt 為base的 desc
-        init_descriptor(
-                &gdt[selector_ldt >> 3], vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
-                LDT_SIZE * sizeof(DESCRIPTOR) - 1, DA_LDT
-                );
+
+        //把每個process的 ldt, 放入到GDT 5~7的地方，而GDT中的base, 都是每個proc中的LDT的位置
+        init_descriptor(&gdt[selector_ldt >> 3],
+                vir2phys(seg2phys(SELECTOR_KERNEL_DS), proc_table[i].ldts),
+                LDT_SIZE * sizeof(DESCRIPTOR) - 1,
+                DA_LDT);
+
         p_proc++;
         selector_ldt += 1 << 3;
     }

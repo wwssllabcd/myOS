@@ -23,7 +23,7 @@ typedef struct gate
 }GATE;
 
 
-typedef struct s_tss {
+typedef struct tss {
     u32 backlink;
     u32 esp0;   /* stack pointer to use during interrupt */
     u32 ss0;    /*   "   segment  "  "    "        "     */
