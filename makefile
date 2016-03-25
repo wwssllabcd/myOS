@@ -7,6 +7,7 @@ NASM_FLG = -I inc/ -f elf
 DIR_BOOT = ./boot
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
+DIR_FS = ./fs
 
 
 #======== Flag ========
@@ -19,6 +20,7 @@ OBJ_FILES = \
 	$(OBJDIR)/head.o  \
 	$(OBJ_LIB) \
 	$(OBJ_KERNEL) \
+	$(OBJ_FS)
 	
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
@@ -43,6 +45,10 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/printf.o  \
 	$(DIR_KERENL)/vsprintf.o  \
 	$(DIR_KERENL)/systask.o  \
+	
+OBJ_FS = \
+	$(DIR_FS)/main.o  \
+	
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test
@@ -82,6 +88,10 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
 	$(NASM) $(NASM_FLG) $< -o $@
 	
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
+	$(CC) $(CFLAGS) $< -o $@
+	
+# == rule for fs/*.c ==
+$(DIR_FS)/%.o: $(DIR_FS)/%.c
 	$(CC) $(CFLAGS) $< -o $@
 	
 # ut
