@@ -10,7 +10,7 @@ PUBLIC int get_ticks()
     MESSAGE msg;
     reset_msg(&msg);
     msg.type = GET_TICKS;
-    //printf("\nGT=%x", proc2pid(p_proc_ready));
+    // printf("\nGT=%x", proc2pid(p_proc_ready));
     // both 就是向 task_sys 先送"我要tick"，後收 tick
     send_recv(BOTH, TASK_SYS, &msg);
     return msg.RETVAL;

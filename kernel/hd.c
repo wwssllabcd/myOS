@@ -82,9 +82,6 @@ PRIVATE void init_hd()
 
     printl("\nNrDrives:%d.", *pNrDrives);
 
-	int a = 0;
-
-
 	assert(*pNrDrives);
 
 	put_irq_handler(AT_WINI_IRQ, hd_handler);

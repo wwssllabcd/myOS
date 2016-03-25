@@ -20,7 +20,7 @@ OBJ_FILES = \
 	$(OBJDIR)/head.o  \
 	$(OBJ_LIB) \
 	$(OBJ_KERNEL) \
-	$(OBJ_FS)
+	$(OBJ_FS) \
 	
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
@@ -45,9 +45,11 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/printf.o  \
 	$(DIR_KERENL)/vsprintf.o  \
 	$(DIR_KERENL)/systask.o  \
+	$(DIR_KERENL)/hd.o  \
 	
 OBJ_FS = \
 	$(DIR_FS)/main.o  \
+	
 	
 	
 OBJ_FILES += $(OBJ_UNIT_TEST)
@@ -93,6 +95,7 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 # == rule for fs/*.c ==
 $(DIR_FS)/%.o: $(DIR_FS)/%.c
 	$(CC) $(CFLAGS) $< -o $@
+	
 	
 # ut
 $(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c

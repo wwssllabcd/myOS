@@ -59,7 +59,7 @@ PUBLIC void schedule()
     //}
 
     //printf(",Sch_end, sel=%x", proc2pid(p_proc_ready));
-    //printf("\n------- Current Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
+    //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
 
