@@ -76,9 +76,8 @@ PRIVATE void init_hd()
 {
 	/* Get the number of drives from the BIOS data area */
     u8 * pNrDrives;
-    *pNrDrives = (u8*)(0x475);
+    //* pNrDrives = (u8*)(0x475);
     pNrDrives = &hd_cnt;
-
 
     printl("\nNrDrives:%d.", *pNrDrives);
 
