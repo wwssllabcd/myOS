@@ -5,9 +5,10 @@
                                                     Forrest Yu, 2005
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
+#include "config.h"
+
 #ifndef	_ORANGES_CONST_H_
 #define	_ORANGES_CONST_H_
-
 
 /* the assert macro */
 #define ASSERT
@@ -26,7 +27,7 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
 #define	PRIVATE	static	/* PRIVATE x limits the scope of x */
 
-#define STR_DEFAULT_LEN 1024
+#define	STR_DEFAULT_LEN	1024
 
 /* max() & min() */
 #define	max(a,b)	((a) > (b) ? (a) : (b))
@@ -45,7 +46,7 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define BLUE    0x1     /* 0001 */
 #define FLASH   0x80    /* 1000 0000 */
 #define BRIGHT  0x08    /* 0000 1000 */
-#define MAKE_COLOR(x,y) ((x<<4) | y) /* MAKE_COLOR(Background,Foreground) */
+#define	MAKE_COLOR(x,y)	((x<<4) | y) /* MAKE_COLOR(Background,Foreground) */
 
 /* GDT 和 IDT 中描述符的个数 */
 #define	GDT_SIZE	128
@@ -61,8 +62,8 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define	RPL_USER	SA_RPL3
 
 /* Process */
-#define SENDING   0x02  /* set when proc trying to send */
-#define RECEIVING 0x04  /* set when proc trying to recv */
+#define SENDING   0x02	/* set when proc trying to send */
+#define RECEIVING 0x04	/* set when proc trying to recv */
 
 /* TTY */
 #define NR_CONSOLES	3	/* consoles */
@@ -84,15 +85,14 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 
 /* AT keyboard */
 /* 8042 ports */
-#define KB_DATA     0x60    /* I/O port for keyboard data
-                    Read : Read Output Buffer
-                    Write: Write Input Buffer(8042 Data&8048 Command) */
-#define KB_CMD      0x64    /* I/O port for keyboard command
-                    Read : Read Status Register
-                    Write: Write Input Buffer(8042 Command) */
-#define LED_CODE    0xED
-#define KB_ACK      0xFA
-
+#define KB_DATA		0x60	/* I/O port for keyboard data
+					Read : Read Output Buffer
+					Write: Write Input Buffer(8042 Data&8048 Command) */
+#define KB_CMD		0x64	/* I/O port for keyboard command
+					Read : Read Status Register
+					Write: Write Input Buffer(8042 Command) */
+#define LED_CODE	0xED
+#define KB_ACK		0xFA
 
 /* VGA */
 #define	CRTC_ADDR_REG	0x3D4	/* CRT Controller Registers - Addr Register */
@@ -119,41 +119,41 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 
 /* tasks */
 /* 注意 TASK_XXX 的定义要与 global.c 中对应 */
-#define INVALID_DRIVER  -20
-#define INTERRUPT   -10
-#define TASK_TTY    0
-#define TASK_SYS    1
+#define INVALID_DRIVER	-20
+#define INTERRUPT	-10
+#define TASK_TTY	0
+#define TASK_SYS	1
 #define TASK_HD		2
-/* #define TASK_FS  3 */
-/* #define TASK_MM  4 */
-#define ANY     (NR_TASKS + NR_PROCS + 10)
-#define NO_TASK     (NR_TASKS + NR_PROCS + 20)
+/* #define TASK_FS	3 */
+/* #define TASK_MM	4 */
+#define ANY		(NR_TASKS + NR_PROCS + 10)
+#define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
 /* system call */
-#define NR_SYS_CALL 3
+#define NR_SYS_CALL	3
 
 /* ipc */
-#define SEND        1
-#define RECEIVE     2
-#define BOTH        3   /* BOTH = (SEND | RECEIVE) */
+#define SEND		1
+#define RECEIVE		2
+#define BOTH		3	/* BOTH = (SEND | RECEIVE) */
 
 /* magic chars used by `printx' */
-#define MAG_CH_PANIC    '\002'
-#define MAG_CH_ASSERT   '\003'
+#define MAG_CH_PANIC	'\002'
+#define MAG_CH_ASSERT	'\003'
 
 /**
  * @enum msgtype
  * @brief MESSAGE types
  */
 enum msgtype {
-    /*
-     * when hard interrupt occurs, a msg (with type==HARD_INT) will
-     * be sent to some tasks
-     */
-    HARD_INT = 1,
+	/*
+	 * when hard interrupt occurs, a msg (with type==HARD_INT) will
+	 * be sent to some tasks
+	 */
+	HARD_INT = 1,
 
-    /* SYS task */
-    GET_TICKS,
+	/* SYS task */
+	GET_TICKS,
 
 	/* message type for drivers */
 	DEV_OPEN = 1001,
@@ -179,7 +179,7 @@ enum msgtype {
 
 /* #define	PID		u.m3.m3i2 */
 /* #define	STATUS		u.m3.m3i1 */
-#define RETVAL      u.m3.m3i1
+#define	RETVAL		u.m3.m3i1
 /* #define	STATUS		u.m3.m3i1 */
 
 
@@ -204,21 +204,14 @@ enum msgtype {
 #define	DEV_HD			3
 #define	DEV_CHAR_TTY		4
 #define	DEV_SCSI		5
+
 /* make device number from major and minor numbers */
 #define	MAJOR_SHIFT		8
 #define	MAKE_DEV(a,b)		((a << MAJOR_SHIFT) | b)
+
 /* separate major and minor numbers from device number */
 #define	MAJOR(x)		((x >> MAJOR_SHIFT) & 0xFF)
 #define	MINOR(x)		(x & 0xFF)
-
-/* device numbers of hard disk */
-#define	MINOR_hd1a		0x10
-#define	MINOR_hd2a		0x20
-#define	MINOR_hd2b		0x21
-#define	MINOR_hd3a		0x30
-#define	MINOR_hd4a		0x40
-
-#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)	/* 3, 0x21 */
 
 #define	INVALID_INODE		0
 #define	ROOT_INODE		1
@@ -230,7 +223,7 @@ enum msgtype {
 #define	NR_PRIM_PER_DRIVE	(NR_PART_PER_DRIVE + 1)
 
 /**
- * @def MAX_PRIM_DEV
+ * @def MAX_PRIM
  * Defines the max minor number of the primary partitions.
  * If there are 2 disks, prim_dev ranges in hd[0-9], this macro will
  * equals 9.
@@ -238,6 +231,12 @@ enum msgtype {
 #define	MAX_PRIM		(MAX_DRIVES * NR_PRIM_PER_DRIVE - 1)
 
 #define	MAX_SUBPARTITIONS	(NR_SUB_PER_DRIVE * MAX_DRIVES)
+
+/* device numbers of hard disk */
+#define	MINOR_hd1a		0x10
+#define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART) //0x20
+
+#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
 
 #define	P_PRIMARY	0
 #define	P_EXTENDED	1
