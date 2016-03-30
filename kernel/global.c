@@ -18,15 +18,13 @@
 #include "proto.h"
 
 
-
 PUBLIC	struct proc	proc_table[NR_TASKS + NR_PROCS];
 
 PUBLIC	struct task	task_table[NR_TASKS] = {
-	{task_tty, STACK_SIZE_TTY, "TTY"}
-	,{task_sys, STACK_SIZE_SYS, "SYS"}
-	,{task_hd,  STACK_SIZE_HD,  "HD" }
-	,{task_fs,  STACK_SIZE_FS,  "FS" }
-};
+	{task_tty, STACK_SIZE_TTY, "TTY"},
+	{task_sys, STACK_SIZE_SYS, "SYS"},
+	{task_hd,  STACK_SIZE_HD,  "HD" },
+	{task_fs,  STACK_SIZE_FS,  "FS" }};
 
 PUBLIC	struct task	user_proc_table[NR_PROCS] = {
 	{TestA, STACK_SIZE_TESTA, "TestA"},
@@ -35,13 +33,13 @@ PUBLIC	struct task	user_proc_table[NR_PROCS] = {
 
 PUBLIC	char		task_stack[STACK_SIZE_TOTAL];
 
-PUBLIC	TTY		    tty_table[NR_CONSOLES];
+PUBLIC	TTY		tty_table[NR_CONSOLES];
 PUBLIC	CONSOLE		console_table[NR_CONSOLES];
 
 PUBLIC	irq_handler	irq_table[NR_IRQ];
 
-PUBLIC  system_call sys_call_table[NR_SYS_CALL] = {sys_printx,
-                               sys_sendrec};
+PUBLIC	system_call	sys_call_table[NR_SYS_CALL] = {sys_printx,
+						       sys_sendrec};
 
 /* FS related below */
 /*****************************************************************************/
@@ -49,7 +47,7 @@ PUBLIC  system_call sys_call_table[NR_SYS_CALL] = {sys_printx,
  * For dd_map[k],
  * `k' is the device nr.\ dd_map[k].driver_nr is the driver nr.
  *
- * Remeber to modify include/const.h if the order is changed
+ * Remeber to modify include/const.h if the order is changed.
  *****************************************************************************/
 struct dev_drv_map dd_map[] = {
 	/* driver nr.		major device nr.
