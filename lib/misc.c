@@ -24,7 +24,7 @@
  *****************************************************************************/
 PUBLIC void spin(char * func_name)
 {
-	printl("\nspinning in %s ...\n", func_name);
+	printl("\n == spinning in %s ...== \n", func_name);
 	while (1) {}
 }
 

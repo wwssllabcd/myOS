@@ -236,7 +236,7 @@ enum msgtype {
 #define	MINOR_hd1a		0x10
 #define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART) //0x20
 
-#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
+#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT) //0x320
 
 #define	P_PRIMARY	0
 #define	P_EXTENDED	1

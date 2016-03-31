@@ -34,16 +34,7 @@ PRIVATE void mkfs();
 PUBLIC void task_fs()
 {
     printl("\nTask_FS Start");
-
-    /* open the device: hard disk */
-    MESSAGE driver_msg;
-    driver_msg.type = DEV_OPEN;
-    driver_msg.DEVICE = MINOR(ROOT_DEV);
-    assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
-
-    //dd_map[MAJOR(ROOT_DEV)].driver_nr = 2
-    send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
-
+    init_fs();
     spin("FS");
 
 }
@@ -94,6 +85,8 @@ PRIVATE void mkfs()
     driver_msg.BUF      = &geo;
     driver_msg.PROC_NR  = TASK_FS;
     assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
+
+    //傳送msg 給Task_HD
     send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
     printl("\ndev size: 0x%x sectors", geo.size);
@@ -106,16 +99,17 @@ PRIVATE void mkfs()
     sb.nr_inodes      = bits_per_sect;
     sb.nr_inode_sects = sb.nr_inodes * INODE_SIZE / SECTOR_SIZE;
     sb.nr_sects   = geo.size; /* partition size in sector */
-    sb.nr_imap_sects  = 1;
-    sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1;
-    sb.n_1st_sect     = 1 + 1 +   /* boot sector & super block */
-        sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
+    sb.nr_imap_sects  = 1;   //inode-map 目前只有 4096 項，所以花1個sector存
+    sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1;// 這個partition 有多少個sector, 則smap就是N/(512*8)
+    sb.n_1st_sect     = 1 + 1 +  sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
     sb.root_inode     = ROOT_INODE;
     sb.inode_size     = INODE_SIZE;
+
     struct inode x;
     sb.inode_isize_off= (int)&x.i_size - (int)&x;
     sb.inode_start_off= (int)&x.i_start_sect - (int)&x;
     sb.dir_ent_size   = DIR_ENTRY_SIZE;
+
     struct dir_entry de;
     sb.dir_ent_inode_off = (int)&de.inode_nr - (int)&de;
     sb.dir_ent_fname_off = (int)&de.name - (int)&de;
@@ -123,7 +117,7 @@ PRIVATE void mkfs()
     memset(fsbuf, 0x90, SECTOR_SIZE);
     memcpy(fsbuf, &sb, SUPER_BLOCK_SIZE);
 
-    /* write the super block */
+    /* abc */
     WR_SECT(ROOT_DEV, 1);
 
     printl("\ndevbase:0x%x00, sb:0x%x00, imap:0x%x00, smap:0x%x00"
@@ -140,7 +134,8 @@ PRIVATE void mkfs()
     /************************/
     memset(fsbuf, 0, SECTOR_SIZE);
     for (i = 0; i < (NR_CONSOLES + 2); i++)
-        fsbuf[0] |= 1 << i;
+        fsbuf[0] |= 1 << i; //已使用的就是1，前面 inode 的 0,1,2,3,4都被使用了
+
 
     assert(fsbuf[0] == 0x1F);/* 0001 1111 :
                   *    | ||||
@@ -162,6 +157,8 @@ PRIVATE void mkfs()
      *                                |    `--- bit 0 is reserved
      *                                `-------- for `/'
      */
+
+    //每個bit代表1 sector
     for (i = 0; i < nr_sects / 8; i++)
         fsbuf[i] = 0xFF;
 
@@ -171,6 +168,7 @@ PRIVATE void mkfs()
     WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects);
 
     /* zeromemory the rest sector-map */
+    // 沒使用為0
     memset(fsbuf, 0, SECTOR_SIZE);
     for (i = 1; i < sb.nr_smap_sects; i++)
         WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + i);
@@ -181,19 +179,21 @@ PRIVATE void mkfs()
     /* inode of `/' */
     memset(fsbuf, 0, SECTOR_SIZE);
     struct inode * pi = (struct inode*)fsbuf;
-    pi->i_mode = I_DIRECTORY;
+    pi->i_mode = I_DIRECTORY; // mode 為 directory
+
     pi->i_size = DIR_ENTRY_SIZE * 4; /* 4 files:
                       * `.',
                       * `dev_tty0', `dev_tty1', `dev_tty2',
                       */
+
     pi->i_start_sect = sb.n_1st_sect;
     pi->i_nr_sects = NR_DEFAULT_FILE_SECTS;
     /* inode of `/dev_tty0~2' */
     for (i = 0; i < NR_CONSOLES; i++) {
-        pi = (struct inode*)(fsbuf + (INODE_SIZE * (i + 1)));
+        pi = (struct inode*)(fsbuf + (INODE_SIZE * (i + 1)));//跳過第一條 inode ( root dir)
         pi->i_mode = I_CHAR_SPECIAL;
         pi->i_size = 0;
-        pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);
+        pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);// sector 改記錄 device_nr
         pi->i_nr_sects = 0;
     }
     WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
@@ -243,6 +243,7 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
     driver_msg.CNT      = bytes;
     driver_msg.PROC_NR  = proc_nr;
     assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
+
     send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 
     return 0;

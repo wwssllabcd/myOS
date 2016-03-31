@@ -522,5 +522,7 @@ PUBLIC void hd_handler(int irq)
 	 */
 	hd_status = in_byte(REG_STATUS);
 
+	//printf("\nHD_H,S=%x", hd_status);
+
 	inform_int(TASK_HD);
 }

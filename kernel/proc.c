@@ -51,14 +51,15 @@ PUBLIC void schedule()
         }
     }
 
-    //int i,j,k;
-    //for(i=0; i<0x1000; i++){
-    //    for(j=0; j<0x800; j++){
-    //        k++;
-    //    }
-    //}
+//    int i,j,k;
+//    for(i=0; i<0x1000; i++){
+//        for(j=0; j<0x800; j++){
+//            k++;
+//        }
+//    }
 
-    //printf(",Sch_end, sel=%x", proc2pid(p_proc_ready));
+    //printf("\nS");
+    printf("\nSch_end, sel=%x, Status=%x", proc2pid(p_proc_ready),  p_proc_ready->p_flags);
     //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -264,6 +265,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         p_dest->p_msg = 0;
 
         // dest 再等 msg, 然後剛好sender又要送給他，所以就配對
+        // printf("\nCF,Dest=%x,F=%x", proc2pid(p_dest), p_dest->p_flags);
         p_dest->p_flags &= ~RECEIVING; /* dest has received the msg */
         p_dest->p_recvfrom = NO_TASK;
 
@@ -482,8 +484,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * be scheduled until it is unblocked.
 		 */
 
-	    //printf(",NoMsg");
-
+	    // process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
 	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
 		p_who_wanna_recv->p_flags |= RECEIVING;
 
@@ -491,9 +492,15 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
 
+		//printf("\nNoMSg, P=%x,F=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+
 		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
 		// 如果沒人發給本身，則本身這個process會被block
 		block(p_who_wanna_recv);
+
+		//if( (p_who_wanna_recv->p_flags == RECEIVING)==0){
+		//    printf("\nA_P=%x,F=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+		//}
 
 		assert(p_who_wanna_recv->p_flags == RECEIVING);
 		assert(p_who_wanna_recv->p_msg != 0);
@@ -527,6 +534,9 @@ PUBLIC void inform_int(int task_nr)
 		p->p_flags &= ~RECEIVING; /* dest has received the msg */
 		p->p_recvfrom = NO_TASK;
 		assert(p->p_flags == 0);
+
+		//TASK_HD收到了msg，所以要把 RECEIVE打開
+		//printf("\nInt_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
 		unblock(p);
 
 		assert(p->p_flags == 0);
