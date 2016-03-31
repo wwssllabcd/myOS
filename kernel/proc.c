@@ -59,7 +59,7 @@ PUBLIC void schedule()
 //    }
 
     //printf("\nS");
-    printf("\nSch_end, sel=%x, Status=%x", proc2pid(p_proc_ready),  p_proc_ready->p_flags);
+    printf("\nsel=%x,%x", proc2pid(p_proc_ready),  p_proc_ready->p_flags);
     //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -246,7 +246,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
     }
 
-    //printf(",SM,from=%x, dest=%x,d_sts=%X", proc2pid(sender), dest, p_dest->p_flags);
+    printf(",SM,P=%x,des=%x,%x", proc2pid(sender), dest, p_dest->p_flags);
 
     if ((p_dest->p_flags & RECEIVING) && /* dest is waiting for the msg */
         (p_dest->p_recvfrom == proc2pid(sender) ||
@@ -271,6 +271,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
 
 
         // unlock 遠端
+        printf(",unB=%x", proc2pid(p_dest));
         unblock(p_dest);
 
         assert(p_dest->p_flags == 0);
@@ -344,9 +345,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	assert(proc2pid(p_who_wanna_recv) != src);
 
-
-	//printf(",RM,int=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
-
+	printf(",RM,P=%x,", proc2pid(p_who_wanna_recv));
 
 	if ((p_who_wanna_recv->has_int_msg) &&
 	    ((src == ANY) || (src == INTERRUPT))) {
@@ -492,7 +491,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
 
-		//printf("\nNoMSg, P=%x,F=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+		printf(",NoMSg=%x,%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
 
 		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
 		// 如果沒人發給本身，則本身這個process會被block
