@@ -59,6 +59,8 @@ PUBLIC void task_hd()
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
 
+		printf(",HDRM=%X", msg.type);
+
 		int src = msg.source;
 
 		switch (msg.type) {
@@ -85,6 +87,7 @@ PUBLIC void task_hd()
 			break;
 		}
 
+		printf("\nHD=%x,desc=%x", msg.type, src);
 		send_recv(SEND, src, &msg);
 	}
 }
@@ -104,7 +107,7 @@ PRIVATE void init_hd()
     //* pNrDrives = (u8*)(0x475);
     pNrDrives = &hd_cnt;
 
-    printl("\nNrDrives:%d.", *pNrDrives);
+    printl(",initHd,NrDrives:%d.", *pNrDrives);
 	assert(*pNrDrives);
 
 	put_irq_handler(AT_WINI_IRQ, hd_handler);
@@ -130,6 +133,7 @@ PRIVATE void hd_open(int device)
 {
 	int drive = DRV_OF_DEV(device);
 	assert(drive == 0);	/* only one drive */
+
 
 	hd_identify(drive);
 
@@ -383,8 +387,10 @@ PRIVATE void hd_identify(int drive)
 	struct hd_cmd cmd;
 	cmd.device  = MAKE_DEVICE_REG(0, drive, 0);
 	cmd.command = ATA_IDENTIFY;
+	printf(",IdTB");
 	hd_cmd_out(&cmd);
 	interrupt_wait();
+
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 
 	print_identify_info((u16*)hdbuf);
@@ -452,9 +458,11 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 	 * For all commands, the host must first check if BSY=1,
 	 * and should proceed no further unless and until BSY=0
 	 */
+
 	if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT))
 		panic("hd error.");
 
+	printf(",cmdOut=%x",  cmd->command);
 	/* Activate the Interrupt Enable (nIEN) bit */
 	out_byte(REG_DEV_CTRL, 0);
 	/* Load required parameters in the Command Block Registers */
@@ -466,6 +474,8 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 	out_byte(REG_DEVICE,   cmd->device);
 	/* Write the command code to the Command Register */
 	out_byte(REG_CMD,     cmd->command);
+
+
 }
 
 /*****************************************************************************
@@ -478,6 +488,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
+	printf(",wi,setReveInt");
 	send_recv(RECEIVE, INTERRUPT, &msg);
 }
 
@@ -495,6 +506,7 @@ PRIVATE void interrupt_wait()
  *****************************************************************************/
 PRIVATE int waitfor(int mask, int val, int timeout)
 {
+    printf(",WHD");
 	int t = get_ticks();
 
 	while(((get_ticks() - t) * 1000 / HZ) < timeout)
@@ -522,7 +534,11 @@ PUBLIC void hd_handler(int irq)
 	 */
 	hd_status = in_byte(REG_STATUS);
 
-	//printf("\nHD_H,S=%x", hd_status);
+	//
+	printf("\nIntFromHD=%x", hd_status);
 
 	inform_int(TASK_HD);
 }
+
+
+

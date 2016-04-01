@@ -18,6 +18,9 @@
 #define	EXTERN
 #endif
 
+
+EXTERN int noMsgCnt;
+
 EXTERN  u8      hd_cnt;
 EXTERN	int	m_ticks;
 

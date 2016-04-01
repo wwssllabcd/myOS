@@ -17,6 +17,7 @@
 #include "global.h"
 #include "proto.h"
 
+int noMsgCnt=0;
 
 PUBLIC	struct proc	proc_table[NR_TASKS + NR_PROCS];
 

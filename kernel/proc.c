@@ -16,6 +16,9 @@ PRIVATE int  msg_send(struct proc* current, int dest, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
+
+
+
 PUBLIC void schedule()
 {
     PROCESS* p;
@@ -59,7 +62,7 @@ PUBLIC void schedule()
 //    }
 
     //printf("\nS");
-    printf("\nsel=%x,%x", proc2pid(p_proc_ready),  p_proc_ready->p_flags);
+    printf("\nsel=%x", proc2pid(p_proc_ready));
     //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -173,21 +176,11 @@ PUBLIC void reset_msg(MESSAGE* p)
     memset(p, 0, sizeof(MESSAGE));
 }
 
-/*****************************************************************************
- *                                block
- *****************************************************************************/
-/**
- * <Ring 0> This routine is called after `p_flags' has been set (!= 0), it
- * calls `schedule()' to choose another proc as the `proc_ready'.
- *
- * @attention This routine does not change `p_flags'. Make sure the `p_flags'
- * of the proc to be blocked has been set properly.
- *
- * @param p The proc to be blocked.
- *****************************************************************************/
 PRIVATE void block(struct proc* p)
 {
-    //printf(",C_Blk");
+    if( p->p_flags ==0 ){
+        printf(",Blk=%x, %x,%x,%x", p, proc2pid(p), p->p_flags, &p->p_flags);
+    }
     assert(p->p_flags);
     schedule();
 }
@@ -246,7 +239,21 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
     }
 
-    printf(",SM,P=%x,des=%x,%x", proc2pid(sender), dest, p_dest->p_flags);
+    switch (m->type)
+    {
+    case GET_TICKS:
+        printf(",SM(tick=%x)", m->type);
+        break;
+    case DEV_OPEN:
+        printf(",SM(DevOpen)");
+        break;
+    default:
+        printf(",SM(?)");
+        break;
+    }
+    printf(",P=%x,des=%x,%x", proc2pid(sender), dest, p_dest->p_flags);
+
+
 
     if ((p_dest->p_flags & RECEIVING) && /* dest is waiting for the msg */
         (p_dest->p_recvfrom == proc2pid(sender) ||
@@ -345,16 +352,16 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	assert(proc2pid(p_who_wanna_recv) != src);
 
-	printf(",RM,P=%x,", proc2pid(p_who_wanna_recv));
+	printf(",RM(%x)", proc2pid(p_who_wanna_recv));
 
-	if ((p_who_wanna_recv->has_int_msg) &&
-	    ((src == ANY) || (src == INTERRUPT))) {
+	//處理 int 所發送的 msg
+	if ((p_who_wanna_recv->has_int_msg) && ((src == ANY) || (src == INTERRUPT))) {
 		/* There is an interrupt needs p_who_wanna_recv's handling and
 		 * p_who_wanna_recv is ready to handle it.
 		 */
 	    // 如果 has_int_msg=1時
 
-	    //printf(",A");
+	    printf("intF=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
 
 		MESSAGE msg;
 		reset_msg(&msg);
@@ -491,7 +498,20 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
 
-		printf(",NoMSg=%x,%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+		if(proc2pid(p_who_wanna_recv) == 2){
+            noMsgCnt++;
+        }
+
+        if(noMsgCnt == 6){
+
+            printf(",NoMSgCnt=%x", noMsgCnt);
+            // 發生int, 此時 int已經把本 proc 的receive 清掉了
+            // 而除非解開p_flags,否則不會再次進到該process
+            printf(",NoMSg(%x)=%x,%x", p_who_wanna_recv, proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+        }
+
+
+		printf(",F(%x)=%x", &p_who_wanna_recv->p_flags, p_who_wanna_recv->p_flags);
 
 		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
 		// 如果沒人發給本身，則本身這個process會被block
@@ -522,7 +542,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 PUBLIC void inform_int(int task_nr)
 {
 	struct proc* p = proc_table + task_nr;
-
+	printf("\nIntToP=%x,F=%x", task_nr, p->p_flags);
 	if ((p->p_flags & RECEIVING) && /* dest is waiting for the msg */
 	    ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) {
 
@@ -535,7 +555,7 @@ PUBLIC void inform_int(int task_nr)
 		assert(p->p_flags == 0);
 
 		//TASK_HD收到了msg，所以要把 RECEIVE打開
-		//printf("\nInt_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
+		printf(",Int_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
 		unblock(p);
 
 		assert(p->p_flags == 0);
@@ -544,6 +564,8 @@ PUBLIC void inform_int(int task_nr)
 		assert(p->p_sendto == NO_TASK);
 	}
 	else {
+	    //設 flag, 好快速離開int
+	    printf(",SetFlag");
 		p->has_int_msg = 1;
 	}
 }
