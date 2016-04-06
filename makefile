@@ -27,6 +27,8 @@ OBJ_LIB = \
 	$(DIR_LIB)/klib.o  \
 	$(DIR_LIB)/string.o  \
 	$(DIR_LIB)/misc.o  \
+	$(DIR_LIB)/open.o  \
+	$(DIR_LIB)/close.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
@@ -49,6 +51,8 @@ OBJ_KERNEL = \
 	
 OBJ_FS = \
 	$(DIR_FS)/main.o  \
+	$(DIR_FS)/open.o  \
+	$(DIR_FS)/misc.o  \
 	
 	
 	
