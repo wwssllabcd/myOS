@@ -18,6 +18,13 @@
 #define	EXTERN
 #endif
 
+//#define ERIC
+#ifdef ERIC
+    #define ERIC_DEBUG printf
+#else
+    #define ERIC_DEBUG
+#endif
+
 EXTERN int noMsgCnt;
 
 EXTERN  u8      hd_cnt;

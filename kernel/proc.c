@@ -62,7 +62,7 @@ PUBLIC void schedule()
 //    }
 
     //printf("\nS");
-    printf("\nsel=%x", proc2pid(p_proc_ready));
+    ERIC_DEBUG("\nsel=%x", proc2pid(p_proc_ready));
     //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -179,7 +179,7 @@ PUBLIC void reset_msg(MESSAGE* p)
 PRIVATE void block(struct proc* p)
 {
     if( p->p_flags ==0 ){
-        printf(",Blk=%x, %x,%x,%x", p, proc2pid(p), p->p_flags, &p->p_flags);
+        ERIC_DEBUG(",Blk=%x, %x,%x,%x", p, proc2pid(p), p->p_flags, &p->p_flags);
     }
     assert(p->p_flags);
     schedule();
@@ -242,16 +242,16 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
     switch (m->type)
     {
     case GET_TICKS:
-        printf(",SM(tick=%x)", m->type);
+        ERIC_DEBUG(",SM(tick=%x)", m->type);
         break;
     case DEV_OPEN:
-        printf(",SM(DevOpen)");
+        ERIC_DEBUG(",SM(DevOpen)");
         break;
     default:
-        printf(",SM(?)");
+        ERIC_DEBUG(",SM(?)");
         break;
     }
-    printf(",P=%x,des=%x,%x", proc2pid(sender), dest, p_dest->p_flags);
+    ERIC_DEBUG(",P=%x,des=%x,%x", proc2pid(sender), dest, p_dest->p_flags);
 
 
 
@@ -278,7 +278,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
 
 
         // unlock 遠端
-        printf(",unB=%x", proc2pid(p_dest));
+        ERIC_DEBUG(",unB=%x", proc2pid(p_dest));
         unblock(p_dest);
 
         assert(p_dest->p_flags == 0);
@@ -352,7 +352,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	assert(proc2pid(p_who_wanna_recv) != src);
 
-	printf(",RM(%x)", proc2pid(p_who_wanna_recv));
+	ERIC_DEBUG(",RM(%x)", proc2pid(p_who_wanna_recv));
 
 	//處理 int 所發送的 msg
 	if ((p_who_wanna_recv->has_int_msg) && ((src == ANY) || (src == INTERRUPT))) {
@@ -361,7 +361,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 	    // 如果 has_int_msg=1時
 
-	    printf("intF=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
+	    ERIC_DEBUG("intF=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
 
 		MESSAGE msg;
 		reset_msg(&msg);
@@ -539,7 +539,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 PUBLIC void inform_int(int task_nr)
 {
 	struct proc* p = proc_table + task_nr;
-	printf("\nIntToP=%x,F=%x", task_nr, p->p_flags);
+	ERIC_DEBUG("\nIntToP=%x,F=%x", task_nr, p->p_flags);
 	if ((p->p_flags & RECEIVING) && /* dest is waiting for the msg */
 	    ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) {
 
@@ -552,7 +552,7 @@ PUBLIC void inform_int(int task_nr)
 		assert(p->p_flags == 0);
 
 		//TASK_HD收到了msg，所以要把 RECEIVE打開
-		printf(",Int_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
+		ERIC_DEBUG(",Int_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
 		unblock(p);
 
 		assert(p->p_flags == 0);
@@ -562,7 +562,7 @@ PUBLIC void inform_int(int task_nr)
 	}
 	else {
 	    //設 flag, 好快速離開int
-	    printf(",SetFlag");
+	    ERIC_DEBUG(",SetFlag");
 		p->has_int_msg = 1;
 	}
 }

@@ -59,7 +59,7 @@ PUBLIC void task_hd()
 	while (1) {
 		send_recv(RECEIVE, ANY, &msg);
 
-		printf(",HDRM=%X", msg.type);
+		ERIC_DEBUG(",HDRM=%X", msg.type);
 
 		int src = msg.source;
 
@@ -87,7 +87,7 @@ PUBLIC void task_hd()
 			break;
 		}
 
-		printf("\nHD=%x,desc=%x", msg.type, src);
+		ERIC_DEBUG("\nHD=%x,desc=%x", msg.type, src);
 		send_recv(SEND, src, &msg);
 	}
 }
@@ -387,7 +387,7 @@ PRIVATE void hd_identify(int drive)
 	struct hd_cmd cmd;
 	cmd.device  = MAKE_DEVICE_REG(0, drive, 0);
 	cmd.command = ATA_IDENTIFY;
-	printf(",IdTB");
+	ERIC_DEBUG(",IdTB");
 	hd_cmd_out(&cmd);
 	interrupt_wait();
 
@@ -462,7 +462,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 	if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT))
 		panic("hd error.");
 
-	printf(",cmdOut=%x",  cmd->command);
+	ERIC_DEBUG(",cmdOut=%x",  cmd->command);
 	/* Activate the Interrupt Enable (nIEN) bit */
 	out_byte(REG_DEV_CTRL, 0);
 	/* Load required parameters in the Command Block Registers */
@@ -488,7 +488,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
-	printf(",wi,setReveInt");
+	ERIC_DEBUG(",wi,setReveInt");
 	send_recv(RECEIVE, INTERRUPT, &msg);
 }
 
@@ -506,7 +506,7 @@ PRIVATE void interrupt_wait()
  *****************************************************************************/
 PRIVATE int waitfor(int mask, int val, int timeout)
 {
-    printf(",WHD");
+    ERIC_DEBUG(",WHD");
 	int t = get_ticks();
 
 	while(((get_ticks() - t) * 1000 / HZ) < timeout)
@@ -535,7 +535,7 @@ PUBLIC void hd_handler(int irq)
 	hd_status = in_byte(REG_STATUS);
 
 	//
-	printf("\nIntFromHD=%x", hd_status);
+	ERIC_DEBUG("\nIntFromHD=%x", hd_status);
 
 	inform_int(TASK_HD);
 }
