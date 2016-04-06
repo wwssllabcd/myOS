@@ -498,20 +498,17 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
 
-		if(proc2pid(p_who_wanna_recv) == 2){
-            noMsgCnt++;
-        }
-
-        if(noMsgCnt == 6){
-
-            printf(",NoMSgCnt=%x", noMsgCnt);
-            // 發生int, 此時 int已經把本 proc 的receive 清掉了
-            // 而除非解開p_flags,否則不會再次進到該process
-            printf(",NoMSg(%x)=%x,%x", p_who_wanna_recv, proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
-        }
-
-
-		printf(",F(%x)=%x", &p_who_wanna_recv->p_flags, p_who_wanna_recv->p_flags);
+//        if(proc2pid(p_who_wanna_recv) == 2){
+//            noMsgCnt++;
+//        }
+//
+//        if(noMsgCnt == 6){
+//            printf(",NoMSgCnt=%x", noMsgCnt);
+//            // 發生int, 此時 int已經把本 proc 的receive 清掉了
+//            // 而除非解開p_flags,否則不會再次進到該process
+//            printf(",NoMSg(%x)=%x,%x", p_who_wanna_recv, proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+//        }
+//        printf(",F(%x)=%x", &p_who_wanna_recv->p_flags, p_who_wanna_recv->p_flags);
 
 		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
 		// 如果沒人發給本身，則本身這個process會被block

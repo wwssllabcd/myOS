@@ -5,29 +5,8 @@
                                                     Forrest Yu, 2005
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 
-#include "config.h"
-
 #ifndef	_ORANGES_CONST_H_
 #define	_ORANGES_CONST_H_
-
-/* the assert macro */
-#define ASSERT
-#ifdef ASSERT
-void assertion_failure(char *exp, char *file, char *base_file, int line);
-#define assert(exp)  if (exp) ; \
-        else assertion_failure(#exp, __FILE__, __BASE_FILE__, __LINE__)
-#else
-#define assert(exp)
-#endif
-
-/* EXTERN */
-#define	EXTERN	extern	/* EXTERN is defined as extern except in global.c */
-
-/* 函数类型 */
-#define	PUBLIC		/* PUBLIC is the opposite of PRIVATE */
-#define	PRIVATE	static	/* PRIVATE x limits the scope of x */
-
-#define	STR_DEFAULT_LEN	1024
 
 /* max() & min() */
 #define	max(a,b)	((a) > (b) ? (a) : (b))
@@ -124,7 +103,7 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
 #define TASK_TTY	0
 #define TASK_SYS	1
 #define TASK_HD		2
-#define TASK_FS	3
+#define TASK_FS		3
 /* #define TASK_MM	4 */
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
@@ -146,7 +125,7 @@ void assertion_failure(char *exp, char *file, char *base_file, int line);
  * @brief MESSAGE types
  */
 enum msgtype {
-	/*
+	/* 
 	 * when hard interrupt occurs, a msg (with type==HARD_INT) will
 	 * be sent to some tasks
 	 */
@@ -154,6 +133,12 @@ enum msgtype {
 
 	/* SYS task */
 	GET_TICKS,
+
+	/* FS */
+	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
+
+	/* TTY, SYS, FS, MM, etc */
+	SYSCALL_RET,
 
 	/* message type for drivers */
 	DEV_OPEN = 1001,
@@ -164,18 +149,18 @@ enum msgtype {
 };
 
 /* macros for messages */
-/* #define	FD		u.m3.m3i1 */
-/* #define	PATHNAME	u.m3.m3p1 */
-/* #define	FLAGS		u.m3.m3i1 */
-/* #define	NAME_LEN	u.m3.m3i2 */
-#define	CNT		    u.m3.m3i2
+#define	FD		u.m3.m3i1
+#define	PATHNAME	u.m3.m3p1
+#define	FLAGS		u.m3.m3i1
+#define	NAME_LEN	u.m3.m3i2
+#define	CNT		u.m3.m3i2
 #define	REQUEST		u.m3.m3i2
 #define	PROC_NR		u.m3.m3i3
 #define	DEVICE		u.m3.m3i4
 #define	POSITION	u.m3.m3l1
-#define	BUF		    u.m3.m3p2
-/* #define	OFFSET		u.m3.m3i2 */
-/* #define	WHENCE		u.m3.m3i3 */
+#define	BUF		u.m3.m3p2
+#define	OFFSET		u.m3.m3i2
+#define	WHENCE		u.m3.m3i3
 
 /* #define	PID		u.m3.m3i2 */
 /* #define	STATUS		u.m3.m3i1 */
@@ -204,11 +189,9 @@ enum msgtype {
 #define	DEV_HD			3
 #define	DEV_CHAR_TTY		4
 #define	DEV_SCSI		5
-
 /* make device number from major and minor numbers */
 #define	MAJOR_SHIFT		8
 #define	MAKE_DEV(a,b)		((a << MAJOR_SHIFT) | b)
-
 /* separate major and minor numbers from device number */
 #define	MAJOR(x)		((x >> MAJOR_SHIFT) & 0xFF)
 #define	MINOR(x)		(x & 0xFF)
@@ -234,9 +217,9 @@ enum msgtype {
 
 /* device numbers of hard disk */
 #define	MINOR_hd1a		0x10
-#define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART) //0x20
+#define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART)
 
-#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT) //0x320
+#define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
 
 #define	P_PRIMARY	0
 #define	P_EXTENDED	1
@@ -251,7 +234,7 @@ enum msgtype {
 #define	NR_SUPER_BLOCK	8
 
 
-/* INODE::i_mode (octal, lower 32 bits reserved) */
+/* INODE::i_mode (octal, lower 12 bits reserved) */
 #define I_TYPE_MASK     0170000
 #define I_REGULAR       0100000
 #define I_BLOCK_SPECIAL 0060000
