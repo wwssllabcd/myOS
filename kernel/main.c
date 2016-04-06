@@ -140,9 +140,9 @@ PUBLIC int get_ticks()
 void TestA()
 {
 	int fd = open("/blah", O_CREAT);
-	printf("fd: %d\n", fd);
+	printf("\nfd: %d\n", fd);
 	close(fd);
-	spin("TestA");
+	spin("--TestA");
 }
 
 /*======================================================================*
