@@ -43,6 +43,7 @@ PUBLIC int search_file(char * path)
 	char filename[MAX_PATH];
 	memset(filename, 0, MAX_FILENAME_LEN);
 	struct inode * dir_inode;
+
 	if (strip_path(filename, path, &dir_inode) != 0)
 		return 0;
 
@@ -52,6 +53,7 @@ PUBLIC int search_file(char * path)
 	/**
 	 * Search the dir for the file.
 	 */
+
 	int dir_blk0_nr = dir_inode->i_start_sect;
 	int nr_dir_blks = (dir_inode->i_size + SECTOR_SIZE - 1) / SECTOR_SIZE;
 	int nr_dir_entries =
@@ -62,12 +64,22 @@ PUBLIC int search_file(char * path)
 					       */
 	int m = 0;
 	struct dir_entry * pde;
+
+	//走訪所有的 dir entry sector(類似走訪整個 FAT )
 	for (i = 0; i < nr_dir_blks; i++) {
+
+	    //從dir的起始位置開始，步進1個sector
 		RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
+
+		//fsbuf 為全域變數，RW data 都放在這邊
 		pde = (struct dir_entry *)fsbuf;
+
+		//比較這一個sector中，所有的entry的name ，找到的話就回傳inode的number
+		//找不到就回傳0
 		for (j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) {
 			if (memcmp(filename, pde->name, MAX_FILENAME_LEN) == 0)
 				return pde->inode_nr;
+
 			if (++m > nr_dir_entries)
 				break;
 		}

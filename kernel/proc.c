@@ -16,9 +16,6 @@ PRIVATE int  msg_send(struct proc* current, int dest, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
-
-
-
 PUBLIC void schedule()
 {
     PROCESS* p;
@@ -54,12 +51,14 @@ PUBLIC void schedule()
         }
     }
 
-//    int i,j,k;
-//    for(i=0; i<0x1000; i++){
-//        for(j=0; j<0x800; j++){
-//            k++;
-//        }
-//    }
+#ifdef ERIC
+    int i,j,k;
+    for(i=0; i<0x1000; i++){
+        for(j=0; j<0x400; j++){
+            k++;
+        }
+    }
+#endif
 
     //printf("\nS");
     ERIC_DEBUG("\nsel=%x", proc2pid(p_proc_ready));

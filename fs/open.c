@@ -49,9 +49,11 @@ PUBLIC int do_open()
 	int name_len = fs_msg.NAME_LEN;	/* length of filename */
 	int src = fs_msg.source;	/* caller proc nr. */
 	assert(name_len < MAX_PATH);
+
 	phys_copy((void*)va2la(TASK_FS, pathname),
 		  (void*)va2la(src, fs_msg.PATHNAME),
 		  name_len);
+
 	pathname[name_len] = 0;
 
 	/* find a free slot in PROCESS::filp[] */
@@ -69,6 +71,7 @@ PUBLIC int do_open()
 	for (i = 0; i < NR_FILE_DESC; i++)
 		if (f_desc_table[i].fd_inode == 0)
 			break;
+
 	if (i >= NR_FILE_DESC)
 		panic("f_desc_table[] is full (PID:%d)", proc2pid(pcaller));
 
@@ -107,6 +110,7 @@ PUBLIC int do_open()
 
 		int imode = pin->i_mode & I_TYPE_MASK;
 
+		//對文件屬性判斷
 		if (imode == I_CHAR_SPECIAL) {
 			MESSAGE driver_msg;
 
@@ -244,6 +248,7 @@ PRIVATE int alloc_imap_bit(int dev)
 	int imap_blk0_nr = 1 + 1; /* 1 boot sector & 1 super block */
 	struct super_block * sb = get_super_block(dev);
 
+	//走訪所有imap
 	for (i = 0; i < sb->nr_imap_sects; i++) {
 		RD_SECT(dev, imap_blk0_nr + i);
 
@@ -255,10 +260,12 @@ PRIVATE int alloc_imap_bit(int dev)
 			/* skip `1' bits */
 			for (k = 0; ((fsbuf[j] >> k) & 1) != 0; k++) {}
 
+			//找到空的sector，並設成1(使用中)
 			/* i: sector index; j: byte index; k: bit index */
 			inode_nr = (i * SECTOR_SIZE + j) * 8 + k;
 			fsbuf[j] |= (1 << k);
 
+			//寫回imap
 			/* write the bit to imap */
 			WR_SECT(dev, imap_blk0_nr + i);
 			break;
@@ -304,17 +311,20 @@ PRIVATE int alloc_smap_bit(int dev, int nr_sects_to_alloc)
 		/* byte offset in current sect */
 		for (j = 0; j < SECTOR_SIZE && nr_sects_to_alloc > 0; j++) {
 			k = 0;
+
 			if (!free_sect_nr) {
 				/* loop until a free bit is found */
 				if (fsbuf[j] == 0xFF) continue;
 				for (; ((fsbuf[j] >> k) & 1) != 0; k++) {}
-				free_sect_nr = (i * SECTOR_SIZE + j) * 8 +
-					k - 1 + sb->n_1st_sect;
+
+				//算出free實際的sector No.
+				free_sect_nr = (i * SECTOR_SIZE + j) * 8 + k - 1 + sb->n_1st_sect;
 			}
 
 			for (; k < 8; k++) { /* repeat till enough bits are set */
 				assert(((fsbuf[j] >> k) & 1) == 0);
 				fsbuf[j] |= (1 << k);
+				//--的優先順序優於==
 				if (--nr_sects_to_alloc == 0)
 					break;
 			}
@@ -394,6 +404,7 @@ PRIVATE void new_dir_entry(struct inode *dir_inode,int inode_nr,char *filename)
 		RD_SECT(dir_inode->i_dev, dir_blk0_nr + i);
 
 		pde = (struct dir_entry *)fsbuf;
+
 		for (j = 0; j < SECTOR_SIZE / DIR_ENTRY_SIZE; j++,pde++) {
 			if (++m > nr_dir_entries)
 				break;
