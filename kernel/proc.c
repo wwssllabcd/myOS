@@ -54,14 +54,14 @@ PUBLIC void schedule()
 #ifdef ERIC
     int i,j,k;
     for(i=0; i<0x1000; i++){
-        for(j=0; j<0x400; j++){
+        for(j=0; j<0x200; j++){
             k++;
         }
     }
 #endif
 
     //printf("\nS");
-    ERIC_DEBUG("\nsel=%x", proc2pid(p_proc_ready));
+    ERIC_DEBUG("\nsel=%x(%s)", proc2pid(p_proc_ready), p_proc_ready->name);
     //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -177,9 +177,7 @@ PUBLIC void reset_msg(MESSAGE* p)
 
 PRIVATE void block(struct proc* p)
 {
-    if( p->p_flags ==0 ){
-        ERIC_DEBUG(",Blk=%x, %x,%x,%x", p, proc2pid(p), p->p_flags, &p->p_flags);
-    }
+    ERIC_DEBUG(",Blk=%x(%s),F=%x", proc2pid(p), p->name,  p->p_flags);
     assert(p->p_flags);
     schedule();
 }
@@ -511,11 +509,10 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
 		// 如果沒人發給本身，則本身這個process會被block
-		block(p_who_wanna_recv);
 
-		//if( (p_who_wanna_recv->p_flags == RECEIVING)==0){
-		//    printf("\nA_P=%x,F=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
-		//}
+		block(p_who_wanna_recv);
+		printf("\nA_P=%x,F=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
+
 
 		assert(p_who_wanna_recv->p_flags == RECEIVING);
 		assert(p_who_wanna_recv->p_msg != 0);

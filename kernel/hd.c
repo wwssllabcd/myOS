@@ -57,6 +57,8 @@ PUBLIC void task_hd()
 	init_hd();
 
 	while (1) {
+
+	    ERIC_DEBUG(",HDRcv");
 		send_recv(RECEIVE, ANY, &msg);
 
 		ERIC_DEBUG(",HDRM=%X", msg.type);
@@ -101,6 +103,8 @@ PUBLIC void task_hd()
  *****************************************************************************/
 PRIVATE void init_hd()
 {
+    ERIC_DEBUG("\ninitHd");
+
 	int i;
     /* Get the number of drives from the BIOS data area */
     u8 * pNrDrives;

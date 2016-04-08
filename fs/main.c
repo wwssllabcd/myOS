@@ -312,6 +312,7 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 	driver_msg.PROC_NR	= proc_nr;
 	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
 	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+	ERIC_DEBUG("\nW=%x,%x", pos/512, pos%512);
 
 	return 0;
 }

@@ -336,8 +336,10 @@ exception:
 ;                                   save
 ; =============================================================================
 save:
-		;這裡保存了register, 可見進來的時候，esp應該就是指向 struct process
-        pushad          ; `.
+		; 理論上在執行 push之前，esp應該會設成 p_proc_ready 才對
+		; pushad = push ax,cx,dx,bx,sp(可能不push),bp,si,di
+		; 這裡保存了register, 可見進來的時候，esp應該就是指向 struct process
+        pushad
         push    ds      ;  |
         push    es      ;  | 保存原寄存器值
         push    fs      ;  |
@@ -355,20 +357,28 @@ save:
 
 		mov		edx, esi	; 恢复 edx
 
+		; 上面push了保存的參數，所以目前esp所指向的就是保存參數的頭
+		; 目前esp還是指向每個 process 的 stack
+		; 因為返回位置還記錄在 proc stack，所以這邊要保存起來，下面返回的時候會用到
         mov     esi, esp                    ;esi = 进程表起始地址
 
         inc     dword [k_reenter]           ;k_reenter++;
         cmp     dword [k_reenter], 0        ;if(k_reenter ==0)
         jne     .1                          ;{
 
-        ;StackTop為 kernel space
+        ; StackTop為 kernel stack，這邊就是切換到內核棧，這看來是固定值
         mov     esp, StackTop               ;  mov esp, StackTop <--切换到内核栈
 
-        push    restart                     ;  push restart
+        push    restart                     ;  push restart for retaddr
+
+        ; 這個位置為"呼叫 save 的 function" 的下一條指令位置，因為會有兩個地方 call save
+        ; 因為esi是process的stack，加上( RETADR - P_STACKBASE)，就是function call的位置
+        ; 假設是sys_call呼叫的save的話，jmp這條指令就是跳到 sti 那邊去
+        ; 而sys_call 返回時，則是會跑到 restart or restart_reenter
         jmp     [esi + RETADR - P_STACKBASE];  return;
 
 .1:                                         ;} else { 已经在内核栈，不需要再切换
-        push    restart_reenter             ;  push restart_reenter
+        push    restart_reenter             ;  push restart_reenter for retaddr
         jmp     [esi + RETADR - P_STACKBASE];  return;
                                             ;}
 
@@ -377,39 +387,55 @@ save:
 ;                                 sys_call
 ; =============================================================================
 sys_call:
+		; 從 process 進入此時，ESP就會被改變
         call    save
 
+		; 經過了 save，會把stack換成 kernel stack
         sti
+
+        ; 因為 esi 目前是 process stack 的位置(在save中保存)，這邊先保存起來
 		push	esi
 
 		push	dword [p_proc_ready]
 		push	edx
 		push	ecx
 		push	ebx
-        call    [sys_call_table + eax * 4]
-		add	esp, 4 * 4
+
+        ; 目前sys_call_table只有兩個function, sys_call_table[NR_SYS_CALL] = {sys_printx, sys_sendrec};
+        ; 而send functin 參數如右 sys_sendrec(int function, int src_dest, MESSAGE* m, struct proc* p)
+
+        call    [sys_call_table + eax * 4] ; 利用 eax 來選擇 function
+
+		add	esp, 4 * 4  ; 還原上面4個參數
 
 		pop	esi
+
+		; 放入 function 返回值？
         mov     [esi + EAXREG - P_STACKBASE], eax
         cli
-        ret
+        ret      ; 這邊的retrun 應該是 save function中，restart or restart_reenter這兩個值
 
 
 ; ====================================================================================
 ;                                   restart
 ; ====================================================================================
 restart:
+	; 這個動作開始切換process, sys_call 裡面所執行的function 很可能會把p_proc_ready給換掉
 	mov	esp, [p_proc_ready]             ; p_proc_ready 為一個 PROCESS 的 struct, 最前頭就是該process所保存的reg
 										; 所以把他變成 ESP之後，就可以用來還原 process 的 reg, 包括 return address
+
 	lldt	[esp + P_LDT_SEL]           ; P_LDT_SEL 對應到 PROCESS 中的 ldt_sel，把該位置的"值"，指給lldt
+										; 類似 mov ldt, [esp + P_LDT_SEL]
 
-	lea	eax, [esp + P_STACKTOP]         ; for ex: esp+P_STACKTOP=37988，則把 eax = 37988 (P_STACKTOP 與 P_LDT_SEL 是相等的)
-										; 與 mov 不同的是，lea 不是取該位置儲存的值，而是取位置
 
-	mov	dword [tss + TSS3_S_SP0], eax   ; TSS3_S_SP0 為固定值4，也就是把 ldt_sel 的存在位置，放到tss
-										; 這也代表 process如果要保存 reg 時，會從這點開始，往低位保存
-										; 是不是當int發生時，cpu會自動的把這個值放到 ESP中？好讓process保存reg
-										; 當process運行時，都要保證每個TSS.esp0是對應到保存reg的地方 (orange, P192)
+	lea	eax, [esp + P_STACKTOP]         ; 有點類似 eax = esp + P_STACKTOP,
+										; for ex: esp(0x4d370) + P_STACKTOP(0x48) = 0x4d3b8
+										; 與 mov 不同的是，lea 不是取該位置儲存的值，而是直接取位址
+										; 讓 eax 指向該 proc 做  push 之前的 esp 位置
+
+
+	mov	dword [tss + TSS3_S_SP0], eax   ; EAX 目前就是 proc 結構中，register 所保存的起點
+										; 這個值會被設給 tss.esp0，當int發生時，cpu會拿這個值當作esp後，把 register push進去
 
 restart_reenter:
 	dec	dword [k_reenter]
