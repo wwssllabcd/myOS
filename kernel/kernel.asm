@@ -387,7 +387,7 @@ save:
 ;                                 sys_call
 ; =============================================================================
 sys_call:
-		; 從 process 進入此時，ESP就會被改變
+		; 從 process 進入此時，ESP就會被 cpu 設成tss.esp，並且 cpu 還會push 5個參數進去
         call    save
 
 		; 經過了 save，會把stack換成 kernel stack
