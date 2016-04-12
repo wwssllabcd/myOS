@@ -31,7 +31,7 @@ PUBLIC void task_sys()
     MESSAGE msg;
     while( 1 ){
 
-        ERIC_DEBUG(",sys_rcv");
+        ERIC_DEBUG(",sysSetRcv");
         // 跟系統要 msg，要不到就等待
         send_recv(RECEIVE, ANY, &msg);
 
@@ -41,7 +41,6 @@ PUBLIC void task_sys()
         switch (msg.type) {
         case GET_TICKS:
             msg.RETVAL = m_ticks;
-            ERIC_DEBUG(",sys_snd_tck");
             send_recv(SEND, src, &msg);
             break;
         default:

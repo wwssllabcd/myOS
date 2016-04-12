@@ -33,6 +33,8 @@ PUBLIC void clock_handler(int irq)
 		return;
 	}
 
+	ERIC_DEBUG(",TO(%x,F=%x)", proc2pid(p_proc_ready), p_proc_ready->p_flags );
+
 	// tick 等於 cpu time, 用完了tick，就只能被schedule
 	schedule();
 

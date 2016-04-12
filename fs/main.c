@@ -35,7 +35,7 @@ PRIVATE void read_super_block(int dev);
  *****************************************************************************/
 PUBLIC void task_fs()
 {
-	printl("Task FS begins.\n");
+	ERIC_DEBUG(",task_fs");
 
 	init_fs();
 
@@ -115,7 +115,11 @@ PRIVATE void init_fs()
 	driver_msg.type = DEV_OPEN;
 	driver_msg.DEVICE = MINOR(ROOT_DEV);
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
+
+
+	ERIC_DEBUG(",SM2Drive");
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
+	ERIC_DEBUG(",bk");
 
 	/* make FS */
 	mkfs();

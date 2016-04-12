@@ -58,7 +58,7 @@ PUBLIC void task_hd()
 
 	while (1) {
 
-	    ERIC_DEBUG(",HDRcv");
+	    ERIC_DEBUG(",SetHDRcv");
 		send_recv(RECEIVE, ANY, &msg);
 
 		ERIC_DEBUG(",HDRM=%X", msg.type);
@@ -103,15 +103,13 @@ PUBLIC void task_hd()
  *****************************************************************************/
 PRIVATE void init_hd()
 {
-    ERIC_DEBUG("\ninitHd");
-
 	int i;
     /* Get the number of drives from the BIOS data area */
     u8 * pNrDrives;
     //* pNrDrives = (u8*)(0x475);
     pNrDrives = &hd_cnt;
 
-    printl(",initHd,NrDrives:%d.", *pNrDrives);
+    printl(",initHD,NrDrives:%d.", *pNrDrives);
 	assert(*pNrDrives);
 
 	put_irq_handler(AT_WINI_IRQ, hd_handler);

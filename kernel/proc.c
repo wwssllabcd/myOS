@@ -41,7 +41,7 @@ PUBLIC void schedule()
 
         //如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
         if (!greatest_ticks){
-            //printf("\n ------- RST Tick --------");
+            ERIC_DEBUG("\n ------- RST Tick --------");
             for (p = &FIRST_PROC; p <= &LAST_PROC; p++){
                 // 若是狀態在 SEND 或是 RECEIVE 的，將不會獲得tick (orange, P321)
                 if (p->p_flags == 0){
@@ -177,7 +177,7 @@ PUBLIC void reset_msg(MESSAGE* p)
 
 PRIVATE void block(struct proc* p)
 {
-    ERIC_DEBUG(",Blk=%x(%s),F=%x", proc2pid(p), p->name,  p->p_flags);
+    ERIC_DEBUG(",Blk(%x-%x)", proc2pid(p), p->p_flags);
     assert(p->p_flags);
     schedule();
 }
@@ -193,7 +193,7 @@ PRIVATE void block(struct proc* p)
  *****************************************************************************/
 PRIVATE void unblock(struct proc* p)
 {
-    //printf(",UnBLk=%x", proc2pid(p) );
+    ERIC_DEBUG(",unB(%x,F=%x,TO=%x)", proc2pid(p), p->p_flags, p->ticks );
     assert(p->p_flags == 0);
 }
 
@@ -236,27 +236,30 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
     }
 
+    ERIC_DEBUG(",P(%x)", proc2pid(sender));
+
     switch (m->type)
     {
     case GET_TICKS:
-        ERIC_DEBUG(",SM(tick=%x)", m->type);
+        ERIC_DEBUG("SM(GetTick)");
         break;
     case DEV_OPEN:
-        ERIC_DEBUG(",SM(DevOpen)");
+        ERIC_DEBUG("SM(DevOpen)");
+        break;
+    case OPEN:
+        ERIC_DEBUG("SM(FileOpen)");
         break;
     default:
-        ERIC_DEBUG(",SM(?)");
+        ERIC_DEBUG("SM(?)");
         break;
     }
-    ERIC_DEBUG(",P=%x,des=%x,%x", proc2pid(sender), dest, p_dest->p_flags);
-
-
+    ERIC_DEBUG("toP(%x,F=%x)", proc2pid(p_dest), p_dest->p_flags);
 
     if ((p_dest->p_flags & RECEIVING) && /* dest is waiting for the msg */
         (p_dest->p_recvfrom == proc2pid(sender) ||
          p_dest->p_recvfrom == ANY)) {
 
-        //printf(",SM_2_Des_RDY");
+        ERIC_DEBUG(",DesRdy");
 
         assert(p_dest->p_msg);
         assert(m);
@@ -273,9 +276,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         p_dest->p_flags &= ~RECEIVING; /* dest has received the msg */
         p_dest->p_recvfrom = NO_TASK;
 
-
         // unlock 遠端
-        ERIC_DEBUG(",unB=%x", proc2pid(p_dest));
         unblock(p_dest);
 
         assert(p_dest->p_flags == 0);
@@ -288,7 +289,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         assert(sender->p_sendto == NO_TASK);
     }else { /* dest is not waiting for the msg */
 
-        //printf(",SM_Des_NOT_RDY");
+        ERIC_DEBUG(",DesN_Rdy,QE=%x", p_dest->q_sending);
 
         sender->p_flags |= SENDING;
         assert(sender->p_flags == SENDING);
@@ -299,13 +300,18 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         struct proc * p;
         if (p_dest->q_sending) {
             p = p_dest->q_sending;
-            while (p->next_sending)
+            while (p->next_sending){
+                ERIC_DEBUG(",chgP(%x)->(%x)", proc2pid(p), proc2pid(p->next_sending));
                 p = p->next_sending;
+            }
+
             p->next_sending = sender;
         }
         else {
             p_dest->q_sending = sender;
         }
+
+        //reset next send
         sender->next_sending = 0;
 
         block(sender);
@@ -349,7 +355,9 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	assert(proc2pid(p_who_wanna_recv) != src);
 
-	ERIC_DEBUG(",RM(%x)", proc2pid(p_who_wanna_recv));
+	// 0x11: any
+
+	ERIC_DEBUG(",RM(%x)From=%x", proc2pid(p_who_wanna_recv), src);
 
 	//處理 int 所發送的 msg
 	if ((p_who_wanna_recv->has_int_msg) && ((src == ANY) || (src == INTERRUPT))) {
@@ -358,7 +366,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 	    // 如果 has_int_msg=1時
 
-	    ERIC_DEBUG("intF=%x,src=%x", p_who_wanna_recv->has_int_msg, src);
+	    ERIC_DEBUG(",intM=%x", p_who_wanna_recv->has_int_msg);
 
 		MESSAGE msg;
 		reset_msg(&msg);
@@ -388,8 +396,9 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * ANY proc, we'll check the sending queue and pick the
 		 * first proc in it.
 		 */
+
 	    //sending 的queue，代表有多少人對這個process發送msg
-	    //printf(",Rcv_Any,SND_PROC=%X", proc2pid(p_who_wanna_recv->q_sending));
+	    ERIC_DEBUG(",Qsend=%x", p_who_wanna_recv->q_sending);
 		if (p_who_wanna_recv->q_sending) {
 
 		    //設定從哪接收
@@ -418,6 +427,9 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 			/* Perfect, src is sending a message to
 			 * p_who_wanna_recv.
 			 */
+
+		    ERIC_DEBUG(",P(%x)SM_ToP(%x)", proc2pid(p_from), proc2pid(p_who_wanna_recv));
+
 			copyok = 1;
 
 			struct proc* p = p_who_wanna_recv->q_sending;
@@ -487,6 +499,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * be scheduled until it is unblocked.
 		 */
 
+	    ERIC_DEBUG(",WtRM(%x)", proc2pid(p_who_wanna_recv));
 	    // process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
 	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
 		p_who_wanna_recv->p_flags |= RECEIVING;
@@ -511,8 +524,6 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		// 如果沒人發給本身，則本身這個process會被block
 
 		block(p_who_wanna_recv);
-		printf("\nA_P=%x,F=%x", proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
-
 
 		assert(p_who_wanna_recv->p_flags == RECEIVING);
 		assert(p_who_wanna_recv->p_msg != 0);
