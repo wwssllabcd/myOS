@@ -265,7 +265,6 @@ PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
 	hd_cmd_out(&cmd);
 	interrupt_wait();
 
-
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 	memcpy(entry,
 	       hdbuf + PARTITION_TABLE_OFFSET,
@@ -458,7 +457,12 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 		panic("hd error.");
 	}
 
-	ERIC_DEBUG(",cmdOut=%x",  cmd->command);
+	if( cmd->command == ATA_READ){
+	    ERIC_DEBUG(",R=%x%x%x",  cmd->lba_high,cmd->lba_mid,cmd->lba_low);
+	}else if(cmd->command == ATA_WRITE){
+	    ERIC_DEBUG(",W=%x%x%x",  cmd->lba_high,cmd->lba_mid,cmd->lba_low);
+	}
+
 	/* Activate the Interrupt Enable (nIEN) bit */
 	out_byte(REG_DEV_CTRL, 0);
 	/* Load required parameters in the Command Block Registers */

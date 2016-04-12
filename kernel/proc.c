@@ -16,6 +16,20 @@ PRIVATE int  msg_send(struct proc* current, int dest, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
+
+
+PUBLIC void delay_eric()
+{
+#ifdef ERIC
+    int i, j, k;
+    for (i = 0; i < 0x500; i++){
+        for (j = 0; j < 0x200; j++){
+            k++;
+        }
+    }
+#endif
+}
+
 PUBLIC void schedule()
 {
     PROCESS* p;
@@ -51,14 +65,7 @@ PUBLIC void schedule()
         }
     }
 
-#ifdef ERIC
-    int i,j,k;
-    for(i=0; i<0x800; i++){
-        for(j=0; j<0x200; j++){
-            k++;
-        }
-    }
-#endif
+
 
     //printf("\nS");
     ERIC_PROC("\nsel=%x(%s)", proc2pid(p_proc_ready), p_proc_ready->name);
@@ -323,6 +330,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
     }
 
     //printf(",Send_E");
+    delay_eric();
     return 0;
 }
 
@@ -507,28 +515,19 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 
 	    ERIC_PROC(",WtRM(%x)", proc2pid(p_who_wanna_recv));
-	    // process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
-	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
-		p_who_wanna_recv->p_flags |= RECEIVING;
+
 
 		//m是外部的msg pointer, receive的話就是代表最初呼叫者所提供的容器
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
 
-//        if(proc2pid(p_who_wanna_recv) == 2){
-//            noMsgCnt++;
-//        }
-//
-//        if(noMsgCnt == 6){
-//            printf(",NoMSgCnt=%x", noMsgCnt);
-//            // 發生int, 此時 int已經把本 proc 的receive 清掉了
-//            // 而除非解開p_flags,否則不會再次進到該process
-//            printf(",NoMSg(%x)=%x,%x", p_who_wanna_recv, proc2pid(p_who_wanna_recv), p_who_wanna_recv->p_flags);
-//        }
-//        printf(",F(%x)=%x", &p_who_wanna_recv->p_flags, p_who_wanna_recv->p_flags);
+		 // process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
+        //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
+        p_who_wanna_recv->p_flags |= RECEIVING;
 
-		// 會呼叫 schedule, 會選一個Tick最大的 process 出來，當作執行的對象
-		// 如果沒人發給本身，則本身這個process會被block
+
+        // 解除proc的RCV狀態之後，到進入block在出來的這段時間，很有可能會有time out發生，
+        // 導致有另一個proc送 msg 給這個 proc 成功，這樣會造成下面的assert發生錯誤
 
 		block(p_who_wanna_recv);
 
@@ -538,7 +537,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(p_who_wanna_recv->p_sendto == NO_TASK);
 		assert(p_who_wanna_recv->has_int_msg == 0);
 	}
-
+	delay_eric();
 	return 0;
 }
 
