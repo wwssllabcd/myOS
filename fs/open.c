@@ -40,6 +40,7 @@ PRIVATE void new_dir_entry(struct inode * dir_inode, int inode_nr, char * filena
  *****************************************************************************/
 PUBLIC int do_open()
 {
+
 	int fd = -1;		/* return value */
 
 	char pathname[MAX_PATH];
@@ -55,6 +56,8 @@ PUBLIC int do_open()
 		  name_len);
 
 	pathname[name_len] = 0;
+
+	ERIC_DEBUG(",doOpen=%s", pathname);
 
 	/* find a free slot in PROCESS::filp[] */
 	int i;
