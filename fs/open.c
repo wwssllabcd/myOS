@@ -57,7 +57,7 @@ PUBLIC int do_open()
 
 	pathname[name_len] = 0;
 
-	ERIC_DEBUG(",doOpen=%s", pathname);
+	ERIC_DEBUG("\n==================doOpen=%s", pathname);
 
 	/* find a free slot in PROCESS::filp[] */
 	int i;

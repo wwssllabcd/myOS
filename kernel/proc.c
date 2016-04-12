@@ -41,7 +41,7 @@ PUBLIC void schedule()
 
         //如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
         if (!greatest_ticks){
-            ERIC_DEBUG("\n ------- RST Tick(%x) --------", m_ticks);
+            ERIC_PROC("\n ------- RST Tick(%x) --------", m_ticks);
             for (p = &FIRST_PROC; p <= &LAST_PROC; p++){
                 // 若是狀態在 SEND 或是 RECEIVE 的，將不會獲得tick (orange, P321)
                 if (p->p_flags == 0){
@@ -53,7 +53,7 @@ PUBLIC void schedule()
 
 #ifdef ERIC
     int i,j,k;
-    for(i=0; i<0x1000; i++){
+    for(i=0; i<0x800; i++){
         for(j=0; j<0x200; j++){
             k++;
         }
@@ -61,7 +61,7 @@ PUBLIC void schedule()
 #endif
 
     //printf("\nS");
-    ERIC_DEBUG("\nsel=%x(%s)", proc2pid(p_proc_ready), p_proc_ready->name);
+    ERIC_PROC("\nsel=%x(%s)", proc2pid(p_proc_ready), p_proc_ready->name);
     //printf("\n------- change Process = %x, Status=%x ------", proc2pid(p_proc_ready), p_proc_ready->p_flags);
 
 }
@@ -177,7 +177,7 @@ PUBLIC void reset_msg(MESSAGE* p)
 
 PRIVATE void block(struct proc* p)
 {
-    ERIC_DEBUG(",Blk(%x-%x)", proc2pid(p), p->p_flags);
+    ERIC_PROC(",Blk(%x-%x)", proc2pid(p), p->p_flags);
     assert(p->p_flags);
     schedule();
 }
@@ -193,7 +193,7 @@ PRIVATE void block(struct proc* p)
  *****************************************************************************/
 PRIVATE void unblock(struct proc* p)
 {
-    ERIC_DEBUG(",unB(%x,F=%x,TO=%x)", proc2pid(p), p->p_flags, p->ticks );
+    ERIC_PROC(",unB(%x,F=%x,TO=%x)", proc2pid(p), p->p_flags, p->ticks );
     assert(p->p_flags == 0);
 }
 
@@ -236,30 +236,30 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         panic(">>DEADLOCK<< %s->%s", sender->name, p_dest->name);
     }
 
-    ERIC_DEBUG(",P(%x)", proc2pid(sender));
+    ERIC_PROC(",P(%x)", proc2pid(sender));
 
     switch (m->type)
     {
     case GET_TICKS:
-        ERIC_DEBUG("SM(GetTick)");
+        ERIC_PROC("SM(GetTick)");
         break;
     case DEV_OPEN:
-        ERIC_DEBUG("SM(DevOpen)");
+        ERIC_PROC("SM(DevOpen)");
         break;
     case OPEN:
-        ERIC_DEBUG("SM(FileOpen)");
+        ERIC_PROC("SM(FileOpen)");
         break;
     default:
-        ERIC_DEBUG("SM(?)");
+        ERIC_PROC("SM(?)");
         break;
     }
-    ERIC_DEBUG("toP(%x,F=%x)", proc2pid(p_dest), p_dest->p_flags);
+    ERIC_PROC("toP(%x,F=%x)", proc2pid(p_dest), p_dest->p_flags);
 
     if ((p_dest->p_flags & RECEIVING) && /* dest is waiting for the msg */
         (p_dest->p_recvfrom == proc2pid(sender) ||
          p_dest->p_recvfrom == ANY)) {
 
-        ERIC_DEBUG(",DesRdy");
+        ERIC_PROC(",DesRdy");
 
         assert(p_dest->p_msg);
         assert(m);
@@ -289,7 +289,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         assert(sender->p_sendto == NO_TASK);
     }else { /* dest is not waiting for the msg */
 
-        ERIC_DEBUG(",DesN_Rdy,QE=%x", p_dest->q_sending);
+        ERIC_PROC(",DesN_Rdy,QE=%x", p_dest->q_sending);
 
         sender->p_flags |= SENDING;
         assert(sender->p_flags == SENDING);
@@ -301,7 +301,7 @@ PRIVATE int msg_send(struct proc* current, int dest, MESSAGE* m)
         if (p_dest->q_sending) {
             p = p_dest->q_sending;
             while (p->next_sending){
-                ERIC_DEBUG(",chgP(%x)->(%x)", proc2pid(p), proc2pid(p->next_sending));
+                ERIC_PROC(",chgP(%x)->(%x)", proc2pid(p), proc2pid(p->next_sending));
                 p = p->next_sending;
             }
 
@@ -357,12 +357,12 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	// 0x11: any
 
-	ERIC_DEBUG(",RM(%x)", proc2pid(p_who_wanna_recv));
+	ERIC_PROC(",RM(%x)", proc2pid(p_who_wanna_recv));
 
 	if( src>0){
-	    ERIC_DEBUG("From(%x)", src);
+	    ERIC_PROC("From(%x)", src);
 	}else{
-	    ERIC_DEBUG("From(int,F=%x)", p_who_wanna_recv->has_int_msg);
+	    ERIC_PROC("From(int,F=%x)", p_who_wanna_recv->has_int_msg);
 	}
 
 
@@ -373,7 +373,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 	    // 如果 has_int_msg=1時
 
-	    ERIC_DEBUG(",intM=%x", p_who_wanna_recv->has_int_msg);
+	    ERIC_PROC(",intM=%x", p_who_wanna_recv->has_int_msg);
 
 		MESSAGE msg;
 		reset_msg(&msg);
@@ -405,7 +405,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 */
 
 	    //sending 的queue，代表有多少人對這個process發送msg
-	    ERIC_DEBUG(",Qsend=%x", p_who_wanna_recv->q_sending);
+	    ERIC_PROC(",Qsend=%x", p_who_wanna_recv->q_sending);
 		if (p_who_wanna_recv->q_sending) {
 
 		    //設定從哪接收
@@ -435,7 +435,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 			 * p_who_wanna_recv.
 			 */
 
-		    ERIC_DEBUG(",P(%x)SM_ToP(%x)", proc2pid(p_from), proc2pid(p_who_wanna_recv));
+		    ERIC_PROC(",P(%x)SM_ToP(%x)", proc2pid(p_from), proc2pid(p_who_wanna_recv));
 
 			copyok = 1;
 
@@ -506,7 +506,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * be scheduled until it is unblocked.
 		 */
 
-	    ERIC_DEBUG(",WtRM(%x)", proc2pid(p_who_wanna_recv));
+	    ERIC_PROC(",WtRM(%x)", proc2pid(p_who_wanna_recv));
 	    // process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
 	    //這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
 		p_who_wanna_recv->p_flags |= RECEIVING;
@@ -553,7 +553,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 PUBLIC void inform_int(int task_nr)
 {
 	struct proc* p = proc_table + task_nr;
-	ERIC_DEBUG(",Int_forP(%x,F=%x)", task_nr, p->p_flags);
+	ERIC_INT(",Int_forP(%x,F=%x)", task_nr, p->p_flags);
 	if ((p->p_flags & RECEIVING) && /* dest is waiting for the msg */
 	    ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) {
 
@@ -568,7 +568,7 @@ PUBLIC void inform_int(int task_nr)
 		assert(p->p_flags == 0);
 
 		//TASK_HD收到了msg，所以要把 RECEIVE打開
-		ERIC_DEBUG(",Int_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
+		ERIC_INT(",Int_CF,P=%x,F=%x",proc2pid(p), p->p_flags);
 		unblock(p);
 
 		assert(p->p_flags == 0);
@@ -578,7 +578,7 @@ PUBLIC void inform_int(int task_nr)
 	}
 	else {
 	    //通知目標proc interrupt 已經來了，設 flag, 快速離開int
-	    ERIC_DEBUG(",SetFlag");
+	    ERIC_INT(",SetFlag");
 		p->has_int_msg = 1;
 	}
 }

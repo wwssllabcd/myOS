@@ -18,12 +18,27 @@
 #define	EXTERN
 #endif
 
-//#define ERIC
+#define ERIC
 #ifdef ERIC
     #define ERIC_DEBUG printf
 #else
     #define ERIC_DEBUG
 #endif
+
+//#define ERIC_DEBUG_PROC
+#ifdef ERIC_DEBUG_PROC
+    #define ERIC_PROC printf
+#else
+    #define ERIC_PROC
+#endif
+
+//#define ERIC_DEBUG_INT
+#ifdef ERIC_DEBUG_INT
+    #define ERIC_INT printf
+#else
+    #define ERIC_INT
+#endif
+
 
 EXTERN int noMsgCnt;
 

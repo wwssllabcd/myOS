@@ -53,16 +53,9 @@ PRIVATE	struct hd_info	hd_info[1];
 PUBLIC void task_hd()
 {
 	MESSAGE msg;
-
 	init_hd();
-
 	while (1) {
-
-	    ERIC_DEBUG(",SetHDRcv");
 		send_recv(RECEIVE, ANY, &msg);
-
-		ERIC_DEBUG(",HDRM=%X", msg.type);
-
 		int src = msg.source;
 
 		switch (msg.type) {
@@ -89,7 +82,6 @@ PUBLIC void task_hd()
 			break;
 		}
 
-		ERIC_DEBUG("\nHD=%x,desc=%x", msg.type, src);
 		send_recv(SEND, src, &msg);
 	}
 }
@@ -538,9 +530,9 @@ PUBLIC void hd_handler(int irq)
 	hd_status = in_byte(REG_STATUS);
 
 	//
-	ERIC_DEBUG("\n- HW_Int,FromHD=%x", hd_status);
+	ERIC_INT("\n- HW_Int,FromHD=%x", hd_status);
 	inform_int(TASK_HD);
-	ERIC_DEBUG(" -\n");
+	ERIC_INT(" -\n");
 }
 
 

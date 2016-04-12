@@ -31,7 +31,7 @@ PUBLIC void task_sys()
     MESSAGE msg;
     while( 1 ){
 
-        ERIC_DEBUG(",sysSetRcv");
+        //ERIC_DEBUG(",sysSetRcv");
         // 跟系統要 msg，要不到就等待
         send_recv(RECEIVE, ANY, &msg);
 

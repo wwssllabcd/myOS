@@ -162,7 +162,7 @@ void TestA()
 void TestB()
 {
     while( 1 ){
-        printf("B");
+        //printf("B");
         milli_delay(2000);
     }
 }
@@ -174,7 +174,7 @@ void TestC()
 {
     /* assert(0); */
     while( 1 ){
-        printf("C");
+        //printf("C");
         milli_delay(2000);
     }
 }
