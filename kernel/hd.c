@@ -265,6 +265,7 @@ PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
 	hd_cmd_out(&cmd);
 	interrupt_wait();
 
+
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
 	memcpy(entry,
 	       hdbuf + PARTITION_TABLE_OFFSET,
@@ -483,7 +484,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
-	ERIC_DEBUG(",W_Int,setRcvInt");
+	ERIC_DEBUG(",W_Int");
 	send_recv(RECEIVE, INTERRUPT, &msg);
 }
 
