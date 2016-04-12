@@ -136,7 +136,6 @@ PRIVATE void hd_open(int device)
 	int drive = DRV_OF_DEV(device);
 	assert(drive == 0);	/* only one drive */
 
-
 	hd_identify(drive);
 
     // ++的優先權很低,
@@ -393,8 +392,8 @@ PRIVATE void hd_identify(int drive)
 	hd_cmd_out(&cmd);
 	interrupt_wait();
 
+	ERIC_DEBUG(",ReadData");
 	port_read(REG_DATA, hdbuf, SECTOR_SIZE);
-
 	print_identify_info((u16*)hdbuf);
 
 	u16* hdinfo = (u16*)hdbuf;
@@ -431,11 +430,11 @@ PRIVATE void print_identify_info(u16* hdinfo)
 			s[i*2] = *p++;
 		}
 		s[i*2] = 0;
-		printl("%s: %s\n", iinfo[k].desc, s);
+		printl("\n%s: %s", iinfo[k].desc, s);
 	}
 
 	int capabilities = hdinfo[49];
-	printl("LBA supported: %s\n",
+	printl(",LBA supported: %s\n",
 	       (capabilities & 0x0200) ? "Yes" : "No");
 
 	int cmd_set_supported = hdinfo[83];
@@ -461,8 +460,10 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 	 * and should proceed no further unless and until BSY=0
 	 */
 
-	if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT))
+	if (!waitfor(STATUS_BSY, 0, HD_TIMEOUT)){
+	    ERIC_DEBUG("\nHD_timeOut");
 		panic("hd error.");
+	}
 
 	ERIC_DEBUG(",cmdOut=%x",  cmd->command);
 	/* Activate the Interrupt Enable (nIEN) bit */
@@ -490,7 +491,7 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 PRIVATE void interrupt_wait()
 {
 	MESSAGE msg;
-	ERIC_DEBUG(",wi,setReveInt");
+	ERIC_DEBUG(",W_Int,setRcvInt");
 	send_recv(RECEIVE, INTERRUPT, &msg);
 }
 
@@ -537,9 +538,9 @@ PUBLIC void hd_handler(int irq)
 	hd_status = in_byte(REG_STATUS);
 
 	//
-	ERIC_DEBUG("\nIntFromHD=%x", hd_status);
-
+	ERIC_DEBUG("\n- HW_Int,FromHD=%x", hd_status);
 	inform_int(TASK_HD);
+	ERIC_DEBUG(" -\n");
 }
 
 

@@ -41,7 +41,7 @@ PUBLIC void schedule()
 
         //如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
         if (!greatest_ticks){
-            ERIC_DEBUG("\n ------- RST Tick --------");
+            ERIC_DEBUG("\n ------- RST Tick(%x) --------", m_ticks);
             for (p = &FIRST_PROC; p <= &LAST_PROC; p++){
                 // 若是狀態在 SEND 或是 RECEIVE 的，將不會獲得tick (orange, P321)
                 if (p->p_flags == 0){
@@ -357,7 +357,14 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 	// 0x11: any
 
-	ERIC_DEBUG(",RM(%x)From=%x", proc2pid(p_who_wanna_recv), src);
+	ERIC_DEBUG(",RM(%x)", proc2pid(p_who_wanna_recv));
+
+	if( src>0){
+	    ERIC_DEBUG("From(%x)", src);
+	}else{
+	    ERIC_DEBUG("From(int,F=%x)", p_who_wanna_recv->has_int_msg);
+	}
+
 
 	//處理 int 所發送的 msg
 	if ((p_who_wanna_recv->has_int_msg) && ((src == ANY) || (src == INTERRUPT))) {
@@ -546,10 +553,12 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 PUBLIC void inform_int(int task_nr)
 {
 	struct proc* p = proc_table + task_nr;
-	ERIC_DEBUG("\nIntToP=%x,F=%x", task_nr, p->p_flags);
+	ERIC_DEBUG(",Int_forP(%x,F=%x)", task_nr, p->p_flags);
 	if ((p->p_flags & RECEIVING) && /* dest is waiting for the msg */
 	    ((p->p_recvfrom == INTERRUPT) || (p->p_recvfrom == ANY))) {
 
+	    // 想要接收int的 proc正處在receive int狀態時
+	    // 這邊看來int處理是什麼事都不做，看來像是再等 busy  down
 	    p->p_msg->source = INTERRUPT;
 		p->p_msg->type = HARD_INT;
 		p->p_msg = 0;
@@ -568,7 +577,7 @@ PUBLIC void inform_int(int task_nr)
 		assert(p->p_sendto == NO_TASK);
 	}
 	else {
-	    //設 flag, 好快速離開int
+	    //通知目標proc interrupt 已經來了，設 flag, 快速離開int
 	    ERIC_DEBUG(",SetFlag");
 		p->has_int_msg = 1;
 	}

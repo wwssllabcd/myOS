@@ -258,7 +258,7 @@ struct hd_info
 /***************/
 /* DEFINITIONS */
 /***************/
-#define	HD_TIMEOUT		10000	/* in millisec */
+#define	HD_TIMEOUT		100000	/* in millisec */
 #define	PARTITION_TABLE_OFFSET	0x1BE
 #define ATA_IDENTIFY		0xEC
 #define ATA_READ		0x20
