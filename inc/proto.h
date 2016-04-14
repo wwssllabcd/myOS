@@ -132,4 +132,10 @@ PUBLIC  void    sys_call();             /* int_handler */
 PUBLIC  int sendrec(int function, int src_dest, MESSAGE* p_msg);
 PUBLIC  int printx(char* str);
 
+// eric_util
+void ut_ck_idt_desc();
+void showMsgType(MESSAGE* emsg);
+void printMem(u32 addr, u32 len);
+
+
 #endif

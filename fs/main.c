@@ -95,6 +95,8 @@ PUBLIC void task_fs()
  *****************************************************************************/
 PRIVATE void init_fs()
 {
+    ERIC_DEBUG("\ninitFS");
+
 	int i;
 
 	/* f_desc_table[] */
@@ -117,9 +119,9 @@ PRIVATE void init_fs()
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
 
 
-	ERIC_DEBUG(",SM2Drive");
+	ERIC_DEBUG(",SM_to_Drive");
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
-	ERIC_DEBUG(",bk");
+
 
 	/* make FS */
 	mkfs();
@@ -147,6 +149,7 @@ PRIVATE void init_fs()
  *****************************************************************************/
 PRIVATE void mkfs()
 {
+    ERIC_DEBUG("\nMakeFs");
 	MESSAGE driver_msg;
 	int i, j;
 
@@ -268,6 +271,9 @@ PRIVATE void mkfs()
 		pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);
 		pi->i_nr_sects = 0;
 	}
+
+	ERIC_DEBUG("\nWrite-Smap=%x", 2 + sb.nr_imap_sects);
+
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
 	/************************/
@@ -315,9 +321,16 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 	driver_msg.CNT		= bytes;
 	driver_msg.PROC_NR	= proc_nr;
 	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
-	ERIC_DEBUG("\nW=%x,%x", pos/512, pos%512);
 
+	if(io_type == DEV_WRITE){
+	    showMsgType(&driver_msg);
+	    ERIC_DEBUG("\nW=");
+	}else{
+	    ERIC_DEBUG("\nR=");
+	}
+
+	ERIC_DEBUG("%x,%x", pos/512, pos%512);
+	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 	return 0;
 }
 

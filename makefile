@@ -54,8 +54,7 @@ OBJ_FS = \
 	$(DIR_FS)/open.o  \
 	$(DIR_FS)/misc.o  \
 	
-	
-	
+
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test
 OBJ_UNIT_TEST = \

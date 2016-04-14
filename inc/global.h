@@ -32,12 +32,20 @@
     #define ERIC_PROC
 #endif
 
-//#define ERIC_DEBUG_INT
-#ifdef ERIC_DEBUG_INT
+//#define ERIC_DEBUG_HW_INT
+#ifdef ERIC_DEBUG_HW_INT
     #define ERIC_INT printf
 #else
     #define ERIC_INT
 #endif
+
+#define ERIC_DEBUG_HD
+#ifdef ERIC_DEBUG_HD
+    #define ERIC_HD printf
+#else
+    #define ERIC_HD
+#endif
+
 
 
 EXTERN int noMsgCnt;

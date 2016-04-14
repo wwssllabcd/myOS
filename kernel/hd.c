@@ -126,12 +126,16 @@ PRIVATE void init_hd()
 PRIVATE void hd_open(int device)
 {
 	int drive = DRV_OF_DEV(device);
+
+	ERIC_HD("\nHD_open=%x",drive);
+
 	assert(drive == 0);	/* only one drive */
 
 	hd_identify(drive);
 
-    // ++的優先權很低,
+    // ++的優先權很高, 而 == 號優先權約在中間，所以要小心
 	if (hd_info[drive].open_cnt++ == 0) {
+	    //列印主分區，每個hd都只有4個主分區
 		partition(drive * (NR_PART_PER_DRIVE + 1), P_PRIMARY);
 		print_hdinfo(&hd_info[drive]);
 	}
@@ -164,6 +168,8 @@ PRIVATE void hd_close(int device)
  *****************************************************************************/
 PRIVATE void hd_rdwt(MESSAGE * p)
 {
+
+
 	int drive = DRV_OF_DEV(p->DEVICE);
 
 	u64 pos = p->POSITION;
@@ -191,6 +197,10 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 	cmd.lba_high	= (sect_nr >> 16) & 0xFF;
 	cmd.device	= MAKE_DEVICE_REG(1, drive, (sect_nr >> 24) & 0xF);
 	cmd.command	= (p->type == DEV_READ) ? ATA_READ : ATA_WRITE;
+
+	ERIC_HD("\nHDRW=%x,HML=%x,%x,%x,secNr=%x", p->POSITION, (u32)cmd.lba_high, (u32)cmd.lba_mid, (u32)cmd.lba_low, sect_nr);
+
+
 	hd_cmd_out(&cmd);
 
 	int bytes_left = p->CNT;
@@ -251,6 +261,8 @@ PRIVATE void hd_ioctl(MESSAGE * p)
  *****************************************************************************/
 PRIVATE void get_part_table(int drive, int sect_nr, struct part_ent * entry)
 {
+    ERIC_HD("\nGetPTable=%x", sect_nr);
+
 	struct hd_cmd cmd;
     // ata read cmd ( 0x20 )
 	cmd.features	= 0;
@@ -286,13 +298,15 @@ PRIVATE void partition(int device, int style)
 	int i;
 	int drive = DRV_OF_DEV(device);
 	struct hd_info * hdi = &hd_info[drive];
-
 	struct part_ent part_tbl[NR_SUB_PER_DRIVE];
 
+	ERIC_HD("\nDev=%x,drive=%x,Part=%x", device, drive, style);
 	if (style == P_PRIMARY) {
+
 		get_part_table(drive, drive, part_tbl);
 
 		int nr_prim_parts = 0;
+
 		for (i = 0; i < NR_PART_PER_DRIVE; i++) { /* 0~3 */
 			if (part_tbl[i].sys_id == NO_PART) 
 				continue;
@@ -302,9 +316,12 @@ PRIVATE void partition(int device, int style)
 			hdi->primary[dev_nr].base = part_tbl[i].start_sect;
 			hdi->primary[dev_nr].size = part_tbl[i].nr_sects;
 
+			ERIC_HD("\nSet_P_Part(%x), Base=%x,Size=%x", dev_nr, hdi->primary[dev_nr].base, hdi->primary[dev_nr].size);
+
 			if (part_tbl[i].sys_id == EXT_PART) /* extended */
 				partition(device + dev_nr, P_EXTENDED);
 		}
+
 		assert(nr_prim_parts != 0);
 	}
 	else if (style == P_EXTENDED) {
@@ -322,6 +339,8 @@ PRIVATE void partition(int device, int style)
 			hdi->logical[dev_nr].size = part_tbl[0].nr_sects;
 
 			s = ext_start_sect + part_tbl[1].start_sect;
+
+			ERIC_HD("\nSetLPart(%x),Base=%x,Size=%x", dev_nr, hdi->logical[dev_nr].base, hdi->logical[dev_nr].size);
 
 			/* no more logical partitions
 			   in this extended partition */
@@ -458,9 +477,9 @@ PRIVATE void hd_cmd_out(struct hd_cmd* cmd)
 	}
 
 	if( cmd->command == ATA_READ){
-	    ERIC_DEBUG(",R=%x%x%x",  cmd->lba_high,cmd->lba_mid,cmd->lba_low);
+	    ERIC_DEBUG(",R=%x-%x-%x",  cmd->lba_high, cmd->lba_mid, cmd->lba_low);
 	}else if(cmd->command == ATA_WRITE){
-	    ERIC_DEBUG(",W=%x%x%x",  cmd->lba_high,cmd->lba_mid,cmd->lba_low);
+	    ERIC_DEBUG(",W=%x-%x-%x",  cmd->lba_high, cmd->lba_mid, cmd->lba_low);
 	}
 
 	/* Activate the Interrupt Enable (nIEN) bit */
