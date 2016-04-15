@@ -52,10 +52,10 @@ PUBLIC void task_fs()
 		case CLOSE:
 			fs_msg.RETVAL = do_close();
 			break;
-		/* case READ: */
-		/* case WRITE: */
-		/* 	fs_msg.CNT = do_rdwt(); */
-		/* 	break; */
+		case READ:
+		case WRITE:
+			fs_msg.CNT = do_rdwt();
+			break;
 		/* case LSEEK: */
 		/* 	fs_msg.OFFSET = do_lseek(); */
 		/* 	break; */
@@ -121,7 +121,6 @@ PRIVATE void init_fs()
 
 	ERIC_DEBUG(",SM_to_Drive");
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
-
 
 	/* make FS */
 	mkfs();
@@ -265,7 +264,6 @@ PRIVATE void mkfs()
 					  */
 	pi->i_start_sect = sb.n_1st_sect;
 	pi->i_nr_sects = NR_DEFAULT_FILE_SECTS;
-
 	/* inode of `/dev_tty0~2' */
 	for (i = 0; i < NR_CONSOLES; i++) {
 		pi = (struct inode*)(fsbuf + (INODE_SIZE * (i + 1)));
@@ -328,6 +326,7 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 	driver_msg.PROC_NR	= proc_nr;
 	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
 	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
+
 	return 0;
 }
 

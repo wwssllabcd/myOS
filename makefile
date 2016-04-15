@@ -53,6 +53,7 @@ OBJ_FS = \
 	$(DIR_FS)/main.o  \
 	$(DIR_FS)/open.o  \
 	$(DIR_FS)/misc.o  \
+	$(DIR_FS)/read_write.o  \
 	
 
 OBJ_FILES += $(OBJ_UNIT_TEST)
