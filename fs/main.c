@@ -195,6 +195,7 @@ PRIVATE void mkfs()
 	memcpy(fsbuf, &sb, SUPER_BLOCK_SIZE);
 
 	/* write the super block */
+	//ROOT_DEV = 0x20
 	WR_SECT(ROOT_DEV, 1);
 
     printl("\ndevbase:0x%x00, sb:0x%x00, imap:0x%x00, smap:0x%x00"
@@ -242,6 +243,7 @@ PRIVATE void mkfs()
 	for (j = 0; j < nr_sects % 8; j++)
 		fsbuf[i] |= (1 << j);
 
+	ERIC_DEBUG("\nWrite-inode-map-start=%x", 2 + sb.nr_imap_sects);
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects);
 
 	/* zeromemory the rest sector-map */
@@ -263,6 +265,7 @@ PRIVATE void mkfs()
 					  */
 	pi->i_start_sect = sb.n_1st_sect;
 	pi->i_nr_sects = NR_DEFAULT_FILE_SECTS;
+
 	/* inode of `/dev_tty0~2' */
 	for (i = 0; i < NR_CONSOLES; i++) {
 		pi = (struct inode*)(fsbuf + (INODE_SIZE * (i + 1)));
@@ -272,8 +275,9 @@ PRIVATE void mkfs()
 		pi->i_nr_sects = 0;
 	}
 
-	ERIC_DEBUG("\nWrite-Smap=%x", 2 + sb.nr_imap_sects);
+	ERIC_DEBUG("\nWrite-inode-start=%x", 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
+	//i-node 接在 i-node-map與sec-node-map 後面
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
 	/************************/
@@ -291,6 +295,8 @@ PRIVATE void mkfs()
 		pde->inode_nr = i + 2; /* dev_tty0's inode_nr is 2 */
 		sprintf(pde->name, "dev_tty%d", i);
 	}
+
+	ERIC_DEBUG("\nWrite-dir-entry=%x", sb.n_1st_sect);
 	WR_SECT(ROOT_DEV, sb.n_1st_sect);
 }
 
@@ -321,15 +327,6 @@ PUBLIC int rw_sector(int io_type, int dev, u64 pos, int bytes, int proc_nr,
 	driver_msg.CNT		= bytes;
 	driver_msg.PROC_NR	= proc_nr;
 	assert(dd_map[MAJOR(dev)].driver_nr != INVALID_DRIVER);
-
-	if(io_type == DEV_WRITE){
-	    showMsgType(&driver_msg);
-	    ERIC_DEBUG("\nW=");
-	}else{
-	    ERIC_DEBUG("\nR=");
-	}
-
-	ERIC_DEBUG("%x,%x", pos/512, pos%512);
 	send_recv(BOTH, dd_map[MAJOR(dev)].driver_nr, &driver_msg);
 	return 0;
 }

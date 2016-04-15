@@ -219,6 +219,7 @@ enum msgtype {
 #define	MINOR_hd1a		0x10
 #define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART)
 
+//MINOR_BOOT = 0x20，代表 partition 2的第一個logic分區( partition-1 是 primary, partition-2 是 extend 那塊)
 #define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
 
 #define	P_PRIMARY	0

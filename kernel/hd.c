@@ -168,10 +168,9 @@ PRIVATE void hd_close(int device)
  *****************************************************************************/
 PRIVATE void hd_rdwt(MESSAGE * p)
 {
-
-
+    // p->DEVICE 為 0x20，也就是 hd2a
+    int pDev = p->DEVICE;
 	int drive = DRV_OF_DEV(p->DEVICE);
-
 	u64 pos = p->POSITION;
 	assert((pos >> SECTOR_SIZE_SHIFT) < (1 << 31));
 
@@ -182,24 +181,25 @@ PRIVATE void hd_rdwt(MESSAGE * p)
 
 	u32 sect_nr = (u32)(pos >> SECTOR_SIZE_SHIFT); /* pos / SECTOR_SIZE */
 
+	//取出logic index
 	int logidx = (p->DEVICE - MINOR_hd1a) % NR_SUB_PER_DRIVE;
 
-	//找出某個partition的LBA
+	// 找出某個partition的LBA,
+	// MAX_PRIM=9，代表Hd0~Hd9為primary的編號，超過9以上的編號都是logic
 	sect_nr += p->DEVICE < MAX_PRIM ?
 		hd_info[drive].primary[p->DEVICE].base :
 		hd_info[drive].logical[logidx].base;
+
+	ERIC_HD("\nHDRW=%x", sect_nr);
 
 	struct hd_cmd cmd;
 	cmd.features	= 0;
 	cmd.count	= (p->CNT + SECTOR_SIZE - 1) / SECTOR_SIZE;
 	cmd.lba_low	= sect_nr & 0xFF;
 	cmd.lba_mid	= (sect_nr >>  8) & 0xFF;
-	cmd.lba_high	= (sect_nr >> 16) & 0xFF;
+	cmd.lba_high= (sect_nr >> 16) & 0xFF;
 	cmd.device	= MAKE_DEVICE_REG(1, drive, (sect_nr >> 24) & 0xF);
 	cmd.command	= (p->type == DEV_READ) ? ATA_READ : ATA_WRITE;
-
-	ERIC_HD("\nHDRW=%x,HML=%x,%x,%x,secNr=%x", p->POSITION, (u32)cmd.lba_high, (u32)cmd.lba_mid, (u32)cmd.lba_low, sect_nr);
-
 
 	hd_cmd_out(&cmd);
 
@@ -300,7 +300,6 @@ PRIVATE void partition(int device, int style)
 	struct hd_info * hdi = &hd_info[drive];
 	struct part_ent part_tbl[NR_SUB_PER_DRIVE];
 
-	ERIC_HD("\nDev=%x,drive=%x,Part=%x", device, drive, style);
 	if (style == P_PRIMARY) {
 
 		get_part_table(drive, drive, part_tbl);
@@ -312,12 +311,14 @@ PRIVATE void partition(int device, int style)
 				continue;
 
 			nr_prim_parts++;
+
+			//dev_nr從1開始，因為0是整個hd, 見P346
 			int dev_nr = i + 1;		  /* 1~4 */
+
 			hdi->primary[dev_nr].base = part_tbl[i].start_sect;
 			hdi->primary[dev_nr].size = part_tbl[i].nr_sects;
 
-			ERIC_HD("\nSet_P_Part(%x), Base=%x,Size=%x", dev_nr, hdi->primary[dev_nr].base, hdi->primary[dev_nr].size);
-
+			// 如果是extend的話，還要再往下分析是否有其他logic partition
 			if (part_tbl[i].sys_id == EXT_PART) /* extended */
 				partition(device + dev_nr, P_EXTENDED);
 		}
@@ -325,6 +326,8 @@ PRIVATE void partition(int device, int style)
 		assert(nr_prim_parts != 0);
 	}
 	else if (style == P_EXTENDED) {
+
+
 		int j = device % NR_PRIM_PER_DRIVE; /* 1~4 */
 		int ext_start_sect = hdi->primary[j].base;
 		int s = ext_start_sect;
@@ -339,8 +342,6 @@ PRIVATE void partition(int device, int style)
 			hdi->logical[dev_nr].size = part_tbl[0].nr_sects;
 
 			s = ext_start_sect + part_tbl[1].start_sect;
-
-			ERIC_HD("\nSetLPart(%x),Base=%x,Size=%x", dev_nr, hdi->logical[dev_nr].base, hdi->logical[dev_nr].size);
 
 			/* no more logical partitions
 			   in this extended partition */
@@ -554,9 +555,8 @@ PUBLIC void hd_handler(int irq)
 	hd_status = in_byte(REG_STATUS);
 
 	//
-	ERIC_INT("\n- HW_Int,FromHD=%x", hd_status);
+	ERIC_DEBUG("\n-HWInt,sts=%x", hd_status);
 	inform_int(TASK_HD);
-	ERIC_INT(" -\n");
 }
 
 
