@@ -132,7 +132,7 @@ enum msgtype {
 	HARD_INT = 1,
 
 	/* SYS task */
-	GET_TICKS,
+	GET_TICKS, GET_PID,
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
@@ -145,7 +145,10 @@ enum msgtype {
 	DEV_CLOSE,
 	DEV_READ,
 	DEV_WRITE,
-	DEV_IOCTL
+	DEV_IOCTL,
+
+	/* for debug */
+	DISK_LOG
 };
 
 /* macros for messages */
@@ -162,10 +165,9 @@ enum msgtype {
 #define	OFFSET		u.m3.m3i2
 #define	WHENCE		u.m3.m3i3
 
-/* #define	PID		u.m3.m3i2 */
+#define	PID		u.m3.m3i2
 /* #define	STATUS		u.m3.m3i1 */
 #define	RETVAL		u.m3.m3i1
-/* #define	STATUS		u.m3.m3i1 */
 
 
 
@@ -219,7 +221,6 @@ enum msgtype {
 #define	MINOR_hd1a		0x10
 #define	MINOR_hd2a		(MINOR_hd1a+NR_SUB_PER_PART)
 
-//MINOR_BOOT = 0x20，代表 partition 2的第一個logic分區( partition-1 是 primary, partition-2 是 extend 那塊)
 #define	ROOT_DEV		MAKE_DEV(DEV_HD, MINOR_BOOT)
 
 #define	P_PRIMARY	0

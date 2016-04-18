@@ -224,6 +224,7 @@ struct part_ent {
 
 #define REG_DRV_ADDR	0x3F7		/*	Drive Address			I		*/
 
+#define MAX_IO_BYTES	256	/* how many sectors does one IO can handle */
 
 struct hd_cmd {
 	u8	features;
@@ -237,18 +238,12 @@ struct hd_cmd {
 
 struct part_info {
 	u32	base;	/* # of start sector (NOT byte offset, but SECTOR) */
-	u32	size;	/* how many sectors in this partition (NOT byte size, but SECTOR number) */
+	u32	size;	/* how many sectors in this partition */
 };
 
 /* main drive struct, one entry per drive */
 struct hd_info
 {
-	/* int			cylinders; */
-	/* int			heads; */
-	/* int			sectors; */
-	/* int			precomp; */
-	/* int			lzone; */
-	/* int			ctl; */
 	int			open_cnt;
 	struct part_info	primary[NR_PRIM_PER_DRIVE];
 	struct part_info	logical[NR_SUB_PER_DRIVE];
@@ -258,7 +253,7 @@ struct hd_info
 /***************/
 /* DEFINITIONS */
 /***************/
-#define	HD_TIMEOUT		100000	/* in millisec */
+#define	HD_TIMEOUT		10000	/* in millisec */
 #define	PARTITION_TABLE_OFFSET	0x1BE
 #define ATA_IDENTIFY		0xEC
 #define ATA_READ		0x20

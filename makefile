@@ -29,6 +29,10 @@ OBJ_LIB = \
 	$(DIR_LIB)/misc.o  \
 	$(DIR_LIB)/open.o  \
 	$(DIR_LIB)/close.o  \
+	$(DIR_LIB)/read.o  \
+	$(DIR_LIB)/write.o  \
+	$(DIR_LIB)/syslog.o  \
+	$(DIR_LIB)/getpid.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
@@ -54,6 +58,7 @@ OBJ_FS = \
 	$(DIR_FS)/open.o  \
 	$(DIR_FS)/misc.o  \
 	$(DIR_FS)/read_write.o  \
+	$(DIR_FS)/disklog.o  \
 	
 
 OBJ_FILES += $(OBJ_UNIT_TEST)
