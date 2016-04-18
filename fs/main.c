@@ -42,10 +42,11 @@ PUBLIC void task_fs()
 	while (1) {
 		send_recv(RECEIVE, ANY, &fs_msg);
 
+		int msgtype = fs_msg.type;
 		int src = fs_msg.source;
 		pcaller = &proc_table[src];
 
-		switch (fs_msg.type) {
+		switch (msgtype) {
 		case OPEN:
 			fs_msg.FD = do_open();
 			break;
@@ -79,6 +80,39 @@ PUBLIC void task_fs()
 			assert(0);
 			break;
 		}
+
+#ifdef ENABLE_DISK_LOG
+		char * msg_name[128];
+		msg_name[OPEN]   = "OPEN";
+		msg_name[CLOSE]  = "CLOSE";
+		msg_name[READ]   = "READ";
+		msg_name[WRITE]  = "WRITE";
+		msg_name[LSEEK]  = "LSEEK";
+		msg_name[UNLINK] = "UNLINK";
+		/* msg_name[FORK]   = "FORK"; */
+		/* msg_name[EXIT]   = "EXIT"; */
+		/* msg_name[STAT]   = "STAT"; */
+
+		switch (msgtype) {
+		case OPEN:
+		case CLOSE:
+		case READ:
+		case WRITE:
+		/* case FORK: */
+			dump_fd_graph("%s just finished.", msg_name[msgtype]);
+			//panic("");
+		/* case LSEEK: */
+		/* case UNLINK: */
+		/* case EXIT: */
+		/* case STAT: */
+			break;
+		/* case RESUME_PROC: */
+		case DISK_LOG:
+			break;
+		default:
+			assert(0);
+		}
+#endif
 
 		/* reply */
 		fs_msg.type = SYSCALL_RET;
@@ -177,7 +211,7 @@ PRIVATE void mkfs()
 	sb.nr_inode_sects = sb.nr_inodes * INODE_SIZE / SECTOR_SIZE;
 	sb.nr_sects	  = geo.size; /* partition size in sector */
     sb.nr_imap_sects  = 1;   //inode-map 目前只有 4096 項，所以花1個sector存
-    sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1;// 這個partition 有多少個sector, 則smap就是N/(512*8)
+    sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1; // 這個partition 有多少個sector, 則smap就是N/(512*8)
     sb.n_1st_sect     = 1 + 1 +  sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
 		sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
 	sb.root_inode	  = ROOT_INODE;
