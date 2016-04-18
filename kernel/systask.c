@@ -30,17 +30,17 @@ PUBLIC void task_sys()
 {
     MESSAGE msg;
     while( 1 ){
-
-        //ERIC_DEBUG(",sysSetRcv");
-        // 跟系統要 msg，要不到就等待
         send_recv(RECEIVE, ANY, &msg);
-
-        // 若task_sys 不被阻塞，那麼他的message應該就已經被填好了
-        // 處理該 message
         int src = msg.source;
+
         switch (msg.type) {
         case GET_TICKS:
             msg.RETVAL = m_ticks;
+            send_recv(SEND, src, &msg);
+            break;
+        case GET_PID:
+            msg.type = SYSCALL_RET;
+            msg.PID = src;
             send_recv(SEND, src, &msg);
             break;
         default:
