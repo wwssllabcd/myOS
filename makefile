@@ -34,6 +34,7 @@ OBJ_LIB = \
 	$(DIR_LIB)/syslog.o  \
 	$(DIR_LIB)/getpid.o  \
 	$(DIR_LIB)/unlink.o  \
+	$(DIR_LIB)/printf.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
@@ -49,7 +50,6 @@ OBJ_KERNEL = \
 	$(DIR_KERENL)/keyboard.o  \
 	$(DIR_KERENL)/tty.o  \
 	$(DIR_KERENL)/console.o  \
-	$(DIR_KERENL)/printf.o  \
 	$(DIR_KERENL)/vsprintf.o  \
 	$(DIR_KERENL)/systask.o  \
 	$(DIR_KERENL)/hd.o  \
@@ -61,6 +61,7 @@ OBJ_FS = \
 	$(DIR_FS)/read_write.o  \
 	$(DIR_FS)/disklog.o  \
 	$(DIR_FS)/link.o  \
+	
 	
 
 OBJ_FILES += $(OBJ_UNIT_TEST)
