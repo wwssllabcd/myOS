@@ -605,6 +605,8 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(p_who_wanna_recv->p_msg != 0);
 		assert(p_who_wanna_recv->p_recvfrom != NO_TASK);
 		assert(p_who_wanna_recv->p_sendto == NO_TASK);
+
+		// has_int_msg 在最上面判斷，但是判斷完之後，發生了int，這個flag就會被立起來，導致這裡會出錯
 		assert(p_who_wanna_recv->has_int_msg == 0);
 	}
 	delay_eric();
