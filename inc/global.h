@@ -18,7 +18,7 @@
 #define	EXTERN
 #endif
 
-#define ERIC
+//#define ERIC
 #ifdef ERIC
     #define ERIC_DEBUG printf
 #else
@@ -39,7 +39,7 @@
     #define ERIC_INT
 #endif
 
-#define ERIC_DEBUG_HD
+//#define ERIC_DEBUG_HD
 #ifdef ERIC_DEBUG_HD
     #define ERIC_HD printf
 #else
