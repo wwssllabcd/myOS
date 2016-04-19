@@ -590,13 +590,14 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 
 		ERIC_PROC(",WtRM(%x)", proc2pid(p_who_wanna_recv));
 
-		// process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
-        // 這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
-		p_who_wanna_recv->p_flags |= RECEIVING;
-
 		// m是外部的msg pointer, receive的話就是代表最初呼叫者所提供的容器
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
+
+		// process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
+        // 這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
+        p_who_wanna_recv->p_flags |= RECEIVING;
+
 		// 解除proc的RCV狀態之後，到進入block在出來的這段時間，很有可能會有time out發生，
         // 導致有另一個proc送 msg 給這個 proc 成功，這樣會造成下面的assert發生錯誤
 		block(p_who_wanna_recv);
@@ -607,7 +608,7 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(p_who_wanna_recv->p_sendto == NO_TASK);
 
 		// has_int_msg 在最上面判斷，但是判斷完之後，發生了int，這個flag就會被立起來，導致這裡會出錯
-		//assert(p_who_wanna_recv->has_int_msg == 0);
+		// assert(p_who_wanna_recv->has_int_msg == 0);
 	}
 	delay_eric();
 	return 0;

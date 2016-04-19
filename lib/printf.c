@@ -69,19 +69,17 @@ printf(fmt, i, j);
  *****************************************************************************/
 PUBLIC int printf(const char *fmt, ...)
 {
-	int i;
-	char buf[STR_DEFAULT_LEN];
+    int i;
+        char buf[STR_DEFAULT_LEN];
 
-	va_list arg = (va_list)((char*)(&fmt) + 4); /**
-						     * 4: size of `fmt' in
-						     *    the stack
-						     */
-	i = vsprintf(buf, fmt, arg);
-	int c = write(1, buf, i);
+        va_list arg = (va_list)((char*)(&fmt) + 4); /**
+                                 * 4: size of `fmt' in
+                                 *    the stack
+                                 */
+        i = vsprintf(buf, fmt, arg);
+        printx(buf);
 
-	assert(c == i);
-
-	return i;
+        return i;
 }
 
 /*****************************************************************************
