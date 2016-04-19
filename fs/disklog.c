@@ -22,6 +22,7 @@
 #include "proto.h"
 #include "hd.h"
 #include "fs.h"
+#include "global.h"
 
 static char _buf[SECTOR_SIZE];
 

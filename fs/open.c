@@ -57,7 +57,7 @@ PUBLIC int do_open()
 
 	pathname[name_len] = 0;
 
-	ERIC_DEBUG("\n==================doOpen=%s", pathname);
+	ERIC_DEBUG("\ndoOpen=%s", pathname);
 
 	/* find a free slot in PROCESS::filp[] */
 	int i;
@@ -78,6 +78,7 @@ PUBLIC int do_open()
 	if (i >= NR_FILE_DESC)
 		panic("f_desc_table[] is full (PID:%d)", proc2pid(pcaller));
 
+	ERIC_DEBUG("\nsearch");
 	int inode_nr = search_file(pathname);
 
 	struct inode * pin = 0;
@@ -137,6 +138,8 @@ PUBLIC int do_open()
 	else {
 		return -1;
 	}
+
+	ERIC_DEBUG("\nrt=%x", fd);
 
 	return fd;
 }

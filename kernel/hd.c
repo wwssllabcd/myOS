@@ -553,9 +553,7 @@ PUBLIC void hd_handler(int irq)
 	 *   - writes to the Command Register.
 	 */
 	hd_status = in_byte(REG_STATUS);
-
-	//
-	ERIC_DEBUG("\n-HWInt,sts=%x", hd_status);
+	//ERIC_DEBUG("\n-HWInt,sts=%x", hd_status);
 	inform_int(TASK_HD);
 }
 

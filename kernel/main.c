@@ -165,9 +165,10 @@ void TestA()
 	assert(rd_bytes <= strlen(bufw));
 
 	/* create */
+
 	fd = open(filename, O_CREAT | O_RDWR);
 	assert(fd != -1);
-	printf("File created. fd: %d\n", fd);
+	printf("====File created. fd: %d\n", fd);
 
 	/* write */
 	n = write(fd, bufw, strlen(bufw));

@@ -19,7 +19,7 @@
 #include "console.h"
 #include "global.h"
 #include "proto.h"
-
+#include "global.h"
 #include "hd.h"
 
 PRIVATE void init_fs();
@@ -108,6 +108,7 @@ PUBLIC void task_fs()
 			break;
 		/* case RESUME_PROC: */
 		case DISK_LOG:
+		    ERIC_DEBUG("\n====Write_Log_break====");
 			break;
 		default:
 			assert(0);

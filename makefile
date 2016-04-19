@@ -59,6 +59,7 @@ OBJ_FS = \
 	$(DIR_FS)/misc.o  \
 	$(DIR_FS)/read_write.o  \
 	$(DIR_FS)/disklog.o  \
+	$(DIR_FS)/link.o  \
 	
 
 OBJ_FILES += $(OBJ_UNIT_TEST)
