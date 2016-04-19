@@ -33,6 +33,7 @@ OBJ_LIB = \
 	$(DIR_LIB)/write.o  \
 	$(DIR_LIB)/syslog.o  \
 	$(DIR_LIB)/getpid.o  \
+	$(DIR_LIB)/unlink.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \

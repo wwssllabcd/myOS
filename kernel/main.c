@@ -96,7 +96,7 @@ PUBLIC int kernel_main()
 
 
 
-		p_proc->nr_tty		= 0;
+		/* p_proc->nr_tty		= 0; */
 
 		p_proc->p_flags = 0;
 		p_proc->p_msg = 0;
@@ -117,9 +117,9 @@ PUBLIC int kernel_main()
 		selector_ldt += 1 << 3;
 	}
 
-        proc_table[NR_TASKS + 0].nr_tty = 0;
-    proc_table[NR_TASKS + 1].nr_tty = 0;
-    proc_table[NR_TASKS + 2].nr_tty = 0;
+        /* proc_table[NR_TASKS + 0].nr_tty = 0; */
+        /* proc_table[NR_TASKS + 1].nr_tty = 1; */
+        /* proc_table[NR_TASKS + 2].nr_tty = 1; */
 
 	k_reenter = 0;
     m_ticks = 0;
@@ -156,8 +156,9 @@ PUBLIC int get_ticks()
 void TestA()
 {
 	int fd;
-	int n;
-	const char filename[] = "blah";
+	int i, n;
+
+	char filename[MAX_FILENAME_LEN+1] = "blah";
 	const char bufw[] = "abcde";
 	const int rd_bytes = 3;
 	char bufr[rd_bytes];
@@ -165,10 +166,9 @@ void TestA()
 	assert(rd_bytes <= strlen(bufw));
 
 	/* create */
-
 	fd = open(filename, O_CREAT | O_RDWR);
 	assert(fd != -1);
-	printf("====File created. fd: %d\n", fd);
+	printf("File created: %s (fd %d)\n", filename, fd);
 
 	/* write */
 	n = write(fd, bufw, strlen(bufw));
@@ -191,6 +191,26 @@ void TestA()
 	/* close */
 	close(fd);
 
+	char * filenames[] = {"/foo", "/bar", "/baz"};
+
+	/* create files */
+	for (i = 0; i < sizeof(filenames) / sizeof(filenames[0]); i++) {
+		fd = open(filenames[i], O_CREAT | O_RDWR);
+		assert(fd != -1);
+		printf("File created: %s (fd %d)\n", filenames[i], fd);
+		close(fd);
+	}
+
+	char * rfilenames[] = {"/bar", "/foo", "/baz", "/dev_tty0"};
+
+	/* remove files */
+	for (i = 0; i < sizeof(rfilenames) / sizeof(rfilenames[0]); i++) {
+		if (unlink(rfilenames[i]) == 0)
+			printf("File removed: %s\n", rfilenames[i]);
+		else
+			printf("Failed to remove file: %s\n", rfilenames[i]);
+	}
+
 	spin("TestA");
 }
 
@@ -199,10 +219,33 @@ void TestA()
  *======================================================================*/
 void TestB()
 {
-	while(1){
-		printf("B");
-		milli_delay(200);
+	char tty_name[] = "/dev_tty1";
+
+	int fd_stdin  = open(tty_name, O_RDWR);
+	assert(fd_stdin  == 0);
+	int fd_stdout = open(tty_name, O_RDWR);
+	assert(fd_stdout == 1);
+
+	char rdbuf[128];
+
+	while (1) {
+		write(fd_stdout, "$ ", 2);
+		int r = read(fd_stdin, rdbuf, 70);
+		rdbuf[r] = 0;
+
+		if (strcmp(rdbuf, "hello") == 0) {
+			write(fd_stdout, "hello world!\n", 13);
+		}
+		else {
+			if (rdbuf[0]) {
+				write(fd_stdout, "{", 1);
+				write(fd_stdout, rdbuf, r);
+				write(fd_stdout, "}\n", 2);
+			}
+		}
 	}
+
+	assert(0); /* never arrive here */
 }
 
 /*======================================================================*
@@ -210,25 +253,12 @@ void TestB()
  *======================================================================*/
 void TestC()
 {
+	spin("TestC");
 	/* assert(0); */
 	while(1){
 		printf("C");
 		milli_delay(200);
 	}
-}
-
-void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
-{
-    DESCRIPTOR* p_des = &gdt[itemNum];
-
-    p_des->limit_low = data_0;
-    p_des->base_low = data_1;
-
-    p_des->base_mid = data_2 & 0xFF;
-    p_des->attr1 = (data_2 >> 8) & 0xFF;
-
-    p_des->limit_high_attr2 = data_3 & 0xFF;
-    p_des->base_high = (data_3 >> 8) & 0xFF;
 }
 
 /*****************************************************************************
@@ -250,3 +280,16 @@ PUBLIC void panic(const char *fmt, ...)
 	__asm__ __volatile__("ud2");
 }
 
+void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
+{
+    DESCRIPTOR* p_des = &gdt[itemNum];
+
+    p_des->limit_low = data_0;
+    p_des->base_low = data_1;
+
+    p_des->base_mid = data_2 & 0xFF;
+    p_des->attr1 = (data_2 >> 8) & 0xFF;
+
+    p_des->limit_high_attr2 = data_3 & 0xFF;
+    p_des->base_high = (data_3 >> 8) & 0xFF;
+}
