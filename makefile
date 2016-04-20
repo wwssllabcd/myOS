@@ -1,5 +1,7 @@
 include ./makefile.header
 
+SHOW_CMD = @
+
 NASM = nasm
 NASM_FLG = -I inc/ -f elf
 
@@ -75,63 +77,63 @@ OBJ_UNIT_TEST = \
 all: clean mkdir system.img nm diasm
 
 system.img: boot/boot.bin boot/setup.bin system.bin 
-	@dd if=$(DIR_BOOT)/boot.bin    of=system.img bs=512 count=1 
-	@dd if=$(DIR_BOOT)/setup.bin   of=system.img bs=512 count=4 seek=1
-	@dd if=system.bin    of=system.img bs=512 count=2883 seek=5 conv=notrunc
+	$(SHOW_CMD)dd if=$(DIR_BOOT)/boot.bin    of=system.img bs=512 count=1 
+	$(SHOW_CMD)dd if=$(DIR_BOOT)/setup.bin   of=system.img bs=512 count=4 seek=1
+	$(SHOW_CMD)dd if=system.bin    of=system.img bs=512 count=2883 seek=5 conv=notrunc
 
 system.bin: head.o $(OBJ_FILES)
-	$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
-	$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
-	$(OBJCOPY) --only-keep-debug system.elf system.sym
+	$(SHOW_CMD)$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
+	$(SHOW_CMD)$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
+	$(SHOW_CMD)$(OBJCOPY) --only-keep-debug system.elf system.sym
 	
 boot/boot.bin:
 	make -C boot
 	
 head.o: head.s
-	$(AS) $(ASFLAG) $(OBJDIR)/head.o head.s
+	$(SHOW_CMD)$(AS) $(ASFLAG) $(OBJDIR)/head.o head.s
 
 # == rule for kernel/ ==
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.asm
-	$(NASM) $(NASM_FLG) $< -o $@
+	$(SHOW_CMD)$(NASM) $(NASM_FLG) $< -o $@
 
 $(DIR_KERENL)/%.o: $(DIR_KERENL)/%.c
-	$(CC) $(CFLAGS) $< -o $@  
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@  
 	
 # == rule for lib/ ==
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.asm
-	$(NASM) $(NASM_FLG) $< -o $@
+	$(SHOW_CMD)$(NASM) $(NASM_FLG) $< -o $@
 	
 $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
-	$(CC) $(CFLAGS) $< -o $@
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@
 	
 # == rule for fs/*.c ==
 $(DIR_FS)/%.o: $(DIR_FS)/%.c
-	$(CC) $(CFLAGS) $< -o $@
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@
 	
 	
 # ut
 $(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c
-	$(CC) $(CFLAGS) $< -o $@    
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@    
 	
 # == rule for /*.c ==
 %.o: %.c
-	$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
 
 nm:
-	nm system.elf |sort > system.nm
-	awk '{ print $$1" "$$3 }' system.nm > system.bsb
+	$(SHOW_CMD)nm system.elf |sort > system.nm
+	$(SHOW_CMD)awk '{ print $$1" "$$3 }' system.nm > system.bsb
 	
 diasm:
 	objdump -S  system.elf > system.diasm
 
 clean:
-	@make -C boot clean
-	@rm -rf *.o *.elf *.bin system.img *.nm *.bsb
-	@rm -rf $(OBJ_FILES)
-	@rm -rf $(OBJDIR)
+	$(SHOW_CMD)make -C boot clean
+	$(SHOW_CMD)rm -rf *.o *.elf *.bin system.img *.nm *.bsb
+	$(SHOW_CMD)rm -rf $(OBJ_FILES)
+	$(SHOW_CMD)rm -rf $(OBJDIR)
 
 #=== make dir ===
 $(OBJDIR):
-	@mkdir -p $@
+	$(SHOW_CMD)mkdir -p $@
 	
 mkdir: $(OBJDIR)
