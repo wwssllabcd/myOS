@@ -119,13 +119,14 @@ $(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c
 
 nm:
 	nm system.elf |sort > system.nm
+	awk '{ print $$1" "$$3 }' system.nm > system.bsb
 	
 diasm:
 	objdump -S  system.elf > system.diasm
 
 clean:
 	@make -C boot clean
-	@rm -rf *.o *.elf *.bin system.img *.nm
+	@rm -rf *.o *.elf *.bin system.img *.nm *.bsb
 	@rm -rf $(OBJ_FILES)
 	@rm -rf $(OBJDIR)
 
