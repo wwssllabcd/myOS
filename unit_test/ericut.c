@@ -2,6 +2,20 @@
 #include "type.h"
 #include "global.h"
 
+
+PUBLIC void delay_eric()
+{
+#ifdef ERIC
+    int i, j, k;
+    for (i = 0; i < 0x100; i++){
+        for (j = 0; j < 0x200; j++){
+            k++;
+        }
+    }
+#endif
+}
+
+
 void ut_ck_idt_desc()
 {
     u8 tmpIdt[0x100];
