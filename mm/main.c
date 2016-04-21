@@ -110,6 +110,7 @@ PUBLIC int alloc_mem(int pid, int memsize)
 		      PROC_IMAGE_SIZE_DEFAULT);
 	}
 
+	//0xA00000 當作給 child proc的base位置，大小為1M
 	int base = PROCS_BASE +
 		(pid - (NR_TASKS + NR_NATIVE_PROCS)) * PROC_IMAGE_SIZE_DEFAULT;
 

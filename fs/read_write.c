@@ -75,24 +75,16 @@ PUBLIC int do_rdwt()
 		assert(pin->i_mode == I_REGULAR || pin->i_mode == I_DIRECTORY);
 		assert((fs_msg.type == READ) || (fs_msg.type == WRITE));
 
-		//讀寫不能超過檔案大小
 		int pos_end;
 		if (fs_msg.type == READ)
 			pos_end = min(pos + len, pin->i_size);
 		else		/* WRITE */
 			pos_end = min(pos + len, pin->i_nr_sects * SECTOR_SIZE);
 
-
-		//secNum的offset
 		int off = pos % SECTOR_SIZE;
-
-		//哪一個sector
 		int rw_sect_min=pin->i_start_sect+(pos>>SECTOR_SIZE_SHIFT);
-
-		//結束在那個sector
 		int rw_sect_max=pin->i_start_sect+(pos_end>>SECTOR_SIZE_SHIFT);
 
-		//扇區讀寫使用chunk為單位，如果一次buf傳的完的話，就使用rw_sect_max - rw_sect_min + 1
 		int chunk = min(rw_sect_max - rw_sect_min + 1,
 				FSBUF_SIZE >> SECTOR_SIZE_SHIFT);
 

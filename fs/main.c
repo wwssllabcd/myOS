@@ -37,7 +37,7 @@ PRIVATE int fs_exit();
  *****************************************************************************/
 PUBLIC void task_fs()
 {
-	ERIC_DEBUG(",task_fs");
+	printl("{FS} Task FS begins.\n");
 
 	init_fs();
 
@@ -133,8 +133,6 @@ PUBLIC void task_fs()
  *****************************************************************************/
 PRIVATE void init_fs()
 {
-    ERIC_DEBUG("\ninitFS");
-
 	int i;
 
 	/* f_desc_table[] */
@@ -155,9 +153,6 @@ PRIVATE void init_fs()
 	driver_msg.type = DEV_OPEN;
 	driver_msg.DEVICE = MINOR(ROOT_DEV);
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
-
-
-	ERIC_DEBUG(",SM_to_Drive");
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
 	/* make FS */
@@ -186,7 +181,6 @@ PRIVATE void init_fs()
  *****************************************************************************/
 PRIVATE void mkfs()
 {
-    ERIC_DEBUG("\nMakeFs");
 	MESSAGE driver_msg;
 	int i, j;
 
@@ -200,8 +194,6 @@ PRIVATE void mkfs()
 	driver_msg.BUF		= &geo;
 	driver_msg.PROC_NR	= TASK_FS;
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
-
-    //傳送msg 給Task_HD
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
 	printl("{FS} dev size: 0x%x sectors\n", geo.size);
@@ -214,9 +206,9 @@ PRIVATE void mkfs()
 	sb.nr_inodes	  = bits_per_sect;
 	sb.nr_inode_sects = sb.nr_inodes * INODE_SIZE / SECTOR_SIZE;
 	sb.nr_sects	  = geo.size; /* partition size in sector */
-    sb.nr_imap_sects  = 1;   //inode-map 目前只有 4096 項，所以花1個sector存
-    sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1; // 這個partition 有多少個sector, 則smap就是N/(512*8)
-    sb.n_1st_sect     = 1 + 1 +  sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
+	sb.nr_imap_sects  = 1;
+	sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1;
+	sb.n_1st_sect	  = 1 + 1 +   /* boot sector & super block */
 		sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
 	sb.root_inode	  = ROOT_INODE;
 	sb.inode_size	  = INODE_SIZE;
@@ -232,10 +224,9 @@ PRIVATE void mkfs()
 	memcpy(fsbuf, &sb, SUPER_BLOCK_SIZE);
 
 	/* write the super block */
-	//ROOT_DEV = 0x20
 	WR_SECT(ROOT_DEV, 1);
 
-	printl("\n{FS} devbase:0x%x00, sb:0x%x00, imap:0x%x00, smap:0x%x00"
+	printl("{FS} devbase:0x%x00, sb:0x%x00, imap:0x%x00, smap:0x%x00\n"
 	       "        inodes:0x%x00, 1st_sector:0x%x00\n", 
 	       geo.base * 2,
 	       (geo.base + 1) * 2,
@@ -249,7 +240,7 @@ PRIVATE void mkfs()
 	/************************/
 	memset(fsbuf, 0, SECTOR_SIZE);
 	for (i = 0; i < (NR_CONSOLES + 2); i++)
-		fsbuf[0] |= 1 << i;  //已使用的就是1，前面 inode 的 0,1,2,3,4都被使用了
+		fsbuf[0] |= 1 << i;
 
 	assert(fsbuf[0] == 0x1F);/* 0001 1111 : 
 				  *    | ||||
@@ -271,19 +262,15 @@ PRIVATE void mkfs()
 	 *                                |    `--- bit 0 is reserved
 	 *                                `-------- for `/'
 	 */
-
-    //每個bit代表1 sector
 	for (i = 0; i < nr_sects / 8; i++)
 		fsbuf[i] = 0xFF;
 
 	for (j = 0; j < nr_sects % 8; j++)
 		fsbuf[i] |= (1 << j);
 
-	ERIC_DEBUG("\nWrite-inode-map-start=%x", 2 + sb.nr_imap_sects);
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects);
 
 	/* zeromemory the rest sector-map */
-    // 沒使用為0
 	memset(fsbuf, 0, SECTOR_SIZE);
 	for (i = 1; i < sb.nr_smap_sects; i++)
 		WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + i);
@@ -294,7 +281,7 @@ PRIVATE void mkfs()
 	/* inode of `/' */
 	memset(fsbuf, 0, SECTOR_SIZE);
 	struct inode * pi = (struct inode*)fsbuf;
-    pi->i_mode = I_DIRECTORY; // mode 為 directory
+	pi->i_mode = I_DIRECTORY;
 	pi->i_size = DIR_ENTRY_SIZE * 4; /* 4 files:
 					  * `.',
 					  * `dev_tty0', `dev_tty1', `dev_tty2',
@@ -309,10 +296,6 @@ PRIVATE void mkfs()
 		pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);
 		pi->i_nr_sects = 0;
 	}
-
-	ERIC_DEBUG("\nWrite-inode-start=%x", 2 + sb.nr_imap_sects + sb.nr_smap_sects);
-
-	//i-node 接在 i-node-map與sec-node-map 後面
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
 	/************************/
@@ -330,8 +313,6 @@ PRIVATE void mkfs()
 		pde->inode_nr = i + 2; /* dev_tty0's inode_nr is 2 */
 		sprintf(pde->name, "dev_tty%d", i);
 	}
-
-	ERIC_DEBUG("\nWrite-dir-entry=%x", sb.n_1st_sect);
 	WR_SECT(ROOT_DEV, sb.n_1st_sect);
 }
 
