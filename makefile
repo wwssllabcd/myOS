@@ -37,6 +37,8 @@ OBJ_LIB = \
 	$(DIR_LIB)/getpid.o  \
 	$(DIR_LIB)/unlink.o  \
 	$(DIR_LIB)/printf.o  \
+	$(DIR_LIB)/fork.o  \
+	$(DIR_LIB)/exit.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \

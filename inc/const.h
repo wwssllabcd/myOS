@@ -43,6 +43,11 @@
 /* Process */
 #define SENDING   0x02	/* set when proc trying to send */
 #define RECEIVING 0x04	/* set when proc trying to recv */
+#define WAITING   0x08	/* set when proc waiting for the child to terminate */
+#define HANGING   0x10	/* set when proc exits without being waited by parent */
+#define FREE_SLOT 0x20	/* set when proc table entry is not used
+			 * (ok to allocated to a new process)
+			 */
 
 /* TTY */
 #define NR_CONSOLES	3	/* consoles */
@@ -83,6 +88,33 @@
 #define	V_MEM_BASE	0xB8000	/* base of color video memory */
 #define	V_MEM_SIZE	0x8000	/* 32K: B8000H -> BFFFFH */
 
+/* CMOS */
+#define CLK_ELE		0x70	/* CMOS RAM address register port (write only)
+				 * Bit 7 = 1  NMI disable
+				 *	   0  NMI enable
+				 * Bits 6-0 = RAM address
+				 */
+
+#define CLK_IO		0x71	/* CMOS RAM data register port (read/write) */
+
+#define  YEAR             9	/* Clock register addresses in CMOS RAM	*/
+#define  MONTH            8
+#define  DAY              7
+#define  HOUR             4
+#define  MINUTE           2
+#define  SECOND           0
+#define  CLK_STATUS    0x0B	/* Status register B: RTC configuration	*/
+#define  CLK_HEALTH    0x0E	/* Diagnostic status: (should be set by Power
+				 * On Self-Test [POST])
+				 * Bit  7 = RTC lost power
+				 *	6 = Checksum (for addr 0x10-0x2d) bad
+				 *	5 = Config. Info. bad at POST
+				 *	4 = Mem. size error at POST
+				 *	3 = I/O board failed initialization
+				 *	2 = CMOS time invalid
+				 *    1-0 =    reserved
+				 */
+
 /* Hardware interrupts */
 #define	NR_IRQ		16	/* Number of IRQs */
 #define	CLOCK_IRQ	0
@@ -104,7 +136,8 @@
 #define TASK_SYS	1
 #define TASK_HD		2
 #define TASK_FS		3
-/* #define TASK_MM	4 */
+#define TASK_MM		4
+#define INIT		5
 #define ANY		(NR_TASKS + NR_PROCS + 10)
 #define NO_TASK		(NR_TASKS + NR_PROCS + 20)
 
@@ -134,13 +167,19 @@ enum msgtype {
 	HARD_INT = 1,
 
 	/* SYS task */
-	GET_TICKS, GET_PID,
+	GET_TICKS, GET_PID, GET_RTC_TIME,
 
 	/* FS */
 	OPEN, CLOSE, READ, WRITE, LSEEK, STAT, UNLINK,
 
 	/* FS & TTY */
 	SUSPEND_PROC, RESUME_PROC,
+
+	/* MM */
+	EXEC, WAIT,
+
+	/* FS & MM */
+	FORK, EXIT,
 
 	/* TTY, SYS, FS, MM, etc */
 	SYSCALL_RET,
@@ -150,10 +189,7 @@ enum msgtype {
 	DEV_CLOSE,
 	DEV_READ,
 	DEV_WRITE,
-	DEV_IOCTL,
-
-	/* for debug */
-	DISK_LOG
+	DEV_IOCTL
 };
 
 /* macros for messages */
@@ -171,7 +207,7 @@ enum msgtype {
 #define	WHENCE		u.m3.m3i3
 
 #define	PID		u.m3.m3i2
-/* #define	STATUS		u.m3.m3i1 */
+#define	STATUS		u.m3.m3i1
 #define	RETVAL		u.m3.m3i1
 
 

@@ -42,21 +42,6 @@ PUBLIC int syslog(const char *fmt, ...)
 	i = vsprintf(buf, fmt, arg);
 	assert(strlen(buf) == i);
 
-	if (getpid() == TASK_FS) { /* in FS */
-		return disklog(buf);
-	}
-	else {			/* any proc which is not FS */
-		MESSAGE msg;
-		msg.type = DISK_LOG;
-		msg.BUF= buf;
-		msg.CNT = i;
-		ERIC_DEBUG("\n====Write_Log====");
-		send_recv(BOTH, TASK_FS, &msg);
-		if (i != msg.CNT) {
-			panic("failed to write log");
-		}
-
-		return msg.RETVAL;
-	}
+	return disklog(buf);
 }
 
