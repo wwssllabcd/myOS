@@ -23,6 +23,20 @@ PRIVATE int  msg_send(struct proc* current, int dest, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
 
+
+PUBLIC void delay_eric()
+{
+#ifdef ERIC
+    int i, j, k;
+    for (i = 0; i < 0x100; i++){
+        for (j = 0; j < 0x200; j++){
+            k++;
+        }
+    }
+#endif
+}
+
+
 /*****************************************************************************
  *                                schedule
  *****************************************************************************/
@@ -45,11 +59,10 @@ PUBLIC void schedule()
 			}
 		}
 
-		// 如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
-		// 若是狀態在 SEND 或是 RECEIVE 的，將不會獲得tick (orange, P321)
+		//如果 greatest_ticks = 0，根據上述for loop. 代表所有的ticks都變成0
 		if (!greatest_ticks)
 			for (p = &FIRST_PROC; p <= &LAST_PROC; p++)
-				if (p->p_flags == 0)
+				if (p->p_flags == 0)// 若是狀態在 SEND 或是 RECEIVE 的，將不會獲得tick (orange, P321)
 					p->ticks = p->priority;
 	}
 	ERIC_PROC("\nsel=%x(%s)", proc2pid(p_proc_ready), p_proc_ready->name);
@@ -188,7 +201,7 @@ PUBLIC void* va2la(int pid, void* va)
     // va 應該就是message
 	u32 la = seg_base + (u32)va;
 
-	if (pid < NR_TASKS + NR_NATIVE_PROCS) {
+	if (pid < NR_TASKS + NR_PROCS) {
 		assert(la == (u32)va);
 	}
 
@@ -575,16 +588,16 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		 * be scheduled until it is unblocked.
 		 */
 
-		// process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
-        // 這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
-
-		p_who_wanna_recv->p_flags |= RECEIVING;
-
 		ERIC_PROC(",WtRM(%x)", proc2pid(p_who_wanna_recv));
 
 		// m是外部的msg pointer, receive的話就是代表最初呼叫者所提供的容器
 		p_who_wanna_recv->p_msg = m;
 		p_who_wanna_recv->p_recvfrom = src;
+
+		// process 想要 receive ，但是沒人發給我，所以就把自己設成RECEIVING，並且把控制權交出去
+        // 這邊設定 p_flag 會讓 schedule 不把該 process 排入，造成該process阻塞
+        p_who_wanna_recv->p_flags |= RECEIVING;
+
 		// 解除proc的RCV狀態之後，到進入block在出來的這段時間，很有可能會有time out發生，
         // 導致有另一個proc送 msg 給這個 proc 成功，這樣會造成下面的assert發生錯誤
 		block(p_who_wanna_recv);
@@ -593,8 +606,9 @@ PRIVATE int msg_receive(struct proc* current, int src, MESSAGE* m)
 		assert(p_who_wanna_recv->p_msg != 0);
 		assert(p_who_wanna_recv->p_recvfrom != NO_TASK);
 		assert(p_who_wanna_recv->p_sendto == NO_TASK);
+
 		// has_int_msg 在最上面判斷，但是判斷完之後，發生了int，這個flag就會被立起來，導致這裡會出錯
-		assert(p_who_wanna_recv->has_int_msg == 0);
+		// assert(p_who_wanna_recv->has_int_msg == 0);
 	}
 	delay_eric();
 	return 0;
@@ -673,7 +687,7 @@ PUBLIC void dump_proc(struct proc* p)
 	sprintf(info, "ldt_sel: 0x%x.  ", p->ldt_sel); disp_color_str(info, text_color);
 	sprintf(info, "ticks: 0x%x.  ", p->ticks); disp_color_str(info, text_color);
 	sprintf(info, "priority: 0x%x.  ", p->priority); disp_color_str(info, text_color);
-	/* sprintf(info, "pid: 0x%x.  ", p->pid); disp_color_str(info, text_color); */
+	sprintf(info, "pid: 0x%x.  ", p->pid); disp_color_str(info, text_color);
 	sprintf(info, "name: %s.  ", p->name); disp_color_str(info, text_color);
 	disp_color_str("\n", text_color);
 	sprintf(info, "p_flags: 0x%x.  ", p->p_flags); disp_color_str(info, text_color);

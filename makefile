@@ -10,7 +10,6 @@ DIR_BOOT = ./boot
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
 DIR_FS = ./fs
-DIR_MM = ./mm
 
 
 #======== Flag ========
@@ -24,7 +23,6 @@ OBJ_FILES = \
 	$(OBJ_LIB) \
 	$(OBJ_KERNEL) \
 	$(OBJ_FS) \
-	$(OBJ_MM) \
 	
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
@@ -39,8 +37,6 @@ OBJ_LIB = \
 	$(DIR_LIB)/getpid.o  \
 	$(DIR_LIB)/unlink.o  \
 	$(DIR_LIB)/printf.o  \
-	$(DIR_LIB)/fork.o  \
-	$(DIR_LIB)/exit.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
@@ -67,11 +63,6 @@ OBJ_FS = \
 	$(DIR_FS)/read_write.o  \
 	$(DIR_FS)/disklog.o  \
 	$(DIR_FS)/link.o  \
-	
-OBJ_MM = \
-	$(DIR_MM)/main.o  \
-	$(DIR_MM)/forkexit.o  \
-
 	
 	
 
@@ -117,10 +108,6 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 	
 # == rule for fs/*.c ==
 $(DIR_FS)/%.o: $(DIR_FS)/%.c
-	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@
-	
-# == rule for fs/*.c ==
-$(DIR_MM)/%.o: $(DIR_MM)/%.c
 	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@
 	
 	

@@ -1,70 +1,53 @@
-
-/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                              protect.c
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                                                    Forrest Yu, 2005
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-
 #include "type.h"
-#include "stdio.h"
 #include "const.h"
 #include "protect.h"
-#include "fs.h"
-#include "tty.h"
-#include "console.h"
-#include "proc.h"
-#include "string.h"
-#include "global.h"
 #include "proto.h"
-
+#include "proc.h"
+#include "global.h"
 
 /* 本文件内函数声明 */
 PRIVATE void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege);
+PRIVATE void init_descriptor(struct descriptor * p_desc, u32 base, u32 limit, u16 attribute);
 
 
-/* 中断处理函数 */
-void	divide_error();
-void	single_step_exception();
-void	nmi();
-void	breakpoint_exception();
-void	overflow();
-void	bounds_check();
-void	inval_opcode();
-void	copr_not_available();
-void	double_fault();
-void	copr_seg_overrun();
-void	inval_tss();
-void	segment_not_present();
-void	stack_exception();
-void	general_protection();
-void	page_fault();
-void	copr_error();
-void	hwint00();
-void	hwint01();
-void	hwint02();
-void	hwint03();
-void	hwint04();
-void	hwint05();
-void	hwint06();
-void	hwint07();
-void	hwint08();
-void	hwint09();
-void	hwint10();
-void	hwint11();
-void	hwint12();
-void	hwint13();
-void	hwint14();
-void	hwint15();
+void divide_error();
+void single_step_exception();
+void nmi();
+void breakpoint_exception();
+void overflow();
+void bounds_check();
+void inval_opcode();
+void copr_not_available();
+void double_fault();
+void copr_seg_overrun();
+void inval_tss();
+void segment_not_present();
+void stack_exception();
+void general_protection();
+void page_fault();
+void copr_error();
+
+void hwint00();
+void hwint01();
+void hwint02();
+void hwint03();
+void hwint04();
+void hwint05();
+void hwint06();
+void hwint07();
+void hwint08();
+void hwint09();
+void hwint10();
+void hwint11();
+void hwint12();
+void hwint13();
+void hwint14();
+void hwint15();
 
 
-/*======================================================================*
-                            init_prot
- *----------------------------------------------------------------------*
- 初始化 IDT
- *======================================================================*/
 PUBLIC void init_prot()
 {
-	init_8259A();
+    init_8259A();
 
 	/* 全部初始化成中断门(没有陷阱门) */
 	init_idt_desc(INT_VECTOR_DIVIDE,	DA_386IGate,
@@ -166,132 +149,118 @@ PUBLIC void init_prot()
 	init_idt_desc(INT_VECTOR_SYS_CALL,	DA_386IGate,
 		      sys_call,			PRIVILEGE_USER);
 
-	/* Fill the TSS descriptor in GDT */
-	memset(&tss, 0, sizeof(tss));
-
-	// 把 [GDT 4] 的 descriptor, 填成以 tss 為base的 desc
+    // 把 [GDT 4] 的 descriptor, 填成以 tss 為base的 desc
     // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
-	tss.ss0	= SELECTOR_KERNEL_DS;
-	init_desc(&gdt[INDEX_TSS],
-		  makelinear(SELECTOR_KERNEL_DS, &tss),
-		  sizeof(tss) - 1,
-		  DA_386TSS);
-	tss.iobase = sizeof(tss); /* No IO permission bitmap */
+	tss.ss0		= SELECTOR_KERNEL_DS;
+    init_descriptor(&gdt[INDEX_TSS], 
+		vir2phys(seg2phys(SELECTOR_KERNEL_DS), &tss), 
+		sizeof(tss) - 1, 
+		DA_386TSS);
+    tss.iobase = sizeof(tss); /* 没有I/O许可位图 */
 
-	/* Fill the LDT descriptors of each proc in GDT  */
-	int i;
-	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
-		memset(&proc_table[i], 0, sizeof(struct proc));
 
-		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
-		assert(INDEX_LDT_FIRST + i < GDT_SIZE);
+    int i;
+    PROCESS* p_proc = proc_table;
+    u16 selector_ldt = INDEX_LDT_FIRST << 3;
 
-		//把每個process的 ldt, 放入到GDT 5~7的地方，而GDT中的base, 都是每個proc中的LDT的位置
-		init_desc(&gdt[INDEX_LDT_FIRST + i],
-			  makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
-			  LDT_SIZE * sizeof(struct descriptor) - 1,
-			  DA_LDT);
-	}
+    for (i = 0; i < NR_TASKS + NR_PROCS; i++){
+
+        //把每個process的 ldt, 放入到GDT 5~7的地方，而GDT中的base, 都是每個proc中的LDT的位置
+        init_descriptor(&gdt[selector_ldt >> 3],
+				vir2phys(seg2phys(SELECTOR_KERNEL_DS),
+					proc_table[i].ldts),
+				LDT_SIZE * sizeof(struct descriptor) - 1,
+                DA_LDT);
+
+        p_proc++;
+        selector_ldt += 1 << 3;
+    }
 }
 
-
-/*======================================================================*
-                             init_idt_desc
- *----------------------------------------------------------------------*
- 初始化 386 中断门
- *======================================================================*/
-PUBLIC void init_idt_desc(unsigned char vector, u8 desc_type, int_handler handler, unsigned char privilege)
+PUBLIC void init_idt_desc_imp(u32 addr, u8 desc_type, u32 handler, u8 privilege)
 {
-	struct gate * p_gate	= &idt[vector];
-	u32 base = (u32)handler;
-	p_gate->offset_low	= base & 0xFFFF;
-	p_gate->selector	= SELECTOR_KERNEL_CS;
-	p_gate->dcount		= 0;
-	p_gate->attr		= desc_type | (privilege << 5);
-	p_gate->offset_high	= (base >> 16) & 0xFFFF;
+    GATE* p_gate = (GATE*)addr;
+    u32 base = (u32) handler;
+
+    p_gate->offset_low = base & 0xFFFF;
+    p_gate->selector = SELECTOR_KERNEL_CS;
+    p_gate->dcount = 0;
+    p_gate->attr = desc_type | (privilege << 5);
+    p_gate->offset_high = (base >> 16) & 0xFFFF;
 }
 
-
-/*======================================================================*
-                           seg2phys
- *----------------------------------------------------------------------*
- 由段名求绝对地址
- *======================================================================*/
-PUBLIC u32 seg2linear(u16 seg)
+PUBLIC void init_idt_desc(u8 vector, u8 desc_type, int_handler handler, u8 privilege)
 {
-	struct descriptor* p_dest = &gdt[seg >> 3];
+    GATE* p_gate = &idt[vector];
+    u32 base = (u32) handler;
+    init_idt_desc_imp((u32)p_gate, desc_type, base, privilege);
+}
 
+PUBLIC u32 seg2phys(u16 seg)
+{
+    DESCRIPTOR* p_dest = &gdt[seg >> 3];
 	return (p_dest->base_high << 24) | (p_dest->base_mid << 16) | (p_dest->base_low);
 }
 
-/*======================================================================*
-                           init_descriptor
- *----------------------------------------------------------------------*
- 初始化段描述符
- *======================================================================*/
-PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attribute)
+PRIVATE void init_descriptor(DESCRIPTOR *p_desc,u32 base,u32 limit,u16 attribute)
 {
-	p_desc->limit_low	= limit & 0x0FFFF;		/* 段界限 1		(2 字节) */
-	p_desc->base_low	= base & 0x0FFFF;		/* 段基址 1		(2 字节) */
-	p_desc->base_mid	= (base >> 16) & 0x0FF;		/* 段基址 2		(1 字节) */
-	p_desc->attr1		= attribute & 0xFF;		/* 属性 1 */
-	p_desc->limit_high_attr2= ((limit >> 16) & 0x0F) |
-				  ((attribute >> 8) & 0xF0);	/* 段界限 2 + 属性 2 */
-	p_desc->base_high	= (base >> 24) & 0x0FF;		/* 段基址 3		(1 字节) */
+    p_desc->limit_low   = limit & 0x0FFFF;
+    p_desc->base_low    = base & 0x0FFFF;
+    p_desc->base_mid    = (base >> 16) & 0x0FF;
+    p_desc->attr1       = attribute & 0xFF;
+    p_desc->limit_high_attr2= ((limit>>16) & 0x0F) | (attribute>>8) & 0xF0;
+    p_desc->base_high   = (base >> 24) & 0x0FF;
 }
 
-/*======================================================================*
-                            exception_handler
- *----------------------------------------------------------------------*
- 异常处理
- *======================================================================*/
+//中斷發生時， eflag, cs, eip 會被自動的psuh，所以 interrupt只有推兩個參數
+//
 PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags)
 {
-	//中斷發生時， eflag, cs, eip 會被自動的psuh，所以 interrupt只有推兩個參數
-	int i;
-	int text_color = 0x74; /* 灰底红字 */
+    int i;
+    int text_color = 0x74; /* 灰底红字 */
 	char err_description[][64] = {	"#DE Divide Error",
-					"#DB RESERVED",
-					"—  NMI Interrupt",
-					"#BP Breakpoint",
-					"#OF Overflow",
-					"#BR BOUND Range Exceeded",
-					"#UD Invalid Opcode (Undefined Opcode)",
-					"#NM Device Not Available (No Math Coprocessor)",
-					"#DF Double Fault",
-					"    Coprocessor Segment Overrun (reserved)",
-					"#TS Invalid TSS",
-					"#NP Segment Not Present",
-					"#SS Stack-Segment Fault",
-					"#GP General Protection",
-					"#PF Page Fault",
-					"—  (Intel reserved. Do not use.)",
-					"#MF x87 FPU Floating-Point Error (Math Fault)",
-					"#AC Alignment Check",
-					"#MC Machine Check",
-					"#XF SIMD Floating-Point Exception"
-				};
+            "#DB RESERVED",
+            "—  NMI Interrupt",
+            "#BP Breakpoint",
+            "#OF Overflow",
+            "#BR BOUND Range Exceeded",
+            "#UD Invalid Opcode (Undefined Opcode)",
+            "#NM Device Not Available (No Math Coprocessor)",
+            "#DF Double Fault",
+            "    Coprocessor Segment Overrun (reserved)",
+            "#TS Invalid TSS",
+            "#NP Segment Not Present",
+            "#SS Stack-Segment Fault",
+            "#GP General Protection",
+            "#PF Page Fault",
+            "—  (Intel reserved. Do not use.)",
+            "#MF x87 FPU Floating-Point Error (Math Fault)",
+            "#AC Alignment Check",
+            "#MC Machine Check",
+            "#XF SIMD Floating-Point Exception"
+    };
 
-	/* 通过打印空格的方式清空屏幕的前五行，并把 disp_pos 清零 */
-	disp_pos = 0;
-	for(i=0;i<80*5;i++){
-		disp_str(" ");
-	}
-	disp_pos = 0;
+    /* 通过打印空格的方式清空屏幕的前五行，并把 disp_pos 清零 */
+//    disp_pos = 0;
+//    for (i = 0; i < 80 * 5; i++){
+//        disp_str(" ");
+//    }
+//    disp_pos = 0;
 
-	disp_color_str("Exception! --> ", text_color);
-	disp_color_str(err_description[vec_no], text_color);
-	disp_color_str("\n\n", text_color);
-	disp_color_str("EFLAGS:", text_color);
-	disp_int(eflags);
-	disp_color_str("CS:", text_color);
-	disp_int(cs);
-	disp_color_str("EIP:", text_color);
-	disp_int(eip);
 
-	if(err_code != 0xFFFFFFFF){
-		disp_color_str("Error code:", text_color);
-		disp_int(err_code);
-	}
+    disp_color_str("\nException! --> ", text_color);
+    disp_color_str(err_description[vec_no], text_color);
+    disp_color_str("\n", text_color);
+    disp_color_str("EFLAGS:", text_color);
+    disp_int(eflags);
+    disp_color_str("CS:", text_color);
+    disp_int(cs);
+    disp_color_str("EIP:", text_color);
+    disp_int(eip);
+
+    if(err_code != 0xFFFFFFFF){
+        disp_color_str("Error code:", text_color);
+        disp_int(err_code);
+    }
 }
 

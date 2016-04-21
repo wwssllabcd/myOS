@@ -2,34 +2,6 @@
 #include "type.h"
 #include "global.h"
 
-
-void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
-{
-    struct descriptor* p_des = &gdt[itemNum];
-
-    p_des->limit_low = data_0;
-    p_des->base_low = data_1;
-
-    p_des->base_mid = data_2 & 0xFF;
-    p_des->attr1 = (data_2 >> 8) & 0xFF;
-
-    p_des->limit_high_attr2 = data_3 & 0xFF;
-    p_des->base_high = (data_3 >> 8) & 0xFF;
-}
-
-PUBLIC void delay_eric()
-{
-#ifdef ERIC
-    int i, j, k;
-    for (i = 0; i < 0x100; i++){
-        for (j = 0; j < 0x200; j++){
-            k++;
-        }
-    }
-#endif
-}
-
-
 void ut_ck_idt_desc()
 {
     u8 tmpIdt[0x100];

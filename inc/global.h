@@ -6,7 +6,6 @@
 #include "console.h"
 #include "fs.h"
 #include "stdio.h"
-
 /*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                             global.h
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -81,12 +80,6 @@ extern	irq_handler	irq_table[];
 extern	TTY		tty_table[];
 extern  CONSOLE		console_table[];
 
-/* MM */
-EXTERN	MESSAGE			mm_msg;
-extern	u8 *			mmbuf;
-extern	const int		MMBUF_SIZE;
-EXTERN	int			memory_size;
-
 /* FS */
 EXTERN	struct file_desc	f_desc_table[NR_FILE_DESC];
 EXTERN	struct inode		inode_table[NR_INODE];
@@ -98,8 +91,3 @@ EXTERN	struct proc *		pcaller;
 EXTERN	struct inode *		root_inode;
 extern	struct dev_drv_map	dd_map[];
 
-/* for test only */
-extern	char *			logbuf;
-extern	const int		LOGBUF_SIZE;
-extern	char *			logdiskbuf;
-extern	const int		LOGDISKBUF_SIZE;
