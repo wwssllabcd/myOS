@@ -52,7 +52,7 @@ PUBLIC int kernel_main()
         }
 
         strcpy(p_proc->name, p_task->name); /* name of the process */
-        p_proc->pid = i; /* pid */
+        //p_proc->pid = i; /* pid */
 
         p_proc->ldt_sel = selector_ldt;
 
