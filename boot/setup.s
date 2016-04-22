@@ -49,7 +49,7 @@ _start_s:
 	# save hd infor from bois data
 	mov $0, %ax
 	mov %ax, %ds
-	movb %ds:0x475, %dl
+	movb %ds:0x475, %dx
 
 	mov	$INITSEG, %ax
 	mov	%ax, %ds

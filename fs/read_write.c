@@ -44,7 +44,7 @@ PUBLIC int do_rdwt()
 	       (pcaller->filp[fd] < &f_desc_table[NR_FILE_DESC]));
 
 	if (!(pcaller->filp[fd]->fd_mode & O_RDWR))
-		return 0;
+		return -1;
 
 	int pos = pcaller->filp[fd]->fd_pos;
 
@@ -99,6 +99,7 @@ PUBLIC int do_rdwt()
 		int bytes_rw = 0;
 		int bytes_left = len;
 		int i;
+
 		for (i = rw_sect_min; i <= rw_sect_max; i += chunk) {
 			/* read/write this amount of bytes every time */
 			int bytes = min(bytes_left, chunk * SECTOR_SIZE - off);
@@ -118,6 +119,7 @@ PUBLIC int do_rdwt()
 				phys_copy((void*)va2la(TASK_FS, fsbuf + off),
 					  (void*)va2la(src, buf + bytes_rw),
 					  bytes);
+
 				rw_sector(DEV_WRITE,
 					  pin->i_dev,
 					  i * SECTOR_SIZE,
@@ -134,6 +136,7 @@ PUBLIC int do_rdwt()
 		if (pcaller->filp[fd]->fd_pos > pin->i_size) {
 			/* update inode::size */
 			pin->i_size = pcaller->filp[fd]->fd_pos;
+
 			/* write the updated i-node back to disk */
 			sync_inode(pin);
 		}

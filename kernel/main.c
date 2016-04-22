@@ -51,7 +51,7 @@ PUBLIC int kernel_main()
                 }
 
 		strcpy(p_proc->name, p_task->name);	/* name of the process */
-		//p_proc->pid = i;			/* pid */
+		p_proc->pid = i;			/* pid */
 
 		p_proc->ldt_sel = selector_ldt;
 
@@ -85,13 +85,16 @@ PUBLIC int kernel_main()
         disp_str("\nP=");
         disp_int(i);
         disp_str(",addr=");
-        disp_int( (int)p_proc);
+        disp_int(p_proc);
         disp_str(",esp=");
         disp_int(p_proc->regs.esp);
 
         //觀察 TSS.esp所在的位置
         disp_str(",tss=");
-        disp_int((int)&p_proc->ldt_sel);
+        disp_int(&p_proc->ldt_sel);
+
+
+
 
 		/* p_proc->nr_tty		= 0; */
 
@@ -160,7 +163,7 @@ void TestA()
 	const int rd_bytes = 3;
 	char bufr[rd_bytes];
 
-	assert(rd_bytes <= strlen((char*)bufw));
+	assert(rd_bytes <= strlen(bufw));
 
 	/* create */
 	fd = open(filename, O_CREAT | O_RDWR);
@@ -168,8 +171,8 @@ void TestA()
 	printf("File created: %s (fd %d)\n", filename, fd);
 
 	/* write */
-	n = write(fd, bufw, strlen((char*)bufw));
-	assert(n == strlen((char*)bufw));
+	n = write(fd, bufw, strlen(bufw));
+	assert(n == strlen(bufw));
 
 	/* close */
 	close(fd);
