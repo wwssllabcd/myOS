@@ -85,13 +85,13 @@ PUBLIC int kernel_main()
         disp_str("\nP=");
         disp_int(i);
         disp_str(",addr=");
-        disp_int(p_proc);
+        disp_int( (int)p_proc);
         disp_str(",esp=");
         disp_int(p_proc->regs.esp);
 
         //觀察 TSS.esp所在的位置
         disp_str(",tss=");
-        disp_int(&p_proc->ldt_sel);
+        disp_int((int)&p_proc->ldt_sel);
 
 
 
@@ -163,7 +163,7 @@ void TestA()
 	const int rd_bytes = 3;
 	char bufr[rd_bytes];
 
-	assert(rd_bytes <= strlen(bufw));
+	assert(rd_bytes <= strlen((char*)bufw));
 
 	/* create */
 	fd = open(filename, O_CREAT | O_RDWR);
@@ -171,8 +171,8 @@ void TestA()
 	printf("File created: %s (fd %d)\n", filename, fd);
 
 	/* write */
-	n = write(fd, bufw, strlen(bufw));
-	assert(n == strlen(bufw));
+	n = write(fd, bufw, strlen((char*)bufw));
+	assert(n == strlen((char*)bufw));
 
 	/* close */
 	close(fd);
