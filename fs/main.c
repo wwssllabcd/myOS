@@ -19,12 +19,14 @@
 #include "console.h"
 #include "global.h"
 #include "proto.h"
-#include "global.h"
+
 #include "hd.h"
 
 PRIVATE void init_fs();
 PRIVATE void mkfs();
 PRIVATE void read_super_block(int dev);
+PRIVATE int fs_fork();
+PRIVATE int fs_exit();
 
 /*****************************************************************************
  *                                task_fs
@@ -35,7 +37,7 @@ PRIVATE void read_super_block(int dev);
  *****************************************************************************/
 PUBLIC void task_fs()
 {
-	ERIC_DEBUG(",task_fs");
+	printl("{FS} Task FS begins.\n");
 
 	init_fs();
 
@@ -57,20 +59,20 @@ PUBLIC void task_fs()
 		case WRITE:
 			fs_msg.CNT = do_rdwt();
 			break;
+		case UNLINK:
+			fs_msg.RETVAL = do_unlink();
+			break;
+		case RESUME_PROC:
+			src = fs_msg.PROC_NR;
+			break;
+		case FORK:
+			fs_msg.RETVAL = fs_fork();
+			break;
+		case EXIT:
+			fs_msg.RETVAL = fs_exit();
+			break;
 		/* case LSEEK: */
 		/* 	fs_msg.OFFSET = do_lseek(); */
-		/* 	break; */
-		/* case UNLINK: */
-		/* 	fs_msg.RETVAL = do_unlink(); */
-		/* 	break; */
-		/* case RESUME_PROC: */
-		/* 	src = fs_msg.PROC_NR; */
-		/* 	break; */
-		/* case FORK: */
-		/* 	fs_msg.RETVAL = fs_fork(); */
-		/* 	break; */
-		/* case EXIT: */
-		/* 	fs_msg.RETVAL = fs_exit(); */
 		/* 	break; */
 		/* case STAT: */
 		/* 	fs_msg.RETVAL = do_stat(); */
@@ -94,21 +96,20 @@ PUBLIC void task_fs()
 		/* msg_name[STAT]   = "STAT"; */
 
 		switch (msgtype) {
+		case UNLINK:
+			dump_fd_graph("%s just finished. (pid:%d)",
+				      msg_name[msgtype], src);
+			//panic("");
 		case OPEN:
 		case CLOSE:
 		case READ:
 		case WRITE:
-		/* case FORK: */
-			dump_fd_graph("%s just finished.", msg_name[msgtype]);
-			//panic("");
+		case FORK:
+		case EXIT:
 		/* case LSEEK: */
-		/* case UNLINK: */
-		/* case EXIT: */
 		/* case STAT: */
 			break;
-		/* case RESUME_PROC: */
-		case DISK_LOG:
-		    ERIC_DEBUG("\n====Write_Log_break====");
+		case RESUME_PROC:
 			break;
 		default:
 			assert(0);
@@ -116,8 +117,10 @@ PUBLIC void task_fs()
 #endif
 
 		/* reply */
-		fs_msg.type = SYSCALL_RET;
-		send_recv(SEND, src, &fs_msg);
+		if (fs_msg.type != SUSPEND_PROC) {
+			fs_msg.type = SYSCALL_RET;
+			send_recv(SEND, src, &fs_msg);
+		}
 	}
 }
 
@@ -130,8 +133,6 @@ PUBLIC void task_fs()
  *****************************************************************************/
 PRIVATE void init_fs()
 {
-    ERIC_DEBUG("\ninitFS");
-
 	int i;
 
 	/* f_desc_table[] */
@@ -152,9 +153,6 @@ PRIVATE void init_fs()
 	driver_msg.type = DEV_OPEN;
 	driver_msg.DEVICE = MINOR(ROOT_DEV);
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
-
-
-	ERIC_DEBUG(",SM_to_Drive");
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
 	/* make FS */
@@ -183,7 +181,6 @@ PRIVATE void init_fs()
  *****************************************************************************/
 PRIVATE void mkfs()
 {
-    ERIC_DEBUG("\nMakeFs");
 	MESSAGE driver_msg;
 	int i, j;
 
@@ -197,11 +194,9 @@ PRIVATE void mkfs()
 	driver_msg.BUF		= &geo;
 	driver_msg.PROC_NR	= TASK_FS;
 	assert(dd_map[MAJOR(ROOT_DEV)].driver_nr != INVALID_DRIVER);
-
-    //傳送msg 給Task_HD
 	send_recv(BOTH, dd_map[MAJOR(ROOT_DEV)].driver_nr, &driver_msg);
 
-    printl("\ndev size: 0x%x sectors", geo.size);
+	printl("{FS} dev size: 0x%x sectors\n", geo.size);
 
 	/************************/
 	/*      super block     */
@@ -211,9 +206,9 @@ PRIVATE void mkfs()
 	sb.nr_inodes	  = bits_per_sect;
 	sb.nr_inode_sects = sb.nr_inodes * INODE_SIZE / SECTOR_SIZE;
 	sb.nr_sects	  = geo.size; /* partition size in sector */
-    sb.nr_imap_sects  = 1;   //inode-map 目前只有 4096 項，所以花1個sector存
-    sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1; // 這個partition 有多少個sector, 則smap就是N/(512*8)
-    sb.n_1st_sect     = 1 + 1 +  sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
+	sb.nr_imap_sects  = 1;
+	sb.nr_smap_sects  = sb.nr_sects / bits_per_sect + 1;
+	sb.n_1st_sect	  = 1 + 1 +   /* boot sector & super block */
 		sb.nr_imap_sects + sb.nr_smap_sects + sb.nr_inode_sects;
 	sb.root_inode	  = ROOT_INODE;
 	sb.inode_size	  = INODE_SIZE;
@@ -229,11 +224,10 @@ PRIVATE void mkfs()
 	memcpy(fsbuf, &sb, SUPER_BLOCK_SIZE);
 
 	/* write the super block */
-	//ROOT_DEV = 0x20
 	WR_SECT(ROOT_DEV, 1);
 
-    printl("\ndevbase:0x%x00, sb:0x%x00, imap:0x%x00, smap:0x%x00"
-           "\n        inodes:0x%x00, 1st_sector:0x%x00",
+	printl("{FS} devbase:0x%x00, sb:0x%x00, imap:0x%x00, smap:0x%x00\n"
+	       "        inodes:0x%x00, 1st_sector:0x%x00\n", 
 	       geo.base * 2,
 	       (geo.base + 1) * 2,
 	       (geo.base + 1 + 1) * 2,
@@ -246,8 +240,7 @@ PRIVATE void mkfs()
 	/************************/
 	memset(fsbuf, 0, SECTOR_SIZE);
 	for (i = 0; i < (NR_CONSOLES + 2); i++)
-        fsbuf[0] |= 1 << i; //已使用的就是1，前面 inode 的 0,1,2,3,4都被使用了
-
+		fsbuf[0] |= 1 << i;
 
 	assert(fsbuf[0] == 0x1F);/* 0001 1111 : 
 				  *    | ||||
@@ -269,19 +262,15 @@ PRIVATE void mkfs()
 	 *                                |    `--- bit 0 is reserved
 	 *                                `-------- for `/'
 	 */
-
-    //每個bit代表1 sector
 	for (i = 0; i < nr_sects / 8; i++)
 		fsbuf[i] = 0xFF;
 
 	for (j = 0; j < nr_sects % 8; j++)
 		fsbuf[i] |= (1 << j);
 
-	ERIC_DEBUG("\nWrite-inode-map-start=%x", 2 + sb.nr_imap_sects);
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects);
 
 	/* zeromemory the rest sector-map */
-    // 沒使用為0
 	memset(fsbuf, 0, SECTOR_SIZE);
 	for (i = 1; i < sb.nr_smap_sects; i++)
 		WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + i);
@@ -292,7 +281,7 @@ PRIVATE void mkfs()
 	/* inode of `/' */
 	memset(fsbuf, 0, SECTOR_SIZE);
 	struct inode * pi = (struct inode*)fsbuf;
-    pi->i_mode = I_DIRECTORY; // mode 為 directory
+	pi->i_mode = I_DIRECTORY;
 	pi->i_size = DIR_ENTRY_SIZE * 4; /* 4 files:
 					  * `.',
 					  * `dev_tty0', `dev_tty1', `dev_tty2',
@@ -307,10 +296,6 @@ PRIVATE void mkfs()
 		pi->i_start_sect = MAKE_DEV(DEV_CHAR_TTY, i);
 		pi->i_nr_sects = 0;
 	}
-
-	ERIC_DEBUG("\nWrite-inode-start=%x", 2 + sb.nr_imap_sects + sb.nr_smap_sects);
-
-	//i-node 接在 i-node-map與sec-node-map 後面
 	WR_SECT(ROOT_DEV, 2 + sb.nr_imap_sects + sb.nr_smap_sects);
 
 	/************************/
@@ -328,8 +313,6 @@ PRIVATE void mkfs()
 		pde->inode_nr = i + 2; /* dev_tty0's inode_nr is 2 */
 		sprintf(pde->name, "dev_tty%d", i);
 	}
-
-	ERIC_DEBUG("\nWrite-dir-entry=%x", sb.n_1st_sect);
 	WR_SECT(ROOT_DEV, sb.n_1st_sect);
 }
 
@@ -524,5 +507,53 @@ PUBLIC void sync_inode(struct inode * p)
 	pinode->i_start_sect = p->i_start_sect;
 	pinode->i_nr_sects = p->i_nr_sects;
 	WR_SECT(p->i_dev, blk_nr);
+}
+
+/*****************************************************************************
+ *                                fs_fork
+ *****************************************************************************/
+/**
+ * Perform the aspects of fork() that relate to files.
+ * 
+ * @return Zero if success, otherwise a negative integer.
+ *****************************************************************************/
+PRIVATE int fs_fork()
+{
+	int i;
+	struct proc* child = &proc_table[fs_msg.PID];
+	for (i = 0; i < NR_FILES; i++) {
+		if (child->filp[i]) {
+			child->filp[i]->fd_cnt++;
+			child->filp[i]->fd_inode->i_cnt++;
+		}
+	}
+
+	return 0;
+}
+
+
+/*****************************************************************************
+ *                                fs_exit
+ *****************************************************************************/
+/**
+ * Perform the aspects of exit() that relate to files.
+ * 
+ * @return Zero if success.
+ *****************************************************************************/
+PRIVATE int fs_exit()
+{
+	int i;
+	struct proc* p = &proc_table[fs_msg.PID];
+	for (i = 0; i < NR_FILES; i++) {
+		if (p->filp[i]) {
+			/* release the inode */
+			p->filp[i]->fd_inode->i_cnt--;
+			/* release the file desc slot */
+			if (--p->filp[i]->fd_cnt == 0)
+				p->filp[i]->fd_inode = 0;
+			p->filp[i] = 0;
+		}
+	}
+	return 0;
 }
 

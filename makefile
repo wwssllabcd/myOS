@@ -1,6 +1,6 @@
 include ./makefile.header
 
-SHOW_CMD = @
+SHOW_CMD = 
 
 NASM = nasm
 NASM_FLG = -I inc/ -f elf
@@ -10,6 +10,7 @@ DIR_BOOT = ./boot
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
 DIR_FS = ./fs
+DIR_MM = ./mm
 
 
 #======== Flag ========
@@ -24,6 +25,7 @@ OBJ_FILES = \
 	$(OBJ_KERNEL) \
 	$(OBJ_FS) \
 	
+	
 OBJ_LIB = \
 	$(DIR_LIB)/kliba.o  \
 	$(DIR_LIB)/klib.o  \
@@ -36,6 +38,7 @@ OBJ_LIB = \
 	$(DIR_LIB)/syslog.o  \
 	$(DIR_LIB)/getpid.o  \
 	$(DIR_LIB)/unlink.o  \
+	$(DIR_LIB)/fork.o  \
 	
 OBJ_KERNEL = \
 	$(DIR_KERENL)/main.o  \
@@ -64,6 +67,10 @@ OBJ_FS = \
 	$(DIR_FS)/disklog.o  \
 	$(DIR_FS)/link.o  \
 	
+OBJ_MM = \
+	$(DIR_MM)/main.o  \
+	$(DIR_MM)/forkexit.o  \
+
 
 OBJ_FILES += $(OBJ_UNIT_TEST)
 DIR_UNIT_TEST = ./unit_test
@@ -108,6 +115,10 @@ $(DIR_LIB)/%.o: $(DIR_LIB)/%.c
 # == rule for fs/*.c ==
 $(DIR_FS)/%.o: $(DIR_FS)/%.c
 	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@
+
+# == rule for mm/*.c ==
+$(DIR_MM)/%.o: $(DIR_MM)/%.c
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $@
 	
 	
 # ut
@@ -116,7 +127,9 @@ $(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c
 	
 # == rule for /*.c ==
 %.o: %.c
-	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@   
+	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@  
+	
+   
 
 nm:
 	$(SHOW_CMD)nm system.elf |sort > system.nm

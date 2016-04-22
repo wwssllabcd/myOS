@@ -9,7 +9,6 @@ typedef struct stackframe STACK_FRAME;
 typedef struct proc PROCESS;
 typedef struct task TASK;
 
-
 struct stackframe {	/* proc_ptr points here				↑ Low			*/
 	u32	gs;		/* ┓						│			*/
 	u32	fs;		/* ┃						│			*/
@@ -67,7 +66,9 @@ struct proc {
 				    * queue (q_sending)
 				    */
 
-	int nr_tty;
+	int p_parent; /**< pid of parent process */
+
+	int exit_status; /**< for parent */
 
 	struct file_desc * filp[NR_FILES];
 };
@@ -83,8 +84,8 @@ struct task {
 /* Number of tasks & procs */
 #define NR_TASKS	4
 #define NR_PROCS	3
-#define FIRST_PROC	proc_table[0]
-#define LAST_PROC	proc_table[NR_TASKS + NR_PROCS - 1]
+#define FIRST_PROC		proc_table[0]
+#define LAST_PROC		proc_table[NR_TASKS + NR_PROCS - 1]
 
 /* stacks of tasks */
 #define STACK_SIZE_TTY		0x8000
@@ -95,6 +96,11 @@ struct task {
 #define STACK_SIZE_TESTB	0x8000
 #define STACK_SIZE_TESTC	0x8000
 
+#define NR_NATIVE_PROCS		4
+
+#define	PROCS_BASE		0xA00000 /* 10 MB */
+#define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
+#define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
 
 #define STACK_SIZE_TOTAL    (    \
                 STACK_SIZE_TTY + \

@@ -1,9 +1,9 @@
 /*************************************************************************//**
  *****************************************************************************
- * @file   syslog.c
+ * @file   fork.c
  * @brief  
  * @author Forrest Y. Yu
- * @date   Thu Nov 20 17:02:42 2008
+ * @date   Tue May  6 14:22:13 2008
  *****************************************************************************
  *****************************************************************************/
 
@@ -21,27 +21,25 @@
 
 
 /*****************************************************************************
- *                                syslog
+ *                                fork
  *****************************************************************************/
 /**
- * Write log directly to the disk by sending message to FS.
+ * Create a child process, which is actually a copy of the caller.
  * 
- * @param fmt The format string.
- * 
- * @return How many chars have been printed.
+ * @return   On success, the PID of the child process is returned in the
+ *         parent's thread of execution, and a 0 is returned in the child's
+ *         thread of execution.
+ *           On failure, a -1 will be returned in the parent's context, no
+ *         child process will be created.
  *****************************************************************************/
-PUBLIC int syslog(const char *fmt, ...)
+PUBLIC int fork()
 {
-	int i;
-	char buf[STR_DEFAULT_LEN];
+	MESSAGE msg;
+	msg.type = FORK;
 
-	va_list arg = (va_list)((char*)(&fmt) + 4); /**
-						     * 4: size of `fmt' in
-						     *    the stack
-						     */
-	i = vsprintf(buf, fmt, arg);
-	assert(strlen(buf) == i);
+	send_recv(BOTH, TASK_MM, &msg);
+	assert(msg.type == SYSCALL_RET);
+	assert(msg.RETVAL == 0);
 
-	return disklog(buf);
+	return msg.PID;
 }
-
