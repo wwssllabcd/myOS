@@ -7,5 +7,5 @@ boot: a
 log: bochsout.txt
 mouse: enabled=0
 display_library: x
-#debug_symbols: file="system.nm"
+debug_symbols: file="system.bsb"
 #gdbstub: enabled=1, port=1234

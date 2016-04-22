@@ -129,14 +129,12 @@ $(DIR_UNIT_TEST)/%.o: $(DIR_UNIT_TEST)/%.c
 %.o: %.c
 	$(SHOW_CMD)$(CC) $(CFLAGS) $< -o $(OBJDIR)/$@  
 	
-   
-
 nm:
 	$(SHOW_CMD)nm system.elf |sort > system.nm
 	$(SHOW_CMD)awk '{ print $$1" "$$3 }' system.nm > system.bsb
 	
 diasm:
-	objdump -S  system.elf > system.diasm
+	$(SHOW_CMD)objdump -S  system.elf > system.diasm
 
 clean:
 	$(SHOW_CMD)make -C boot clean
