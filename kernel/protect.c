@@ -168,9 +168,6 @@ PUBLIC void init_prot()
 
 	/* Fill the TSS descriptor in GDT */
 	memset(&tss, 0, sizeof(tss));
-	// 把 [GDT 4] 的 descriptor, 填成以 tss 為base的 desc
-    // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
-
 	tss.ss0	= SELECTOR_KERNEL_DS;
 	init_desc(&gdt[INDEX_TSS],
 		  makelinear(SELECTOR_KERNEL_DS, &tss),
@@ -180,19 +177,15 @@ PUBLIC void init_prot()
 
 	/* Fill the LDT descriptors of each proc in GDT  */
 	int i;
-    PROCESS* p_proc = proc_table;
-    u16 selector_ldt = INDEX_LDT_FIRST << 3;
-
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
+		memset(&proc_table[i], 0, sizeof(struct proc));
 
-		//把每個process的 ldt, 放入到GDT 5~7的地方，而GDT中的base, 都是每個proc中的LDT的位置
-		init_desc(&gdt[selector_ldt >> 3],
+		proc_table[i].ldt_sel = SELECTOR_LDT_FIRST + (i << 3);
+		assert(INDEX_LDT_FIRST + i < GDT_SIZE);
+		init_desc(&gdt[INDEX_LDT_FIRST + i],
 			  makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
 			  LDT_SIZE * sizeof(struct descriptor) - 1,
 			  DA_LDT);
-
-        p_proc++;
-        selector_ldt += 1 << 3;
 	}
 }
 
@@ -249,7 +242,6 @@ PUBLIC void init_desc(struct descriptor * p_desc, u32 base, u32 limit, u16 attri
  *======================================================================*/
 PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int eflags)
 {
-	//中斷發生時， eflag, cs, eip 會被自動的psuh，所以 interrupt只有推兩個參數
 	int i;
 	int text_color = 0x74; /* 灰底红字 */
 	char err_description[][64] = {	"#DE Divide Error",
@@ -274,6 +266,11 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 					"#XF SIMD Floating-Point Exception"
 				};
 
+	/* 通过打印空格的方式清空屏幕的前五行，并把 disp_pos 清零 */
+	disp_pos = 0;
+	for(i=0;i<80*5;i++){
+		disp_str(" ");
+	}
 	disp_pos = 0;
 
 	disp_color_str("Exception! --> ", text_color);
