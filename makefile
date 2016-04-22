@@ -1,6 +1,6 @@
 include ./makefile.header
 
-SHOW_CMD = 
+SHOW_CMD = @
 
 NASM = nasm
 NASM_FLG = -I inc/ -f elf
