@@ -166,13 +166,14 @@ PUBLIC void init_prot()
 	init_idt_desc(INT_VECTOR_SYS_CALL,	DA_386IGate,
 		      sys_call,			PRIVILEGE_USER);
 
-
-
+	/* Fill the TSS descriptor in GDT */
+	memset(&tss, 0, sizeof(tss));
 	// 把 [GDT 4] 的 descriptor, 填成以 tss 為base的 desc
     // 這邊把TSS放在 GDT 的 0x20的位置，所以 載入TSS的指令為 "ltr $0x20"，且base addr要設成TSS的offset
+
 	tss.ss0	= SELECTOR_KERNEL_DS;
-    init_desc(&gdt[INDEX_TSS], 
-		vir2phys(seg2linear(SELECTOR_KERNEL_DS), &tss), 
+	init_desc(&gdt[INDEX_TSS],
+		  makelinear(SELECTOR_KERNEL_DS, &tss),
 		  sizeof(tss) - 1,
 		  DA_386TSS);
 	tss.iobase = sizeof(tss); /* No IO permission bitmap */
@@ -183,11 +184,10 @@ PUBLIC void init_prot()
     u16 selector_ldt = INDEX_LDT_FIRST << 3;
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++) {
-		
+
 		//把每個process的 ldt, 放入到GDT 5~7的地方，而GDT中的base, 都是每個proc中的LDT的位置
-        init_desc(&gdt[selector_ldt >> 3],
-				vir2phys(seg2linear(SELECTOR_KERNEL_DS),
-					proc_table[i].ldts),
+		init_desc(&gdt[selector_ldt >> 3],
+			  makelinear(SELECTOR_KERNEL_DS, proc_table[i].ldts),
 			  LDT_SIZE * sizeof(struct descriptor) - 1,
 			  DA_LDT);
 
@@ -274,7 +274,7 @@ PUBLIC void exception_handler(int vec_no, int err_code, int eip, int cs, int efl
 					"#XF SIMD Floating-Point Exception"
 				};
 
-
+	disp_pos = 0;
 
 	disp_color_str("Exception! --> ", text_color);
 	disp_color_str(err_description[vec_no], text_color);

@@ -162,7 +162,7 @@ struct tss {
 
 /* 宏 */
 /* 线性地址 → 物理地址 */
-#define vir2phys(seg_base, vir)	(u32)(((u32)seg_base) + (u32)(vir))
+//#define vir2phys(seg_base, vir)	(u32)(((u32)seg_base) + (u32)(vir))
 
 /* seg:off -> linear addr */
 #define makelinear(seg,off) (u32)(((u32)(seg2linear(seg))) + (u32)(off))
