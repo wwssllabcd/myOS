@@ -24,6 +24,7 @@ OBJ_FILES = \
 	$(OBJ_LIB) \
 	$(OBJ_KERNEL) \
 	$(OBJ_FS) \
+	$(OBJ_MM) \
 	
 	
 OBJ_LIB = \
@@ -93,7 +94,7 @@ system.bin: head.o $(OBJ_FILES)
 	$(SHOW_CMD)$(OBJCOPY) --only-keep-debug system.elf system.sym
 	
 boot/boot.bin:
-	make -C boot
+	$(SHOW_CMD)make -C boot
 	
 head.o: head.s
 	$(SHOW_CMD)$(AS) $(ASFLAG) $(OBJDIR)/head.o head.s
