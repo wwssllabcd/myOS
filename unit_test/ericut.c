@@ -2,6 +2,21 @@
 #include "type.h"
 #include "global.h"
 
+
+void set_gdt(u8 itemNum, u16 data_0, u16 data_1, u16 data_2, u16 data_3)
+{
+    DESCRIPTOR* p_des = &gdt[itemNum];
+
+    p_des->limit_low = data_0;
+    p_des->base_low = data_1;
+
+    p_des->base_mid = data_2 & 0xFF;
+    p_des->attr1 = (data_2 >> 8) & 0xFF;
+
+    p_des->limit_high_attr2 = data_3 & 0xFF;
+    p_des->base_high = (data_3 >> 8) & 0xFF;
+}
+
 void ut_ck_idt_desc()
 {
     u8 tmpIdt[0x100];
