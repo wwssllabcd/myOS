@@ -147,6 +147,33 @@ PUBLIC int get_ticks()
     return msg.RETVAL;
 }
 
+/*****************************************************************************
+ *                                Init
+ *****************************************************************************/
+/**
+ * The hen.
+ * 
+ *****************************************************************************/
+void Init()
+{
+	int fd_stdin  = open("/dev_tty0", O_RDWR);
+	assert(fd_stdin  == 0);
+	int fd_stdout = open("/dev_tty0", O_RDWR);
+	assert(fd_stdout == 1);
+
+	printf("Init() is running ...\n");
+
+	int pid = fork();
+	if (pid != 0) { /* parent process */
+		printf("parent is running, child pid:%d\n", pid);
+		spin("parent");
+	}
+	else {	/* child process */
+		printf("child is running, pid:%d\n", getpid());
+		spin("child");
+	}
+}
+
 /*======================================================================*
  TestA
  *======================================================================*/
