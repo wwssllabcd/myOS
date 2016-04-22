@@ -1,3 +1,10 @@
+
+/*++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                               proc.h
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                                                    Forrest Yu, 2005
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
+
 #include "protect.h"
 #include "type.h"
 
@@ -40,7 +47,7 @@ struct proc {
         int ticks;                 /* remained ticks */
         int priority;
 
-	u32 pid;                   /* process id passed in from MM */
+	u32 pid;
 	char name[16];		   /* name of the process */
 
 	int  p_flags;              /**
@@ -81,29 +88,38 @@ struct task {
 
 #define proc2pid(x) (x - proc_table)
 
-/* Number of tasks & procs */
-#define NR_TASKS	4
-#define NR_PROCS	3
+/* Number of tasks & processes */
+#define NR_TASKS		4
+#define NR_PROCS		3
+#define NR_NATIVE_PROCS		4
 #define FIRST_PROC		proc_table[0]
 #define LAST_PROC		proc_table[NR_TASKS + NR_PROCS - 1]
 
-/* stacks of tasks */
-#define STACK_SIZE_TTY		0x8000
-#define STACK_SIZE_SYS		0x8000
-#define STACK_SIZE_HD		0x8000
-#define STACK_SIZE_FS		0x8000
-#define STACK_SIZE_TESTA	0x8000
-#define STACK_SIZE_TESTB	0x8000
-#define STACK_SIZE_TESTC	0x8000
-
-#define NR_NATIVE_PROCS		4
-
+/**
+ * All forked proc will use memory above PROCS_BASE.
+ *
+ * @attention make sure PROCS_BASE is higher than any buffers, such as
+ *            fsbuf, mmbuf, etc
+ * @see global.c
+ * @see global.h
+ */
 #define	PROCS_BASE		0xA00000 /* 10 MB */
 #define	PROC_IMAGE_SIZE_DEFAULT	0x100000 /*  1 MB */
 #define	PROC_ORIGIN_STACK	0x400    /*  1 KB */
 
-#define STACK_SIZE_TOTAL    (    \
-                STACK_SIZE_TTY + \
+/* stacks of tasks */
+#define	STACK_SIZE_DEFAULT	0x4000 /* 16 KB */
+#define STACK_SIZE_TTY		STACK_SIZE_DEFAULT
+#define STACK_SIZE_SYS		STACK_SIZE_DEFAULT
+#define STACK_SIZE_HD		STACK_SIZE_DEFAULT
+#define STACK_SIZE_FS		STACK_SIZE_DEFAULT
+#define STACK_SIZE_MM		STACK_SIZE_DEFAULT
+#define STACK_SIZE_INIT		STACK_SIZE_DEFAULT
+#define STACK_SIZE_TESTA	STACK_SIZE_DEFAULT
+#define STACK_SIZE_TESTB	STACK_SIZE_DEFAULT
+#define STACK_SIZE_TESTC	STACK_SIZE_DEFAULT
+
+#define STACK_SIZE_TOTAL	(STACK_SIZE_TTY + \
 				STACK_SIZE_SYS + \
 				STACK_SIZE_HD + \
 				STACK_SIZE_FS + \
