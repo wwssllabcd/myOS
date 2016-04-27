@@ -78,12 +78,12 @@ DIR_UNIT_TEST = ./unit_test
 OBJ_UNIT_TEST = \
 	$(DIR_UNIT_TEST)/ericut.o  \
 	
-.PHONY : clean
+.PHONY : everything
 
 # === Rule ===
 all: clean mkdir system.img nm diasm
 
-system.img: boot/boot.bin boot/setup.bin system.bin 
+system.img: $(DIR_BOOT)/boot.bin $(DIR_BOOT)/setup.bin system.bin 
 	$(SHOW_CMD)dd if=$(DIR_BOOT)/boot.bin    of=system.img bs=512 count=1 
 	$(SHOW_CMD)dd if=$(DIR_BOOT)/setup.bin   of=system.img bs=512 count=4 seek=1
 	$(SHOW_CMD)dd if=system.bin    of=system.img bs=512 count=2883 seek=5 conv=notrunc
