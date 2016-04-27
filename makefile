@@ -148,3 +148,8 @@ $(OBJDIR):
 	$(SHOW_CMD)mkdir -p $@
 	
 mkdir: $(OBJDIR)
+
+#=== make dir ===
+qemu: 
+	sudo qemu-system-i386 -fda system.img -hda 80.img -boot a
+	
