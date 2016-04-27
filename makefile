@@ -5,8 +5,12 @@ SHOW_CMD = @
 NASM = nasm
 NASM_FLG = -I inc/ -f elf
 
+ASMBFLAGS	= -I $(DIR_BOOTLOADER)/include/
+ORANGESBOOT	=  $(DIR_BOOTLOADER)/boot.bin  $(DIR_BOOTLOADER)/loader.bin
+
 #======== Folder =======
 DIR_BOOT = ./boot
+DIR_BOOTLOADER = ./bootloader
 DIR_KERENL = ./kernel
 DIR_LIB = ./lib
 DIR_FS = ./fs
@@ -18,6 +22,17 @@ LDFLAGS_BOOT = $(LDFLAGS) -Ttext 0
 LDFLAGS_SYS = $(LDFLAGS) -Ttext 0 -e startup_32
 
 ASMKFLAGS = -I $(INC_FD) 
+
+OBJ_BOOT_BIN = \
+	$(DIR_BOOTLOADER)/boot.asm  \
+	$(DIR_BOOTLOADER)/include/load.inc \
+	$(DIR_BOOTLOADER)/include/fat12hdr.inc \
+
+OBJ_BOOT_LOADER = \
+	$(DIR_BOOTLOADER)/loader.asm  \
+	$(DIR_BOOTLOADER)/include/load.inc \
+	$(DIR_BOOTLOADER)/include/fat12hdr.inc \
+	$(DIR_BOOTLOADER)/include/pm.inc \
 
 OBJ_FILES = \
 	$(OBJDIR)/head.o  \
@@ -87,7 +102,22 @@ system.img: $(DIR_BOOT)/boot.bin $(DIR_BOOT)/setup.bin system.bin
 	$(SHOW_CMD)dd if=$(DIR_BOOT)/boot.bin    of=system.img bs=512 count=1 
 	$(SHOW_CMD)dd if=$(DIR_BOOT)/setup.bin   of=system.img bs=512 count=4 seek=1
 	$(SHOW_CMD)dd if=system.bin    of=system.img bs=512 count=2883 seek=5 conv=notrunc
+	
+buildimg: bootloader/boot.bin bootloader/loader.bin
+	dd if=bootloader/boot.bin of=a.img bs=512 count=1 conv=notrunc
+	sudo umount /mnt/floppy/
+	sudo mount -o loop a.img /mnt/floppy/
+	sudo cp -fv bootloader/loader.bin /mnt/floppy/
+	sudo cp -fv system.bin /mnt/floppy
+	sudo umount /mnt/floppy
 
+bootloader/boot.bin : $(OBJ_BOOT_BIN)
+	$(NASM) $(ASMBFLAGS) -o $@ $<
+
+bootloader/loader.bin : $(OBJ_BOOT_LOADER)
+	$(NASM) $(ASMBFLAGS) -o $@ $<
+	
+	
 system.bin: head.o $(OBJ_FILES)
 	$(SHOW_CMD)$(LD) $(LDFLAGS_SYS) $(OBJ_FILES) -o system.elf
 	$(SHOW_CMD)$(OBJCOPY) $(TRIM_FLAGS) system.elf system.bin
@@ -139,7 +169,7 @@ diasm:
 
 clean:
 	$(SHOW_CMD)make -C boot clean
-	$(SHOW_CMD)rm -rf *.o *.elf *.bin system.img *.nm *.bsb
+	$(SHOW_CMD)rm -rf *.o *.elf *.bin system.img *.nm *.bsb *.diasm
 	$(SHOW_CMD)rm -rf $(OBJ_FILES)
 	$(SHOW_CMD)rm -rf $(OBJDIR)
 
